@@ -1,5 +1,5 @@
 
-const DB_PATH = '../omnifin/db/test.db';
+const DB_PATH = '../omnifin/db/test.db'; // relative to omnifin dir
 
 onload = start;
 onscroll = handleSticky;
