@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es6"
+  },
+  "include": [
+    "." 
+  ],
+  "exclude": [
+    "basejs",
+    "coding",
+    "combu",
+    "odf",
+    "ode",
+    "*_fail",
+    "node_modules",
+    "_unused",
+    "flask",
+    "../y/*",
+    "_hideTEMP",
+    "_projects",
+    "CODE.js",
+    "_weg",
+    "*elim.js",
+    "z_april",
+    "codesafe",
+    "codesammler.js",
+    "copi2",
+    "z_history"
+  ]
+}

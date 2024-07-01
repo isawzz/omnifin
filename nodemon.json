@@ -1,0 +1,5 @@
+{
+  "ignore": ["temp/*", "otherDir/*","assets/*","img/*"],
+  "watch": ["ode/app.js"],
+  "ext": "js"
+}
