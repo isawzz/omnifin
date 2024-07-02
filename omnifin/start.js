@@ -4,18 +4,16 @@ const DB_PATH = '../omnifin/db/test.db'; // relative to omnifin dir
 onload = start;
 onscroll = handleSticky;
 
-function handleSticky() { let d = mBy('dNav'); if (window.scrollY >= 88) mClass(d, 'sticky'); else mClassRemove(d, 'sticky'); }
-
-async function start() { await prelims();test6(); }
+async function start() { await prelims(); test6(); }
 
 async function test6(){
-	await switchToMainMenu('home');
-	await onclickTransactions();
+	await switchToMainMenu('overview');
+	onclickTransactions();
 
 }
 async function test5(){
 	await switchToMainMenu('home');
-	let q=getTransactionsFlexperks();
+	let q=qTransactionsFlexperks();
 	let res=dboutput(q);
 	mBy('dPre').textContent = res;
 }

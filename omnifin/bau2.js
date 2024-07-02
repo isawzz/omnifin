@@ -1,5 +1,5 @@
 
-function getTransactions(){
+function qTransactions(){
 	return `
 			SELECT
 					t.id,
@@ -22,7 +22,7 @@ function getTransactions(){
 					accounts receiver_account ON t.receiver = receiver_account.id;
 		`;
 }
-function getTransactionsSelected(){
+function qTransactionsSelected(){
 	return `
 			SELECT
 					t.id,
@@ -43,7 +43,7 @@ function getTransactionsSelected(){
 					accounts receiver_account ON t.receiver = receiver_account.id;
 		`;
 }
-function getTransactionsFlexperks(){
+function qTransactionsFlexperks(){
 	return `
 			SELECT
 					t.id,

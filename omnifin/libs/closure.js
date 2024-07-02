@@ -3914,6 +3914,11 @@ function getGameValues() {
 	Speech.setLanguage(settings.language);
 	return settings;
 }
+function getHeaderNames(arr) {
+	let di = { dateof: 'date', sender_name: 'from', sender_owner: 'owner', receiver_name: 'to', receiver_owner: 'owner', description: 'note' };
+	let headers = arr.map(x => valf(di[x], x));
+	return headers;
+}
 function getIdKey(elem) { let id = mBy(elem).id; return id.substring(1).toLowerCase(); }
 
 function getImageData(src) {
@@ -5967,6 +5972,12 @@ function mShield(dParent, styles = {}, id = null, classnames = null, hideonclick
 	mClass(d, 'topmost');
 	return d;
 }
+function mSidebar(dParent = 'dLeft', wmin = 170, styles = {}, opts = {}) {
+	dParent = toElem(dParent);
+	mStyle(dParent, { wmin: wmin, patop: 25 });
+	let d = mDom(dParent, styles, opts);
+	return { wmin, d }
+}
 function mSizeSuccession(styles = {}, szDefault = 100, fromWidth = true) {
 	let [w, h] = [styles.w, styles.h];
 	if (fromWidth) {
@@ -6323,7 +6334,7 @@ function menuDisable(menu, key) { mClass(iDiv(menu.commands[key]), 'disabled') }
 function menuEnable(menu, key) { mClassRemove(iDiv(menu.commands[key]), 'disabled') }
 
 async function menuOpen(menu, key, defaultKey = 'settings') {
-	let cmd = menu.commands[key]; //console.log(cmd)
+	let cmd = menu.commands[key];
 	if (nundef(cmd)) { console.log('abandon', key); await switchToMainMenu(defaultKey); return; }
 	menu.cur = key;
 	mClass(iDiv(cmd), 'activeLink'); //console.log('cmd',cmd)
@@ -8294,18 +8305,6 @@ function showMessage(msg, ms = 3000) {
 	d.innerHTML = msg;
 	clearTimeout(TO.message);
 	TO.message = setTimeout(clearMessage, ms)
-}
-function showNavbar() {
-	let nav = mMenu('dNav');
-	let commands = {};
-	commands.home = menuCommand(nav.l, 'nav', 'home', 'HOME', showDashboard, menuCloseHome);
-	commands.settings = menuCommand(nav.l, 'nav', 'settings', null, settingsOpen, menuCloseSettings);
-	commands.simple = menuCommand(nav.l, 'nav', 'simple', 'Collection', onclickSimple, menuCloseSimple);
-	commands.play = menuCommand(nav.l, 'nav', 'play', 'Games', onclickPlay, menuCloseGames);
-	commands.table = menuCommand(nav.l, 'nav', 'table', 'Table', onclickTableMenu, menuCloseTable);
-	commands.plan = menuCommand(nav.l, 'nav', 'plan', 'Calendar', onclickPlan, menuCloseCalendar);
-	nav.commands = commands;
-	return nav;
 }
 function showObject(o, keys, dParent, styles = {}, opts = {}) {
 	if (nundef(keys)) { keys = Object.keys(o); opts.showKeys = true; styles.align = 'left' }
