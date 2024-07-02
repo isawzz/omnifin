@@ -16,7 +16,21 @@ async function onclickAddTag(idtrans, item) {
 	console.log(list);
 
 	
+	
 
+}
+
+function saveDatabase() {
+	const data = db.export();
+	const blob = new Blob([data], { type: 'application/octet-stream' });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = 'test.db';
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
 }
 
 
