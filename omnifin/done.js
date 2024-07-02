@@ -46,6 +46,9 @@ async function menuOpenOverview() {
 	UI.commands.transactions = mCommand(side.d, 'transactions', 'transactions'); mNewline(side.d, gap);
 	UI.commands.flex = mCommand(side.d, 'flex', 'flex-perks'); mNewline(side.d, gap);
 	UI.commands.limit10 = mCommand(side.d, 'limit10', 'just 10'); mNewline(side.d, gap);
+	UI.commands.taggedLimit10 = mCommand(side.d, 'taggedLimit10', 'tagged 10'); mNewline(side.d, gap);
+
+	onclickTaggedLimit10();
 }
 async function menuOpenSql() {
 	let side = UI.sidebar = mSidebar();
@@ -69,9 +72,7 @@ async function onclickExecute() {
 	console.log(res)
 	showQueryResult(tablename,res)
 }
-function onclickFlex() { 
-	showTableInMain(qTransactionsFlexperks()); 
-}
+function onclickFlex() { 	showTableInMain(qTransactionsFlexperks()); }
 
 function onclickLimit10() { showTableInMain(qTransactions10()); }
 
@@ -81,6 +82,7 @@ function onclickShowSchema() {
 }
 async function onclickSql() { console.log('hallo') }
 
+function onclickTaggedLimit10() { showTableInMain(qTaggedTransactionsLimit10()); }
 function onclickTransactions() { showTableInMain(qTransactionsSelected()); }
 
 function showNavbar() {

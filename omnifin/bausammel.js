@@ -1,6 +1,6 @@
 
 function dbRecords(q) {
-	let tablename = stringAfter(q.toLowerCase(), 'from').trim(); console.log('tablename', tablename);
+	let tablename = stringAfter(q.toLowerCase(), 'from').trim(); //console.log('tablename', tablename);
 	let res = dbq(q);
 	if (isdef(res)) res = res[0];
 
@@ -8,7 +8,7 @@ function dbRecords(q) {
 }
 function dbGetTableNames() {
 	let res = dbRecords(qTablenames());
-	console.log(res);
+	//console.log(res);
 	return res;
 }
 

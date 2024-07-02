@@ -23,7 +23,8 @@ function mGather(dAnchor, styles = {}, opts = {}) {
 			}
 		});
 		dDialog.showModal();
-		mAnchorTo(dx, toElem(dAnchor), opts.align);
+		if (isdef(dAnchor)) mAnchorTo(dx, toElem(dAnchor), opts.align);
+		else {mStyle(d,{h:'100vh'});mCenterCenterFlex(d); }
 	});
 }
 

@@ -93,3 +93,21 @@ function qTransactions10() {
 }
 function qTags() { return 'select * from tags;'; }
 function qTablenames(){ return `SELECT name FROM sqlite_master WHERE type='table';`; }
+function qTransactionTags(){
+	return `select * from transaction_tags where tag_id = '51'`;
+}
+function qTaggedTransactions(){
+	return `SELECT * FROM transactions WHERE id IN (SELECT id FROM transaction_tags);`
+}
+function qTaggedTransactionsLimit10(){
+	return `SELECT * FROM transactions WHERE id IN (SELECT id FROM transaction_tags) limit 10;`
+}
+function qiTransactionTag(id,tag_id,report){
+	return `INSERT INTO transaction_tags (id, tag_id, report) VALUES (${id}, ${tag_id}, ${report});`;
+}
+
+
+
+
+
+

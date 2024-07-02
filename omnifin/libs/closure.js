@@ -9263,7 +9263,7 @@ function toNameValueList(any) {
 		let nameKey = keys[0];
 		let valueKey = keys[1];
 		for (const x of any) {
-			list.push({ name: x[nameKey], value: x[nameKey] });
+			list.push({ name: x[nameKey], value: x[valueKey] });
 		}
 	}
 	return list;
@@ -9340,7 +9340,7 @@ function uiGadgetTypeCheckList(dParent, content, resolve, styles = {}, opts = {}
 	return dOuter;
 }
 function uiGadgetTypeCheckListInput(form, content, resolve, styles, opts) {
-	addKeys({ wmax: '100vw', hmax: 500, bg: 'white', fg: 'black', padding: 10, rounding: 10, box: true }, styles)
+	addKeys({ wmax: '100vw', hmax: valf(styles.hmax,500), bg: 'white', fg: 'black', padding: 10, rounding: 10, box: true }, styles)
 	let dOuter = mDom(form, styles);
 	opts.handler = resolve;
 	let ui = uiTypeCheckListInput(content, dOuter, styles, opts);
@@ -9529,9 +9529,10 @@ function uiTypeCheckList(any, dParent, styles = {}, opts = {}) {
 }
 function uiTypeCheckListInput(any, dParent, styles = {}, opts = {}) {
 	let dg = mDom(dParent);
-	let list = toNameValueList(any); list.map(x => { if (x.value !== true) x.value = false; });
+	let list = toNameValueList(any); list.map(x => { if (x.value != true) x.value = false; });
 	let items = [];
 	for (const o of list) {
+		//console.log(o.value)
 		let div = mCheckbox(dg, o.name, o.value);
 		items.push({ nam: o.name, div, w: mGetStyle(div, 'w'), h: mGetStyle(div, 'h') });
 	}
@@ -9546,9 +9547,13 @@ function uiTypeCheckListInput(any, dParent, styles = {}, opts = {}) {
 	mButton('clear', ev => { onclickClear(inp, grid) }, db, { maleft: 10 }, 'input');
 	mButton('done', () => opts.handler(extractWords(inp.value, ' ')), db, { maleft: 10 }, 'input');
 	mStyle(dg, { w: wgrid, box: true, padding: 10 }); //, w: wgrid })
-	let hmax = isdef(styles.hmax) ? styles.hmax - 150 : 300;
-	let grid = mGrid(null, cols, dg, { w100: true, gap: 10, matop: 4, hmax });
+	//let hmax = isdef(styles.hmax) ? styles.hmax - 150 : 300;
+	console.log('...hmax',styles.hmax)
+	//addKeys({hmax:450},styles);
+	let hmax = valf(styles.hmax,450); //isdef(styles.hmax) ? styles.hmax - 150 : 300;
+	let grid = mGrid(null, cols, dg, { w100: true, gap: 10, matop: 4, hmax:hmax-150}); //, bg:'red' });
 	items.map(x => mAppend(grid, iDiv(x)));
+	sortCheckboxes(grid);
 	let chks = Array.from(dg.querySelectorAll('input[type="checkbox"]'));
 	for (const chk of chks) {
 		chk.addEventListener('click', ev => checkToInput(ev, inp, grid))

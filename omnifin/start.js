@@ -129,11 +129,13 @@ async function prelims() {
 	let tablenames = dbGetTableNames();
 	//console.log(tablenames);
 	tablenames = tablenames.map(x=>x.name);
+
 	for(const tablename of tablenames){
-		console.log(tablename)
+		//console.log(tablename)
 		M[tablename]=dbRecords(`select * from ${tablename}`);
+		if (!tablename.includes('_')) M[`${tablename}Index`]=list2dict(M[tablename],'id');
 	}
-	M.tagsDict = list2dict(M.tags,'tag_name');
+	M.tagsByName = list2dict(M.tags,'tag_name');
 	//console.log(M);
 	//M.tags = dbResultToDict(dbq('select * from tags'),'tag_name');
 }
