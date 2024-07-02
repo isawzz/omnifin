@@ -2,7 +2,8 @@ async function dbInit(path) {
 	try {
 		const response = await fetch(path);
 		const buffer = await response.arrayBuffer();
-		const SQL = await initSqlJs({ locateFile: filename => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.2/${filename}` });
+		// const SQL = await initSqlJs({ locateFile: filename => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.2/${filename}` });
+		const SQL = await initSqlJs({ locateFile: filename => `../omnifin/libs/${filename}` });
 		const db = new SQL.Database(new Uint8Array(buffer));
 		return db;
 	} catch (error) {
@@ -38,6 +39,7 @@ async function menuOpenOverview() {
 	UI.commands.showSchema = mCommand(side.d, 'showSchema', 'DB Structure'); mNewline(side.d, gap);
 	UI.commands.transactions = mCommand(side.d, 'transactions', 'transactions'); mNewline(side.d, gap);
 	UI.commands.flex = mCommand(side.d, 'flex', 'flex-perks'); mNewline(side.d, gap);
+	UI.commands.limit10 = mCommand(side.d, 'limit10', 'just 10'); mNewline(side.d, gap);
 }
 async function menuOpenSql() {
 	let side = UI.sidebar = mSidebar();
@@ -50,11 +52,9 @@ async function menuOpenSql() {
 		}
 	});
 }
-async function onclickExecute() {
-	let res = dbq(UI.ta.value);
-	console.log(res)
-}
 function onclickFlex() { showTableInMain(qTransactionsFlexperks()); }
+
+function onclickLimit10() { showTableInMain(qTransactions10()); }
 
 function onclickShowSchema() {
 	let res = dbq(`SELECT sql FROM sqlite_master WHERE type='table';`);
@@ -86,20 +86,6 @@ function showTableInMain(q) {
 	mClear('dMain');
 	showTransactions(res[0])
 }
-function showTableSortedBy(dParent, records, headers, header) {
-	if (DA.sortedBy == header) { sortByDescending(records, header); DA.sortedBy = null; }
-	else { sortBy(records, header); DA.sortedBy = header; }
-	mClear(dParent);
-	mText(`<h2>transactions</h2>`, dParent, { maleft: 12 })
-	let t = UI.tables = mDataTable(records, dParent, null, headers, 'records');
-	let dt = t.div;
-	mStyle(dt, { 'caret-color': 'transparent' });
-	let headeruis = Array.from(dt.firstChild.getElementsByTagName('th'));
-	for (const ui of headeruis) {
-		mStyle(ui, { cursor: 'pointer' });
-		ui.onclick = () => showTableSortedBy(dParent, records, headers, ui.innerHTML);
-	}
-}
 async function showTransactions(res) {
 	let records = dbResultToList(res);
 	let dParent = mBy('dT');
@@ -111,7 +97,7 @@ async function showTransactions(res) {
 	records.map(x => x.to = `${x.receiver_name} (${x.receiver_owner})`);
 	let units = ['$', '€'];
 	records.map(x => x.amt = `${x.unit < units.length ? units[x.unit] : '?'}${x.amount}`);
-	showTableSortedBy(dParent, records, ['id', 'dateof', 'from', 'to', 'amount', 'unit'], 'dateof');
+	showTableSortedBy(dParent, 'transactions', records, ['id', 'dateof', 'from', 'to', 'amount', 'unit'], 'dateof');
 }
 async function updateExtra() { }
 

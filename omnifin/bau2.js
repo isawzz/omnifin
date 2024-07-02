@@ -1,71 +1,13 @@
 
-function qTransactions(){
-	return `
-			SELECT
-					t.id,
-					t.dateof,
-					t.location,
-					sender_account.account_name AS sender_name,
-					receiver_account.account_name AS receiver_name,
-					t.amount,
-					t.unit,
-					t.received_amount,
-					t.received_unit,
-					t.description,
-					t.reference,
-					t.report
-			FROM
-					transactions t
-			JOIN
-					accounts sender_account ON t.sender = sender_account.id
-			JOIN
-					accounts receiver_account ON t.receiver = receiver_account.id;
-		`;
-}
-function qTransactionsSelected(){
-	return `
-			SELECT
-					t.id,
-					t.dateof,
-					t.location,
-					sender_account.account_name AS sender_name,
-					sender_account.account_owner AS sender_owner,
-					receiver_account.account_name AS receiver_name,
-					receiver_account.account_owner AS receiver_owner,
-					t.amount,
-					t.unit,
-					t.description
-			FROM
-					transactions t
-			JOIN
-					accounts sender_account ON t.sender = sender_account.id
-			JOIN
-					accounts receiver_account ON t.receiver = receiver_account.id;
-		`;
-}
-function qTransactionsFlexperks(){
-	return `
-			SELECT
-					t.id,
-					t.dateof,
-					t.location,
-					sender_account.account_name AS sender_name,
-					sender_account.account_owner AS sender_owner,
-					receiver_account.account_name AS receiver_name,
-					receiver_account.account_owner AS receiver_owner,
-					t.amount,
-					t.unit,
-					t.description
-			FROM
-					transactions t
-			JOIN
-					accounts sender_account ON t.sender = sender_account.id
-			JOIN
-					accounts receiver_account ON t.receiver = receiver_account.id
-			WHERE
-					sender_name = 'flex-perks';
-		`;
-}
+async function onclickAddTag(idtrans,item){
 
+	let tags = Object.keys(M.tags);
+	let content = tags.map(x=>({key:x,value:false}));
+	let list = await mGather('dNav', {}, { content, type: 'checkListInput' });
+	console.log(list);
+
+	
+
+}
 
 
