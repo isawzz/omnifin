@@ -92,4 +92,4 @@ function qTransactions10() {
 		`;
 }
 function qTags() { return 'select * from tags;'; }
-//function qInsertTag(tag_name,)
+function qTablenames(){ return `SELECT name FROM sqlite_master WHERE type='table';`; }

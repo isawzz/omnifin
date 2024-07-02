@@ -8,7 +8,7 @@ async function start() { await prelims(); test6(); }
 
 async function test6(){
 	await switchToMainMenu('overview');
-	onclickTransactions();
+	//onclickTransactions();
 
 }
 async function test5(){
@@ -125,7 +125,17 @@ async function prelims() {
 	UI.nav = showNavbar(); 
 	setColors('skyblue', 'white');
 	DB = await dbInit(DB_PATH);
-	M.tags = dbResultToDict(dbq('select * from tags'),'tag_name');
+
+	let tablenames = dbGetTableNames();
+	//console.log(tablenames);
+	tablenames = tablenames.map(x=>x.name);
+	for(const tablename of tablenames){
+		console.log(tablename)
+		M[tablename]=dbRecords(`select * from ${tablename}`);
+	}
+	M.tagsDict = list2dict(M.tags,'tag_name');
+	//console.log(M);
+	//M.tags = dbResultToDict(dbq('select * from tags'),'tag_name');
 }
 
 

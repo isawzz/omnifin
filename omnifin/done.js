@@ -12,6 +12,8 @@ async function dbInit(path) {
 		return null;
 	}
 }
+function dbq(q) { return DB.exec(q); }
+
 function dbResultToDict(res, keyprop) {
 	let list = dbResultToList(res);
 	return list2dict(list, keyprop);
@@ -29,8 +31,12 @@ function dbResultToList(res) {
 	}
 	return records;
 }
-function dbq(q) { return DB.exec(q); }
-
+function ensuredT(){
+	let dParent = mBy('dT');
+	if (isdef(dParent)) { mClear(dParent); }
+	else dParent = mDom('dMain', {}, { className: 'section', id: 'dT' });
+	return dParent;
+}
 function handleSticky() { let d = mBy('dNav'); if (window.scrollY >= 88) mClass(d, 'sticky'); else mClassRemove(d, 'sticky'); }
 
 async function menuOpenOverview() {
@@ -52,7 +58,20 @@ async function menuOpenSql() {
 		}
 	});
 }
-function onclickFlex() { showTableInMain(qTransactionsFlexperks()); }
+async function onclickExecute() {
+	let q = UI.ta.value;
+	let tablename = stringAfter(q.toLowerCase(),'from').trim(); //console.log('tablename',tablename);
+	let res = dbq(q);
+	//console.log(res)
+	
+	if (isdef(res)) res=res[0];
+	if (nundef(res)) {let d=ensuredT();d.innerHTML = `no records found in ${tablename}`; return []; }
+	console.log(res)
+	showQueryResult(tablename,res)
+}
+function onclickFlex() { 
+	showTableInMain(qTransactionsFlexperks()); 
+}
 
 function onclickLimit10() { showTableInMain(qTransactions10()); }
 
@@ -74,6 +93,13 @@ function showNavbar() {
 	nav.commands = commands;
 	return nav;
 }
+async function showQueryResult(tablename,res) {
+	let records = dbResultToList(res);
+	let dParent = ensuredT();
+	if (isEmpty(records)) { mText('no records', dParent); return []; }
+	let headers = Object.keys(records[0]);
+	showTableSortedBy(dParent, tablename, records, headers, headers[0]);
+}
 function showRawInMain(res) {
 	let text = res.map(({ columns, values }) => {
 		return columns.join('\t') + '\n' + values.map(row => row.join('\t')).join('\n');
@@ -85,6 +111,27 @@ function showTableInMain(q) {
 	let res = dbq(q);
 	mClear('dMain');
 	showTransactions(res[0])
+}
+function showTableSortedBy(dParent, tablename, records, headers, header) {
+	if (DA.sortedBy == header) { sortByDescending(records, header); DA.sortedBy = null; }
+	else { sortBy(records, header); DA.sortedBy = header; }
+	mClear(dParent);
+	mText(`<h2>${tablename}</h2>`, dParent, { maleft: 12 })
+	let t = UI.tables = mDataTable(records, dParent, null, headers, 'records');
+	let d = t.div;
+	mStyle(d, { 'caret-color': 'transparent' });
+	let headeruis = Array.from(d.firstChild.getElementsByTagName('th'));
+	for (const ui of headeruis) {
+		mStyle(ui, { cursor: 'pointer' });
+		ui.onclick = () => showTableSortedBy(dParent, tablename, records, headers, ui.innerHTML);
+	}
+	if (tablename != 'transactions' && tablename != 'reports') return records;
+	for (const ri of t.rowitems) {
+		let r = iDiv(ri);
+		let id = ri.o.id;
+		let h = hFunc('tag', 'onclickAddTag', id, ri); let c = mAppend(r, mCreate('td')); c.innerHTML = h;
+	}
+
 }
 async function showTransactions(res) {
 	let records = dbResultToList(res);
