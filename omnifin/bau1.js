@@ -2,21 +2,20 @@
 async function onclickAddTag(idtrans, item) {
 
 	//transaction id 3 hat tag id 51
-	//console.log(idtrans, item)
+	let currentTagObjects = M.transaction_tags.filter(x=>x.id == idtrans); //console.log(rtags); //return;
 
-	let tagsSet = [];
-	let rtags = M.transaction_tags.filter(x=>x.id == idtrans); //console.log(rtags); //return;
+	let currentTagNames = currentTagObjects.map(x=>M.tagsIndex[x.tag_id].tag_name); //console.log(rtagNames); //return;//M.tag_name.
 
-	let rtagNames = rtags.map(x=>M.tagsIndex[x.tag_id].tag_name); //console.log(rtagNames); //return;//M.tag_name.
-
-	let tagNameList = Object.keys(M.tagsByName); console.log(tagNameList)
-	let content = tagNameList.map(x => ({ key: x, value:rtagNames.includes(x) }));
+	let allTagNames = Object.keys(M.tagsByName); console.log(allTagNames)
+	let content = allTagNames.map(x => ({ key: x, value:currentTagNames.includes(x) }));
 	//content = sortBy(content,x=>x.value)
 	let list = await mGather(null, {h:800,hmax:800}, { content, type: 'checkListInput' });
 	console.log(list);
 
-	
-	
+	//look if there is any tag that has not been there before
+	let newTagNames=arrWithout(list,currentTagNames);
+	console.log('new tags',newTagNames);
+
 
 }
 

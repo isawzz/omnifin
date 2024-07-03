@@ -1,0 +1,32 @@
+@font-face {
+  font-family: 'emoOne';
+	src: url('./EmojiOneColor.otf') format("truetype");
+}
+@font-face {
+  font-family: 'emoNoto';
+	src: url('./NotoColorEmoji.ttf') format("truetype");
+}
+@font-face{
+	font-family: 'pictoFa';
+	src: url('./pictoFa.otf') format("truetype");
+}
+@font-face {
+	font-family: 'pictoGame';
+	src: url('./pictoGame.ttf') format("truetype");
+}
+@font-face {
+	font-family: 'opensans';
+	src: url('./opensansregular.ttf') format("truetype");
+}
+@font-face {
+	font-family: 'summervibes';
+	src: url('./summervibes.otf') format("truetype");
+}
+@font-face {
+  font-family: 'fa6';
+  font-style: normal;
+  font-weight: 900;
+  font-display: block;
+  src: url("./fa6.ttf") format("truetype"); 
+}
+

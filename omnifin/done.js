@@ -37,8 +37,6 @@ function ensuredT(){
 	else dParent = mDom('dMain', {}, { className: 'section', id: 'dT' });
 	return dParent;
 }
-function handleSticky() { let d = mBy('dNav'); if (window.scrollY >= 88) mClass(d, 'sticky'); else mClassRemove(d, 'sticky'); }
-
 async function menuOpenOverview() {
 	let side = UI.sidebar = mSidebar();
 	let gap = 5;
