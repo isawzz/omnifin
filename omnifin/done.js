@@ -1,3 +1,5 @@
+function dbGetTableNames() { return dbRecords(qTablenames()); }
+
 async function dbInit(path) {
 	try {
 		const response = await fetch(path);
@@ -14,6 +16,13 @@ async function dbInit(path) {
 }
 function dbq(q) { return DB.exec(q); }
 
+function dbRecords(q) {
+	let tablename = stringAfter(q.toLowerCase(), 'from').trim(); //console.log('tablename', tablename);
+	let res = dbq(q);
+	if (isdef(res)) res = res[0];
+
+	return isdef(res) ? dbResultToList(res) : [];
+}
 function dbResultToDict(res, keyprop) {
 	let list = dbResultToList(res);
 	return list2dict(list, keyprop);
@@ -45,6 +54,8 @@ async function menuOpenOverview() {
 	UI.commands.flex = mCommand(side.d, 'flex', 'flex-perks'); mNewline(side.d, gap);
 	UI.commands.limit10 = mCommand(side.d, 'limit10', 'just 10'); mNewline(side.d, gap);
 	UI.commands.taggedLimit10 = mCommand(side.d, 'taggedLimit10', 'tagged 10'); mNewline(side.d, gap);
+	UI.commands.transtagname = mCommand(side.d, 'transtagname', 'transtagname'); mNewline(side.d, gap);
+	UI.commands.transmultitag = mCommand(side.d, 'transmultitag', 'transmultitag'); mNewline(side.d, gap);
 
 	onclickTaggedLimit10();
 }
@@ -70,9 +81,9 @@ async function onclickExecute() {
 	console.log(res)
 	showQueryResult(tablename,res)
 }
-function onclickFlex() { 	showTableInMain(qTransactionsFlexperks()); }
+function onclickFlex() { 	showTransactionsInMain(qTransactionsFlexperks()); }
 
-function onclickLimit10() { showTableInMain(qTransactions10()); }
+function onclickLimit10() { showTransactionsInMain(qTransactions10()); }
 
 function onclickShowSchema() {
 	let res = dbq(`SELECT sql FROM sqlite_master WHERE type='table';`);
@@ -80,8 +91,11 @@ function onclickShowSchema() {
 }
 async function onclickSql() { console.log('hallo') }
 
-function onclickTaggedLimit10() { showTableInMain(qTaggedTransactionsLimit10()); }
-function onclickTransactions() { showTableInMain(qTransactionsSelected()); }
+function onclickTransactions() { showTransactionsInMain(qTransactionsSelected()); }
+
+function onclickTranstagname(){ showTableInMain(qTranstags());}
+
+function onclickTransmultitag(){ showTableInMain(qTransmultitag());}
 
 function showNavbar() {
 	mDom('dNav', { fz: 34, mabottom: 10, w100: true }, { html: `Omnifin` });
@@ -93,11 +107,11 @@ function showNavbar() {
 	nav.commands = commands;
 	return nav;
 }
-async function showQueryResult(tablename,res) {
+async function showQueryResult(tablename,res,headers) {
 	let records = dbResultToList(res);
 	let dParent = ensuredT();
 	if (isEmpty(records)) { mText('no records', dParent); return []; }
-	let headers = Object.keys(records[0]);
+	if (nundef(headers)) headers = Object.keys(records[0]);
 	showTableSortedBy(dParent, tablename, records, headers, headers[0]);
 }
 function showRawInMain(res) {
@@ -107,7 +121,7 @@ function showRawInMain(res) {
 	mClear('dMain');
 	let d = mDom('dMain', {}, { tag: 'pre', html: text })
 }
-function showTableInMain(q) {
+function showTransactionsInMain(q) {
 	let res = dbq(q);
 	mClear('dMain');
 	showTransactions(res[0])

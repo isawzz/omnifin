@@ -11,7 +11,7 @@ async function onclickAddTag(idtrans, item) {
 	//content = sortBy(content,x=>x.value)
 	let list = await mGather(null, {h:800,hmax:800}, { content, type: 'checkListInput' });
 	console.log(list);
-
+	if (!list) {console.log('add tag CANCELLED!!!'); return; }
 	//look if there is any tag that has not been there before
 	let newTagNames=arrWithout(list,currentTagNames);
 	console.log('new tags',newTagNames);

@@ -96,6 +96,86 @@ function qTablenames(){ return `SELECT name FROM sqlite_master WHERE type='table
 function qTransactionTags(){
 	return `select * from transaction_tags where tag_id = '51'`;
 }
+function qTransactionsTagnames(){
+	return `
+		SELECT 
+				t.id, 
+				t.dateof, 
+				sender.account_name AS sender_name, 
+				receiver.account_name AS receiver_name, 
+				t.amount, 
+				a.asset_name AS unit, 
+				tg.tag_name 
+		FROM 
+				transactions t
+		JOIN 
+				accounts sender ON t.sender = sender.id
+		JOIN 
+				accounts receiver ON t.receiver = receiver.id
+		JOIN 
+				assets a ON t.unit = a.id
+		JOIN 
+				transaction_tags tt ON t.id = tt.id
+		JOIN 
+				tags tg ON tt.tag_id = tg.id;
+	`;
+}
+function qTranstags(){
+	return `
+		SELECT 
+				t.id, 
+				t.dateof, 
+				sender.account_name AS sender_name, 
+				receiver.account_name AS receiver_name, 
+				t.amount, 
+				a.asset_name AS unit, 
+				GROUP_CONCAT(tg.tag_name) AS tag_names 
+		FROM 
+				transactions t
+		JOIN 
+				accounts sender ON t.sender = sender.id
+		JOIN 
+				accounts receiver ON t.receiver = receiver.id
+		JOIN 
+				assets a ON t.unit = a.id
+		JOIN 
+				transaction_tags tt ON t.id = tt.id
+		JOIN 
+				tags tg ON tt.tag_id = tg.id
+		GROUP BY 
+				t.id;
+
+		`;
+}
+function qTransmultitag(){
+	return `
+		SELECT 
+				t.id, 
+				t.dateof, 
+				sender.account_name AS sender_name, 
+				receiver.account_name AS receiver_name, 
+				t.amount, 
+				a.asset_name AS unit, 
+				GROUP_CONCAT(tg.tag_name) AS tag_names 
+		FROM 
+				transactions t
+		JOIN 
+				accounts sender ON t.sender = sender.id
+		JOIN 
+				accounts receiver ON t.receiver = receiver.id
+		JOIN 
+				assets a ON t.unit = a.id
+		JOIN 
+				transaction_tags tt ON t.id = tt.id
+		JOIN 
+				tags tg ON tt.tag_id = tg.id
+		GROUP BY 
+				t.id
+		HAVING 
+				COUNT(tg.tag_name) > 1;
+	
+		`;
+}
 function qTaggedTransactions(){
 	return `SELECT * FROM transactions WHERE id IN (SELECT id FROM transaction_tags);`
 }
