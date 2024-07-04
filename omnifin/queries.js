@@ -157,6 +157,9 @@ function qTablenames(){ return `SELECT name FROM sqlite_master WHERE type='table
 function qiTransactionTag(id,tag_id,report){
 	return `INSERT INTO transaction_tags (id, tag_id, report) VALUES (${id}, ${tag_id}, ${report});`;
 }
+function qiReport(){
+	return `INSERT INTO transaction_tags (id, tag_id, report) VALUES (${id}, ${tag_id}, ${report});`;
+}
 
 
 
