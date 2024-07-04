@@ -1,6 +1,23 @@
 
 function handleSticky() { let d = mBy('dNav'); if (window.scrollY >= 88) mClass(d, 'sticky'); else mClassRemove(d, 'sticky'); }
 
+function mDataTable(reclist, dParent, rowstylefunc, headers, id, showheaders = true) {
+	//console.log(reclist[0])
+	if (isEmpty(reclist)) {mText('no data',dParent); return; }
+	if (nundef(headers)) headers = Object.keys(reclist[0]);
+	let t = mTable(dParent, headers, showheaders);
+	if (isdef(id)) t.id = `t${id}`;
+	let rowitems = [];
+	let i = 0;
+	for (const u of reclist) {
+		let rid = isdef(id) ? `r${id}_${i}` : null;
+		r = mTableRow(t, u, headers, rid);
+		if (isdef(rowstylefunc)) mStyle(r.div, rowstylefunc(u));
+		rowitems.push({ div: r.div, colitems: r.colitems, o: u, id: rid, index: i });
+		i++;
+	}
+	return { div: t, rowitems: rowitems };
+}
 function mGather(dAnchor, styles = {}, opts = {}) {
 	return new Promise((resolve, _) => {
 		let [content, type] = [valf(opts.content, 'name'), valf(opts.type, 'text')]; //defaults
@@ -28,6 +45,24 @@ function mGather(dAnchor, styles = {}, opts = {}) {
 		if (isdef(dAnchor)) mAnchorTo(dx, toElem(dAnchor), opts.align);
 		else {mStyle(d,{h:'100vh'});mCenterCenterFlex(d); }
 	});
+}
+async function onclickCommand(ev) {
+	//hier muss command irgendwie markiert werden und altes unmarked werden!!!
+	let key = evToAttr(ev, 'key'); //console.log(key);
+	let cmd = key == 'user' ? UI.nav.commands.user : UI.commands[key];
+	assertion(isdef(cmd), `command ${key} not in UI!!!`);
+
+	await cmd.open();
+}
+function showNavbar() {
+	mDom('dNav', { fz: 34, mabottom: 10, w100: true }, { html: `Omnifin` });
+	let nav = mMenu('dNav');
+	let commands = {};
+	commands.overview = menuCommand(nav.l, 'nav', 'overview', 'Overview', menuOpenOverview, menuCloseOverview);
+	commands.sql = menuCommand(nav.l, 'nav', 'sql', 'Sql', menuOpenSql, menuCloseSql);
+	// commands.test = menuCommand(nav.l, 'nav', 'test', 'Test', menuOpenTest, menuCloseTest);
+	nav.commands = commands;
+	return nav;
 }
 function uiTypeCheckListInput(any, dParent, styles = {}, opts = {}) {
 	let dg = mDom(dParent);

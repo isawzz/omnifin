@@ -5442,7 +5442,7 @@ function mCropResizePan(dParent, img, dButtons) {
 	}
 }
 function mDataTable(reclist, dParent, rowstylefunc, headers, id, showheaders = true) {
-	if (nundef(headers)) headers = get_keys(reclist[0]);
+	if (nundef(headers)) headers = Object.keys(reclist[0]);
 	let t = mTable(dParent, headers, showheaders);
 	if (isdef(id)) t.id = `t${id}`;
 	let rowitems = [];

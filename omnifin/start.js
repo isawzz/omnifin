@@ -7,8 +7,11 @@ onscroll = handleSticky;
 async function start() { await prelims(); test6(); }
 
 async function test6(){
-	await switchToMainMenu('overview');
 
+	await switchToMainMenu('sql');
+	//onclickLimit20();
+
+	//createNewDatabase();
 }
 async function test5(){
 	await switchToMainMenu('home');
@@ -21,8 +24,6 @@ async function test4() {
 
 	let res=dbq('select * from transactions');
 	console.log(res[0].columns,res[0].values)
-
-
 
 }
 
@@ -126,17 +127,10 @@ async function prelims() {
 	DB = await dbInit(DB_PATH);
 
 	let tablenames = dbGetTableNames();
-	//console.log(tablenames);
 	tablenames = tablenames.map(x=>x.name);
-
-	for(const tablename of tablenames){
-		//console.log(tablename)
-		M[tablename]=dbRecords(`select * from ${tablename}`);
-		if (!tablename.includes('_')) M[`${tablename}Index`]=list2dict(M[tablename],'id');
-	}
-	M.tagsByName = list2dict(M.tags,'tag_name');
-	//console.log(M);
-	//M.tags = dbResultToDict(dbq('select * from tags'),'tag_name');
+	tablenames.map(x=>M[x]=dbToDict(`select * from ${x}`));
+	M.tagsByName=dbToDict(`select * from tags`,'tag_name');
+	//console.log(M)
 }
 
 

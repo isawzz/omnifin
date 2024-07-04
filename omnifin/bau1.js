@@ -1,35 +1,27 @@
 
-async function onclickAddTag(idtrans, item) {
-
-	//transaction id 3 hat tag id 51
-	let currentTagObjects = M.transaction_tags.filter(x=>x.id == idtrans); //console.log(rtags); //return;
-
-	let currentTagNames = currentTagObjects.map(x=>M.tagsIndex[x.tag_id].tag_name); //console.log(rtagNames); //return;//M.tag_name.
-
-	let allTagNames = Object.keys(M.tagsByName); console.log(allTagNames)
-	let content = allTagNames.map(x => ({ key: x, value:currentTagNames.includes(x) }));
-	//content = sortBy(content,x=>x.value)
-	let list = await mGather(null, {h:800,hmax:800}, { content, type: 'checkListInput' });
-	console.log(list);
-	if (!list) {console.log('add tag CANCELLED!!!'); return; }
-	//look if there is any tag that has not been there before
-	let newTagNames=arrWithout(list,currentTagNames);
-	console.log('new tags',newTagNames);
-
+async function menuOpenSql() {
+	let d = mDom('dMain');
+	let ta = UI.ta = mDom(d, { 'white-space': 'pre-wrap', w100: true, 'border-color': 'transparent' }, { tag: 'textarea', id: 'taSql', rows: 4, value: 'select * from transactions' });
+	ta.addEventListener('keydown', function (event) {
+		if (event.key === 'Enter' && !event.shiftKey) {
+			event.preventDefault();
+			onclickExecute();
+		}
+	});
+	let db = mDom(d,{gap:10}); mFlex(db);
+	mButton('Execute', onclickExecute, db, {}, 'button');
+	mButton('Clear', () => UI.ta.value = '', db, {}, 'button');
+	UI.d = mDom('dMain', { className: 'section' });
 
 }
-
-function saveDatabase() {
-	const data = db.export();
-	const blob = new Blob([data], { type: 'application/octet-stream' });
-	const url = URL.createObjectURL(blob);
-	const a = document.createElement('a');
-	a.href = url;
-	a.download = 'test.db';
-	document.body.appendChild(a);
-	a.click();
-	document.body.removeChild(a);
-	URL.revokeObjectURL(url);
+async function onclickExecute() {
+	let q = UI.ta.value;
+	let tablename = dbGetTableName(q);
+	let records = dbToList(q); 
+	showTableSortedBy(UI.d, 'Result', records); 
 }
+
+
+
 
 

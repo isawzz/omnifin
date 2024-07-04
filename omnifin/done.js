@@ -1,11 +1,14 @@
-function dbGetTableNames() { return dbRecords(qTablenames()); }
+//#region db
+function dbGetTableName(q) { return wordAfter(q.toLowerCase(), 'from'); }
+
+function dbGetTableNames() { return dbToList(qTablenames()); }
 
 async function dbInit(path) {
 	try {
 		const response = await fetch(path);
 		const buffer = await response.arrayBuffer();
 		// const SQL = await initSqlJs({ locateFile: filename => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.2/${filename}` });
-		const SQL = await initSqlJs({ locateFile: filename => `../omnifin/libs/${filename}` });
+		const SQL = DA.SQL = await initSqlJs({ locateFile: filename => `../omnifin/libs/${filename}` });
 		const db = new SQL.Database(new Uint8Array(buffer));
 		return db;
 	} catch (error) {
@@ -14,21 +17,14 @@ async function dbInit(path) {
 		return null;
 	}
 }
-function dbq(q) { return DB.exec(q); }
+function dbRaw(q) { return DB.exec(q); }
 
-function dbRecords(q) {
-	let tablename = stringAfter(q.toLowerCase(), 'from').trim(); //console.log('tablename', tablename);
-	let res = dbq(q);
-	if (isdef(res)) res = res[0];
+function dbToDict(q,keyprop='id'){	return list2dict(dbToList(q),keyprop); }
 
-	return isdef(res) ? dbResultToList(res) : [];
-}
-function dbResultToDict(res, keyprop) {
-	let list = dbResultToList(res);
-	return list2dict(list, keyprop);
-}
-function dbResultToList(res) {
-	if (isList(res) && res.length == 1 && isdef(res[0].columns)) res = res[0];
+function dbToList(q) { 
+	//runs query, returns dict of records by id
+	//assumes that query selects keyprop
+	let res = dbToObject(q); //console.log(res)
 	let headers = res.columns;
 	let records = [];
 	for (const row of res.values) {
@@ -40,126 +36,45 @@ function dbResultToList(res) {
 	}
 	return records;
 }
-function ensuredT(){
-	let dParent = mBy('dT');
-	if (isdef(dParent)) { mClear(dParent); }
-	else dParent = mDom('dMain', {}, { className: 'section', id: 'dT' });
-	return dParent;
+function dbToObject(q){
+	let res = dbRaw(q); 
+	//console.log('tablename',dbGetTableName(q))
+	return isList(res) && res.length == 1 && isdef(res[0].columns)? res[0]: isEmpty(res)?{columns:[],values:[]}:res;
 }
+//#_endregion
+
+//#region menu overview
 async function menuOpenOverview() {
 	let side = UI.sidebar = mSidebar();
 	let gap = 5;
 	UI.commands.showSchema = mCommand(side.d, 'showSchema', 'DB Structure'); mNewline(side.d, gap);
 	UI.commands.transactions = mCommand(side.d, 'transactions', 'transactions'); mNewline(side.d, gap);
 	UI.commands.flex = mCommand(side.d, 'flex', 'flex-perks'); mNewline(side.d, gap);
-	UI.commands.limit10 = mCommand(side.d, 'limit10', 'just 10'); mNewline(side.d, gap);
-	UI.commands.taggedLimit10 = mCommand(side.d, 'taggedLimit10', 'tagged 10'); mNewline(side.d, gap);
-	UI.commands.transtagname = mCommand(side.d, 'transtagname', 'transtagname'); mNewline(side.d, gap);
-	UI.commands.transmultitag = mCommand(side.d, 'transmultitag', 'transmultitag'); mNewline(side.d, gap);
+	UI.commands.tagged = mCommand(side.d, 'tagged', 'tagged'); mNewline(side.d, gap);
+	UI.commands.multiTagged = mCommand(side.d, 'multiTagged', 'multi-tagged'); mNewline(side.d, gap);
+	UI.commands.limit20 = mCommand(side.d, 'limit20', 'just 20'); mNewline(side.d, gap);
 
-	onclickTaggedLimit10();
+	UI.d=mDom('dMain',{className:'section'});
+	onclickLimit20();
 }
-async function menuOpenSql() {
-	let side = UI.sidebar = mSidebar();
-	let d = mDom('dMain', { w: window.innerWidth - side.wmin - 20, box: true, padding: 10 });
-	let ta = UI.ta = mDom(d, { 'white-space': 'pre-wrap', w100: true, 'border-color': 'transparent' }, { tag: 'textarea', id: 'taSql', rows: 4, value: 'select * from transactions' });
-	ta.addEventListener('keydown', function (event) {
-		if (event.key === 'Enter' && !event.shiftKey) {
-			event.preventDefault();
-			onclickExecute();
-		}
-	});
-}
-async function onclickExecute() {
-	let q = UI.ta.value;
-	let tablename = stringAfter(q.toLowerCase(),'from').trim(); //console.log('tablename',tablename);
-	let res = dbq(q);
-	//console.log(res)
-	
-	if (isdef(res)) res=res[0];
-	if (nundef(res)) {let d=ensuredT();d.innerHTML = `no records found in ${tablename}`; return []; }
-	console.log(res)
-	showQueryResult(tablename,res)
-}
-function onclickFlex() { 	showTransactionsInMain(qTransactionsFlexperks()); }
-
-function onclickLimit10() { showTransactionsInMain(qTransactions10()); }
+async function menuCloseOverview(){closeLeftSidebar();mClear('dMain')}
 
 function onclickShowSchema() {
-	let res = dbq(`SELECT sql FROM sqlite_master WHERE type='table';`);
-	showRawInMain(res)
-}
-async function onclickSql() { console.log('hallo') }
-
-function onclickTransactions() { showTransactionsInMain(qTransactionsSelected()); }
-
-function onclickTranstagname(){ showTableInMain(qTranstags());}
-
-function onclickTransmultitag(){ showTableInMain(qTransmultitag());}
-
-function showNavbar() {
-	mDom('dNav', { fz: 34, mabottom: 10, w100: true }, { html: `Omnifin` });
-	let nav = mMenu('dNav');
-	let commands = {};
-	commands.overview = menuCommand(nav.l, 'nav', 'overview', 'Overview', menuOpenOverview, menuCloseOverview);
-	commands.sql = menuCommand(nav.l, 'nav', 'sql', 'Sql', menuOpenSql, menuCloseSql);
-	// commands.test = menuCommand(nav.l, 'nav', 'test', 'Test', menuOpenTest, menuCloseTest);
-	nav.commands = commands;
-	return nav;
-}
-async function showQueryResult(tablename,res,headers) {
-	let records = dbResultToList(res);
-	let dParent = ensuredT();
-	if (isEmpty(records)) { mText('no records', dParent); return []; }
-	if (nundef(headers)) headers = Object.keys(records[0]);
-	showTableSortedBy(dParent, tablename, records, headers, headers[0]);
-}
-function showRawInMain(res) {
+	let res = dbRaw(`SELECT sql FROM sqlite_master WHERE type='table';`);
 	let text = res.map(({ columns, values }) => {
-		return columns.join('\t') + '\n' + values.map(row => row.join('\t')).join('\n');
+		// return columns.join('\t') + '\n' + values.map(row => row.join('\t')).join('\n');
+		return values.map(row => row.join('\t')).join('\n');
 	}).join('\n\n');
-	mClear('dMain');
-	let d = mDom('dMain', {}, { tag: 'pre', html: text })
+	let d= UI.d;
+	mClear(d)
+	mText(`<h2>Schema</h2>`, d, { maleft: 12 })
+	mDom(d, {}, { tag: 'pre', html: text });
 }
-function showTransactionsInMain(q) {
-	let res = dbq(q);
-	mClear('dMain');
-	showTransactions(res[0])
-}
-function showTableSortedBy(dParent, tablename, records, headers, header) {
-	if (DA.sortedBy == header) { sortByDescending(records, header); DA.sortedBy = null; }
-	else { sortBy(records, header); DA.sortedBy = header; }
-	mClear(dParent);
-	mText(`<h2>${tablename}</h2>`, dParent, { maleft: 12 })
-	let t = UI.tables = mDataTable(records, dParent, null, headers, 'records');
-	let d = t.div;
-	mStyle(d, { 'caret-color': 'transparent' });
-	let headeruis = Array.from(d.firstChild.getElementsByTagName('th'));
-	for (const ui of headeruis) {
-		mStyle(ui, { cursor: 'pointer' });
-		ui.onclick = () => showTableSortedBy(dParent, tablename, records, headers, ui.innerHTML);
-	}
-	if (tablename != 'transactions' && tablename != 'reports') return records;
-	for (const ri of t.rowitems) {
-		let r = iDiv(ri);
-		let id = ri.o.id;
-		let h = hFunc('tag', 'onclickAddTag', id, ri); let c = mAppend(r, mCreate('td')); c.innerHTML = h;
-	}
+function onclickTransactions() { let records = dbToList(qTransactions()); showTableSortedBy(UI.d, 'transactions', records); }
+function onclickFlex() { let records = dbToList(qTransFlex()); showTableSortedBy(UI.d, 'flex-perks', records); }
+function onclickTagged() { let records = dbToList(qTranstags()); showTableSortedBy(UI.d, 'tagged transactions', records); }
+function onclickMultiTagged() { let records = dbToList(qTransmultitag()); showTableSortedBy(UI.d, 'transactionsw/  multiple tags', records); }
+function onclickLimit20() { let records = dbToList(qLimit20()); showTableSortedBy(UI.d, '20 transactions', records); }
 
-}
-async function showTransactions(res) {
-	let records = dbResultToList(res);
-	let dParent = mBy('dT');
-	if (isdef(dParent)) { mClear(dParent); }
-	else dParent = mDom('dMain', {}, { className: 'section', id: 'dT' });
-	if (isEmpty(records)) { mText('no records', dParent); return []; }
-	records.map(x => x.amount = Number(x.amount));
-	records.map(x => x.from = `${x.sender_name} (${x.sender_owner})`);
-	records.map(x => x.to = `${x.receiver_name} (${x.receiver_owner})`);
-	let units = ['$', '€'];
-	records.map(x => x.amt = `${x.unit < units.length ? units[x.unit] : '?'}${x.amount}`);
-	showTableSortedBy(dParent, 'transactions', records, ['id', 'dateof', 'from', 'to', 'amount', 'unit'], 'dateof');
-}
-async function updateExtra() { }
-
+//#region menu sql
 

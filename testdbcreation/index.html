@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SQL.js Example</title>
+  <script src="libs/sql-wasm.js"></script>
+</head>
+<body>
+  <button id="create-new-db">Create New Database</button>
+  <script>
+    initSqlJs({ locateFile: file => `libs/${file}` }).then(SQL => {
+      let db;
+
+      // Load existing database or create a new one
+      if (localStorage.getItem('database')) {
+        const storedData = JSON.parse(localStorage.getItem('database'));
+        const Uints = new Uint8Array(storedData);
+        db = new SQL.Database(Uints);
+      } else {
+        db = new SQL.Database();
+        // Your schema creation code goes here
+      }
+
+      // Function to create a new database with the same schema
+      function createNewDatabase() {
+        // Get the schema of the existing database
+        const schemaQuery = `
+          SELECT sql
+          FROM sqlite_master
+          WHERE type IN ('table', 'index', 'trigger');
+        `;
+        const schemaResult = db.exec(schemaQuery);
+
+        if (schemaResult.length === 0) {
+          alert("No schema found in the existing database.");
+          return;
+        }
+
+        // Create a new database
+        const newDb = new SQL.Database();
+
+        // Apply the schema to the new database
+        newDb.exec("PRAGMA foreign_keys = ON;");
+        schemaResult[0].values.forEach(row => {
+          newDb.run(row[0]);
+        });
+
+        // Export the new database
+        const data = newDb.export();
+        const blob = new Blob([data], { type: 'application/octet-stream' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'new_database.db';
+        a.click();
+      }
+
+      document.getElementById('create-new-db').addEventListener('click', createNewDatabase);
+    });
+  </script>
+</body>
+</html>

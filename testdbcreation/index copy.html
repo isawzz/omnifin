@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>SQL.js Example</title>
+	<script src="../omnifin/libs/sql-wasm.js"></script>
+</head>
+
+<body>
+	<button id="save-filtered-db">Save Filtered Database</button>
+	<script>
+		initSqlJs({ locateFile: file => `../omnifin/libs/${file}` }).then(SQL => {
+			let db;
+
+			// Load existing database or create a new one
+			if (localStorage.getItem('database')) {
+				const storedData = JSON.parse(localStorage.getItem('database'));
+				const Uints = new Uint8Array(storedData);
+				db = new SQL.Database(Uints);
+			} else {
+				db = new SQL.Database();
+				// Your schema creation code goes here
+			}
+
+			// Function to filter transactions and save to a new database
+			function saveFilteredDatabase() {
+				// Create a new database
+				const newDb = new SQL.Database();
+
+				// Copy the schema to the new database
+				newDb.run("CREATE TABLE transactions AS SELECT * FROM transactions WHERE 1=0;");
+				newDb.run("CREATE TABLE transaction_tags AS SELECT * FROM transaction_tags WHERE 1=0;");
+				newDb.run("CREATE TABLE tags AS SELECT * FROM tags WHERE 1=0;");
+				newDb.run("CREATE TABLE accounts AS SELECT * FROM accounts WHERE 1=0;");
+				newDb.run("CREATE TABLE assets AS SELECT * FROM assets WHERE 1=0;");
+
+				// Insert filtered transactions with multiple tags
+				newDb.run(`
+          INSERT INTO transactions
+          SELECT t.*
+          FROM transactions t
+          JOIN (
+              SELECT id
+              FROM transaction_tags
+              GROUP BY id
+              HAVING COUNT(tag_id) > 1
+          ) tt
+          ON t.id = tt.id;
+        `);
+
+				// Insert related transaction_tags
+				newDb.run(`
+          INSERT INTO transaction_tags
+          SELECT tt.*
+          FROM transaction_tags tt
+          JOIN transactions t
+          ON tt.id = t.id;
+        `);
+
+				// Insert related tags
+				newDb.run(`
+          INSERT INTO tags
+          SELECT tg.*
+          FROM tags tg
+          JOIN transaction_tags tt
+          ON tg.id = tt.tag_id
+          GROUP BY tg.id;
+        `);
+
+				// Insert related accounts
+				newDb.run(`
+          INSERT INTO accounts
+          SELECT DISTINCT a.*
+          FROM accounts a
+          JOIN transactions t
+          ON a.id = t.sender OR a.id = t.receiver;
+        `);
+
+				// Insert related assets
+				newDb.run(`
+          INSERT INTO assets
+          SELECT DISTINCT a.*
+          FROM assets a
+          JOIN transactions t
+          ON a.id = t.unit OR a.id = t.received_unit;
+        `);
+
+				// Export the new database
+				const data = newDb.export();
+				const blob = new Blob([data], { type: 'application/octet-stream' });
+				const url = window.URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = 'filtered_test.db';
+				a.click();
+			}
+
+			document.getElementById('save-filtered-db').addEventListener('click', saveFilteredDatabase);
+		});
+	</script>
+</body>
+
+</html>
