@@ -84,13 +84,13 @@ function onclickTagged() { let records = dbToList(qTranstags()); showTableSorted
 function onclickMultiTagged() { let records = dbToList(qTransmultitag()); showTableSortedBy(UI.d, 'transactionsw/  multiple tags', 'transactions', records); }
 function onclickLimit20() { let records = dbToList(qLimit20()); showTableSortedBy(UI.d, '20 transactions', 'transactions', records); }
 
-function onclickReports() { let records = dbToList('select * from reports;'); showTableSortedBy(UI.d, '20 transactions', 'transactions', records); }
-function onclickAssets() { let records = dbToList('select * from assets;'); showTableSortedBy(UI.d, '20 transactions', 'transactions', records); }
-function onclickTags() { let records = dbToList('select * from tags;'); showTableSortedBy(UI.d, '20 transactions', 'transactions', records); }
-function onclickAccounts() { let records = dbToList('select * from accounts;'); showTableSortedBy(UI.d, '20 transactions', 'transactions', records); }
-function onclickStatements() { let records = dbToList('select * from statements;'); showTableSortedBy(UI.d, '20 transactions', 'transactions', records); }
-function onclickVerifications() { let records = dbToList('select * from verifications;'); showTableSortedBy(UI.d, '20 transactions', 'transactions', records); }
-function onclickTRevisions() { let records = dbToList('select * from transaction_revisions;'); showTableSortedBy(UI.d, '20 transactions', 'transactions', records); }
+function onclickReports() { let records = dbToList('select * from reports;'); showTableSortedBy(UI.d, 'reports', 'reports', records); }
+function onclickAssets() { let records = dbToList('select * from assets;'); showTableSortedBy(UI.d, 'assets', 'assets', records); }
+function onclickTags() { let records = dbToList('select * from tags;'); showTableSortedBy(UI.d, 'tags', 'tags', records); }
+function onclickAccounts() { let records = dbToList('select * from accounts;'); showTableSortedBy(UI.d, 'accounts', 'accounts', records); }
+function onclickStatements() { let records = dbToList('select * from statements;'); showTableSortedBy(UI.d, 'statements', 'statements', records); }
+function onclickVerifications() { let records = dbToList('select * from verifications;'); showTableSortedBy(UI.d, 'verifications', 'verifications', records); }
+function onclickTRevisions() { let records = dbToList('select * from transaction_revisions;'); showTableSortedBy(UI.d, 'transaction revisions', 'transaction_revisions', records); }
 //#endregion
 
 //#region menu sql
