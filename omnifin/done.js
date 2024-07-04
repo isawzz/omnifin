@@ -19,9 +19,9 @@ async function dbInit(path) {
 }
 function dbRaw(q) { return DB.exec(q); }
 
-function dbToDict(q,keyprop='id'){	return list2dict(dbToList(q),keyprop); }
+function dbToDict(q, keyprop = 'id') { return list2dict(dbToList(q), keyprop); }
 
-function dbToList(q) { 
+function dbToList(q) {
 	//runs query, returns dict of records by id
 	//assumes that query selects keyprop
 	let res = dbToObject(q); //console.log(res)
@@ -36,10 +36,10 @@ function dbToList(q) {
 	}
 	return records;
 }
-function dbToObject(q){
-	let res = dbRaw(q); 
+function dbToObject(q) {
+	let res = dbRaw(q);
 	//console.log('tablename',dbGetTableName(q))
-	return isList(res) && res.length == 1 && isdef(res[0].columns)? res[0]: isEmpty(res)?{columns:[],values:[]}:res;
+	return isList(res) && res.length == 1 && isdef(res[0].columns) ? res[0] : isEmpty(res) ? { columns: [], values: [] } : res;
 }
 //#endregion
 
@@ -48,12 +48,13 @@ async function menuOpenOverview() {
 	let side = UI.sidebar = mSidebar();
 	let gap = 5;
 	UI.commands.showSchema = mCommand(side.d, 'showSchema', 'DB Structure'); mNewline(side.d, gap);
+	mLinebreak(side.d, 10);
 	UI.commands.transactions = mCommand(side.d, 'transactions', 'transactions'); mNewline(side.d, gap);
 	UI.commands.flex = mCommand(side.d, 'flex', 'flex-perks'); mNewline(side.d, gap);
 	UI.commands.tagged = mCommand(side.d, 'tagged', 'tagged'); mNewline(side.d, gap);
 	UI.commands.multiTagged = mCommand(side.d, 'multiTagged', 'multi-tagged'); mNewline(side.d, gap);
 	UI.commands.limit20 = mCommand(side.d, 'limit20', 'just 20'); mNewline(side.d, gap);
-	mLinebreak(side.d,10)
+	mLinebreak(side.d, 10);
 	UI.commands.reports = mCommand(side.d, 'reports', 'reports'); mNewline(side.d, gap);
 	UI.commands.assets = mCommand(side.d, 'assets', 'assets'); mNewline(side.d, gap);
 	UI.commands.tags = mCommand(side.d, 'tags', 'tags'); mNewline(side.d, gap);
@@ -62,10 +63,10 @@ async function menuOpenOverview() {
 	UI.commands.verifications = mCommand(side.d, 'verifications', 'verifications'); mNewline(side.d, gap);
 	UI.commands.tRevisions = mCommand(side.d, 'tRevisions', 'transaction revisions'); mNewline(side.d, gap);
 
-	UI.d=mDom('dMain',{className:'section'});
+	UI.d = mDom('dMain', { className: 'section' });
 	onclickLimit20();
 }
-async function menuCloseOverview(){closeLeftSidebar();mClear('dMain')}
+async function menuCloseOverview() { closeLeftSidebar(); mClear('dMain') }
 
 function onclickShowSchema() {
 	let res = dbRaw(`SELECT sql FROM sqlite_master WHERE type='table';`);
@@ -73,7 +74,7 @@ function onclickShowSchema() {
 		// return columns.join('\t') + '\n' + values.map(row => row.join('\t')).join('\n');
 		return values.map(row => row.join('\t')).join('\n');
 	}).join('\n\n');
-	let d= UI.d;
+	let d = UI.d;
 	mClear(d)
 	mText(`<h2>Schema</h2>`, d, { maleft: 12 })
 	mDom(d, {}, { tag: 'pre', html: text });
@@ -103,7 +104,7 @@ async function menuOpenSql() {
 			onclickExecute();
 		}
 	});
-	let db = mDom(d,{gap:10}); mFlex(db);
+	let db = mDom(d, { gap: 10 }); mFlex(db);
 	mButton('Execute', onclickExecute, db, {}, 'button');
 	mButton('Clear', () => UI.ta.value = '', db, {}, 'button');
 	mButton('Example', () => UI.ta.value = dbGetSampleQuery(), db, {}, 'button');
@@ -111,12 +112,12 @@ async function menuOpenSql() {
 
 	onclickExecute();
 }
-async function menuCloseSql(){mClear('dMain')}
+async function menuCloseSql() { mClear('dMain') }
 async function onclickExecute() {
 	let q = UI.ta.value;
 	let tablename = dbGetTableName(q);
-	let records = dbToList(q); 
-	showTableSortedBy(UI.d, 'Result',tablename, records); 
+	let records = dbToList(q);
+	showTableSortedBy(UI.d, 'Result', tablename, records);
 }
 //#endregion
 
