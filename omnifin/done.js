@@ -53,6 +53,14 @@ async function menuOpenOverview() {
 	UI.commands.tagged = mCommand(side.d, 'tagged', 'tagged'); mNewline(side.d, gap);
 	UI.commands.multiTagged = mCommand(side.d, 'multiTagged', 'multi-tagged'); mNewline(side.d, gap);
 	UI.commands.limit20 = mCommand(side.d, 'limit20', 'just 20'); mNewline(side.d, gap);
+	mLinebreak(side.d,10)
+	UI.commands.reports = mCommand(side.d, 'reports', 'reports'); mNewline(side.d, gap);
+	UI.commands.assets = mCommand(side.d, 'assets', 'assets'); mNewline(side.d, gap);
+	UI.commands.tags = mCommand(side.d, 'tags', 'tags'); mNewline(side.d, gap);
+	UI.commands.accounts = mCommand(side.d, 'accounts', 'accounts'); mNewline(side.d, gap);
+	UI.commands.statements = mCommand(side.d, 'statements', 'statements'); mNewline(side.d, gap);
+	UI.commands.verifications = mCommand(side.d, 'verifications', 'verifications'); mNewline(side.d, gap);
+	UI.commands.tRevisions = mCommand(side.d, 'tRevisions', 'transaction revisions'); mNewline(side.d, gap);
 
 	UI.d=mDom('dMain',{className:'section'});
 	onclickLimit20();
@@ -75,6 +83,14 @@ function onclickFlex() { let records = dbToList(qTransFlex()); showTableSortedBy
 function onclickTagged() { let records = dbToList(qTranstags()); showTableSortedBy(UI.d, 'tagged transactions', 'transactions', records); }
 function onclickMultiTagged() { let records = dbToList(qTransmultitag()); showTableSortedBy(UI.d, 'transactionsw/  multiple tags', 'transactions', records); }
 function onclickLimit20() { let records = dbToList(qLimit20()); showTableSortedBy(UI.d, '20 transactions', 'transactions', records); }
+
+function onclickReports() { let records = dbToList('select * from reports;'); showTableSortedBy(UI.d, '20 transactions', 'transactions', records); }
+function onclickAssets() { let records = dbToList('select * from assets;'); showTableSortedBy(UI.d, '20 transactions', 'transactions', records); }
+function onclickTags() { let records = dbToList('select * from tags;'); showTableSortedBy(UI.d, '20 transactions', 'transactions', records); }
+function onclickAccounts() { let records = dbToList('select * from accounts;'); showTableSortedBy(UI.d, '20 transactions', 'transactions', records); }
+function onclickStatements() { let records = dbToList('select * from statements;'); showTableSortedBy(UI.d, '20 transactions', 'transactions', records); }
+function onclickVerifications() { let records = dbToList('select * from verifications;'); showTableSortedBy(UI.d, '20 transactions', 'transactions', records); }
+function onclickTRevisions() { let records = dbToList('select * from transaction_revisions;'); showTableSortedBy(UI.d, '20 transactions', 'transactions', records); }
 //#endregion
 
 //#region menu sql
