@@ -8,8 +8,7 @@ async function start() { await prelims(); test6(); }
 
 async function test6(){
 
-	await switchToMainMenu('sql');
-	//onclickLimit20();
+	await switchToMainMenu('overview');
 
 	//createNewDatabase();
 }

@@ -1,3 +1,52 @@
+async function restOnclickTag(){
+
+	//transaction id 3 hat tag id 51
+	let currentTagObjects = Object.values(M.transaction_tags).filter(x=>x.id == idtrans); //console.log(rtags); //return;
+
+	let currentTagNames = currentTagObjects.map(x=>M.tags[x.tag_id].tag_name); //console.log(rtagNames); //return;//M.tag_name.
+
+	let allTagNames = Object.keys(M.tagsByName); console.log(allTagNames)
+	let content = allTagNames.map(x => ({ key: x, value:currentTagNames.includes(x) }));
+	//content = sortBy(content,x=>x.value)
+	let list = await mGather(null, {h:800,hmax:800}, { content, type: 'checkListInput' });
+	console.log(list);
+	if (!list) {console.log('add tag CANCELLED!!!'); return; }
+	//look if there is any tag that has not been there before
+	let newTagNames=arrWithout(list,currentTagNames);
+	console.log('new tags',newTagNames);
+
+	for(const t of newTagNames){
+		//need to create a report and add it to reports,
+		//need to add a record in transaction_tags with corresponding trans_id,tag_id,report_id
+	}
+}
+function splitOnUpperCaseWord(s){
+	let w=s.split(' ');
+}
+function ensuredT(){
+	let dParent = mBy('dT');
+	if (isdef(dParent)) { mClear(dParent); }
+	else dParent = mDom('dMain', {}, { className: 'section', id: 'dT' });
+	return dParent;
+}
+async function showQueryResult(tablename,res,headers) {
+	let records = dbResultToList(res);
+	let dParent = ensuredT();
+	if (isEmpty(records)) { mText('no records', dParent); return []; }
+	if (nundef(headers)) headers = Object.keys(records[0]);
+	showTableSortedBy(dParent, tablename, records, headers, headers[0]);
+}
+function showTableInMain(q,headers){
+	let tablename = wordAfter(q.toLowerCase(),'from').trim(); //console.log('tablename',tablename);
+	let res = dbq(q);
+	
+	if (isdef(res)) res=res[0];
+	if (nundef(res)) {let d=ensuredT();d.innerHTML = `no records found in ${tablename}`; return []; }
+	//console.log(res)
+	showQueryResult(tablename,res,headers);
+
+}
+
 
 //menu sql MIT sidebar!!!
 async function menuOpenSql() {

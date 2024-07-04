@@ -41,7 +41,7 @@ function dbToObject(q){
 	//console.log('tablename',dbGetTableName(q))
 	return isList(res) && res.length == 1 && isdef(res[0].columns)? res[0]: isEmpty(res)?{columns:[],values:[]}:res;
 }
-//#_endregion
+//#endregion
 
 //#region menu overview
 async function menuOpenOverview() {
@@ -70,11 +70,38 @@ function onclickShowSchema() {
 	mText(`<h2>Schema</h2>`, d, { maleft: 12 })
 	mDom(d, {}, { tag: 'pre', html: text });
 }
-function onclickTransactions() { let records = dbToList(qTransactions()); showTableSortedBy(UI.d, 'transactions', records); }
-function onclickFlex() { let records = dbToList(qTransFlex()); showTableSortedBy(UI.d, 'flex-perks', records); }
-function onclickTagged() { let records = dbToList(qTranstags()); showTableSortedBy(UI.d, 'tagged transactions', records); }
-function onclickMultiTagged() { let records = dbToList(qTransmultitag()); showTableSortedBy(UI.d, 'transactionsw/  multiple tags', records); }
-function onclickLimit20() { let records = dbToList(qLimit20()); showTableSortedBy(UI.d, '20 transactions', records); }
+function onclickTransactions() { let records = dbToList(qTransactions()); showTableSortedBy(UI.d, 'transactions', 'transactions', records); }
+function onclickFlex() { let records = dbToList(qTransFlex()); showTableSortedBy(UI.d, 'flex-perks', 'transactions', records); }
+function onclickTagged() { let records = dbToList(qTranstags()); showTableSortedBy(UI.d, 'tagged transactions', 'transactions', records); }
+function onclickMultiTagged() { let records = dbToList(qTransmultitag()); showTableSortedBy(UI.d, 'transactionsw/  multiple tags', 'transactions', records); }
+function onclickLimit20() { let records = dbToList(qLimit20()); showTableSortedBy(UI.d, '20 transactions', 'transactions', records); }
+//#endregion
 
 //#region menu sql
+async function menuOpenSql() {
+	let d = mDom('dMain');
+	let ta = UI.ta = mDom(d, { 'white-space': 'pre-wrap', w100: true, 'border-color': 'transparent' }, { rows: 25, tag: 'textarea', id: 'taSql', value: 'select * from transactions' });
+	ta.addEventListener('keydown', function (event) {
+		if (event.key === 'Enter' && !event.shiftKey) {
+			event.preventDefault();
+			onclickExecute();
+		}
+	});
+	let db = mDom(d,{gap:10}); mFlex(db);
+	mButton('Execute', onclickExecute, db, {}, 'button');
+	mButton('Clear', () => UI.ta.value = '', db, {}, 'button');
+	mButton('Example', () => UI.ta.value = dbGetSampleQuery(), db, {}, 'button');
+	UI.d = mDom('dMain', { className: 'section' });
+
+}
+async function menuCloseSql(){mClear('dMain')}
+async function onclickExecute() {
+	let q = UI.ta.value;
+	let tablename = dbGetTableName(q);
+	let records = dbToList(q); 
+	showTableSortedBy(UI.d, 'Result',tablename, records); 
+}
+//#endregion
+
+//#region show functions
 

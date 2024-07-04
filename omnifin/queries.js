@@ -1,3 +1,4 @@
+
 function qTransactions() {
   return `
     SELECT 
@@ -141,12 +142,21 @@ function qLimit20(){
 }
 function qTags() { return 'select * from tags;'; }
 
+function dbGetSampleQuery(){
+	let qs = [qTransactions,qTransFlex,qTranstags,qTransmultitag,qLimit20,qTags,];
+	let q=rChoose(qs)();
+	q=replaceAllSpecialChars(q,'\t',' ');
+	q=replaceAll(q,'  ',' ');
+	//q=splitOnUpperCaseWord(q);
+	return q.trim();
+}
+
+//special queries
 function qTablenames(){ return `SELECT name FROM sqlite_master WHERE type='table';`; }
 
 function qiTransactionTag(id,tag_id,report){
 	return `INSERT INTO transaction_tags (id, tag_id, report) VALUES (${id}, ${tag_id}, ${report});`;
 }
-
 
 
 

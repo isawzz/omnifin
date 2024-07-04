@@ -99,6 +99,7 @@ function uiTypeCheckListInput(any, dParent, styles = {}, opts = {}) {
 	inp.addEventListener('keypress', ev => inpToChecklist(ev, grid));
 	return { dg, inp, grid };
 }
+async function updateExtra() { }
 
 
 
