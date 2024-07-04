@@ -3,7 +3,7 @@ function showTableSortedBy(dParent, title, tablename, records, headers, header) 
 	if (DA.sortedBy == header) { sortByDescending(records, header); DA.sortedBy = null; }
 	else { sortBy(records, header); DA.sortedBy = header; }
 	mClear(dParent);
-	mText(`<h2>${title}</h2>`, dParent, { maleft: 12 })
+	mText(`<h2>${title} (${tablename})</h2>`, dParent, { maleft: 12 })
 	let t = UI.dataTable = mDataTable(records, dParent, null, headers, 'records');
 	if (nundef(t)) return;
 	let d = t.div;
@@ -13,7 +13,7 @@ function showTableSortedBy(dParent, title, tablename, records, headers, header) 
 		mStyle(ui, { cursor: 'pointer' });
 		ui.onclick = () => showTableSortedBy(dParent, title, tablename, records, headers, ui.innerHTML);
 	}
-	if (tablename != 'transactions' && tablename != 'reports') return records;
+	if (tablename != 'transactions') return records;
 	for (const ri of t.rowitems) {
 		let r = iDiv(ri);
 		let id = ri.o.id;

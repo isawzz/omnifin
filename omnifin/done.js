@@ -80,7 +80,7 @@ function onclickLimit20() { let records = dbToList(qLimit20()); showTableSortedB
 //#region menu sql
 async function menuOpenSql() {
 	let d = mDom('dMain');
-	let ta = UI.ta = mDom(d, { 'white-space': 'pre-wrap', w100: true, 'border-color': 'transparent' }, { rows: 25, tag: 'textarea', id: 'taSql', value: 'select * from transactions' });
+	let ta = UI.ta = mDom(d, { 'white-space': 'pre-wrap', w100: true, 'border-color': 'transparent' }, { rows: 25, tag: 'textarea', id: 'taSql', value: 'select * from reports' });
 	ta.addEventListener('keydown', function (event) {
 		if (event.key === 'Enter' && !event.shiftKey) {
 			event.preventDefault();
@@ -93,6 +93,7 @@ async function menuOpenSql() {
 	mButton('Example', () => UI.ta.value = dbGetSampleQuery(), db, {}, 'button');
 	UI.d = mDom('dMain', { className: 'section' });
 
+	onclickExecute();
 }
 async function menuCloseSql(){mClear('dMain')}
 async function onclickExecute() {
