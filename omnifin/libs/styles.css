@@ -481,14 +481,18 @@ fieldset .disabled {
 .table th,
 .table td {
   padding: 0.25rem 0.75rem;
-  vertical-align: top;
+  vertical-align: center;
   text-align: left;
-  border-top: 1px solid #dee2e680;
+  /* border-top: 1px solid #dee2e680; */
+  /* background-color: white; */
   /* max-height: 50px; */
   /* max-width: 400px; */
   /* white-space: nowrap; */
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.table td{
+  border-top: 1px solid dimgray;
 }
 
 .title {

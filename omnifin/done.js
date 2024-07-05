@@ -87,7 +87,7 @@ async function menuOpenOverview() {
 	UI.commands.tRevisions = mCommand(side.d, 'tRevisions', 'transaction revisions'); mNewline(side.d, gap);
 
 	UI.d = mDom('dMain', { className: 'section' });
-	onclickTesttrans();
+	onclickTranslist();
 }
 async function menuCloseOverview() { closeLeftSidebar(); mClear('dMain') }
 
@@ -149,9 +149,15 @@ async function onclickExecute() {
 
 //#region show functions
 function showTableSortedBy(dParent, title, tablename, records, headers, header) {
-	if (DA.sortedBy == header) { sortByDescending(records, header); DA.sortedBy = null; }
-	else { sortBy(records, header); DA.sortedBy = header; }
-	mClear(dParent);
+	if (isEmpty(records)) {mText('no data',dParent); return null; }
+	if (nundef(headers)) headers = Object.keys(records[0]);
+  if (nundef(header)) header = headers[0];
+  console.log('___ show Full Table',Counter++,DA.tinfo);
+  console.log(DA.sortedBy,header);
+
+	if (DA.sortedBy == header) { sortBy(records, header); DA.sortedBy = null; }
+	else { sortByDescending(records, header); DA.sortedBy = header; }
+	if (isdef(UI.dataTable)) mRemove(UI.dataTable.div); mClear(dParent);
 	mText(`<h2>${title} (${tablename})</h2>`, dParent, { maleft: 12 })
 	let t = UI.dataTable = mDataTable(records, dParent, null, headers, 'records');
 	if (nundef(t)) return;

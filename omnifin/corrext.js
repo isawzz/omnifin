@@ -8,7 +8,7 @@ function handleSticky() { let d = mBy('dNav'); if (window.scrollY >= 88) mClass(
 
 function mDataTable(reclist, dParent, rowstylefunc, headers, id, showheaders = true) {
 	//console.log(reclist[0])
-	if (isEmpty(reclist)) {mText('no data',dParent); return; }
+	if (isEmpty(reclist)) {mText('no data',dParent); return null; }
 	if (nundef(headers)) headers = Object.keys(reclist[0]);
 	let t = mTable(dParent, headers, showheaders);
 	if (isdef(id)) t.id = `t${id}`;
@@ -51,11 +51,28 @@ function mGather(dAnchor, styles = {}, opts = {}) {
 		else {mStyle(d,{h:'100vh'});mCenterCenterFlex(d); }
 	});
 }
+function mTable(dParent, headers, showheaders, styles = { mabottom: 0 }, className = 'table') {
+	let d = mDiv(dParent);
+	let t = mCreate('table');
+	mAppend(d, t);
+	if (isdef(className)) mClass(t, className);
+	if (isdef(styles)) mStyle(t, styles);
+	if (showheaders) {
+		let r=mDom(t,{},{tag:'tr'});
+		headers.map(x=>mDom(r,{},{tag:'th',html:x}));
+	}
+	return t;
+}
 async function onclickCommand(ev) {
 	//hier muss command irgendwie markiert werden und altes unmarked werden!!!
 	let key = evToAttr(ev, 'key'); //console.log(key);
 	let cmd = key == 'user' ? UI.nav.commands.user : UI.commands[key];
 	assertion(isdef(cmd), `command ${key} not in UI!!!`);
+
+	let links = Array.from(mBy('dLeft').getElementsByTagName('a'));
+	links.map(x=>mStyle(x,{fStyle:'normal'}));
+	mStyle(ev.target,{fStyle:'italic'})
+
 
 	await cmd.open();
 }
@@ -68,6 +85,30 @@ function showNavbar() {
 	// commands.test = menuCommand(nav.l, 'nav', 'test', 'Test', menuOpenTest, menuCloseTest);
 	nav.commands = commands;
 	return nav;
+}
+function sortBy(arr, key) { 
+	function fsort(a,b){
+		let [av,bv]=[a[key],b[key]];
+		if(isNumber(av) && isNumber(bv)) return Number(av)<Number(bv)?-1:1;
+		if (isEmpty(av)) return -1;
+		if (isEmpty(bv)) return 1;
+		return av<bv?-1:1;
+	}
+	arr.sort(fsort); //(a, b) => {let [av,bv]=[a[key],b[key]];return (av && !bv && av > bv) ? -1 : 1;}); 
+	// arr.sort((a, b) => {let [av,bv]=[a[key],b[key]];return (!av || av < bv) ? -1 : 1;}); 
+	return arr; 
+}
+
+function sortByDescending(arr, key) { 
+	function fsort(a,b){
+		let [av,bv]=[a[key],b[key]];
+		if(isNumber(av) && isNumber(bv)) return Number(av)>Number(bv)?-1:1;
+		if (isEmpty(av)) return 1;
+		if (isEmpty(bv)) return -1;
+		return av>bv?-1:1;
+	}
+	arr.sort(fsort); //(a, b) => {let [av,bv]=[a[key],b[key]];return (av && !bv && av > bv) ? -1 : 1;}); 
+	return arr; 
 }
 
 async function updateExtra() { }

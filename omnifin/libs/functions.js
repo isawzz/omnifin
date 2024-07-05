@@ -6130,22 +6130,6 @@ function mSymSizeToH(info, h) { let f = h / info.h; return { fz: 100 * f, w: inf
 
 function mSymSizeToW(info, w) { let f = w / info.w; return { fz: 100 * f, w: w, h: info.h * f }; }
 
-function mTable(dParent, headers, showheaders, styles = { mabottom: 0 }, className = 'table') {
-	let d = mDiv(dParent);
-	let t = mCreate('table');
-	mAppend(d, t);
-	if (isdef(className)) mClass(t, className);
-	if (isdef(styles)) mStyle(t, styles);
-	if (showheaders) {
-		let code = `<tr>`;
-		for (const h of headers) {
-			code += `<th>${h}</th>`
-		}
-		code += `</tr>`;
-		t.innerHTML = code;
-	}
-	return t;
-}
 function mTableCol(r, val) {
 	let col = mCreate('td');
 	mAppend(r, col);
@@ -8875,7 +8859,7 @@ function sockPostUserChange(oldname, newname) {
 function someOtherPlayerName(table) {
 	return rChoose(arrWithout(table.playerNames, getUname()));
 }
-function sortBy(arr, key) { arr.sort((a, b) => (a[key] < b[key] ? -1 : 1)); return arr; }
+function sortBy(arr, key) { arr.sort((a, b) => isEmpty(a[key]) || (a[key] < b[key] ? -1 : 1)); return arr; }
 
 function sortByDescending(arr, key) { arr.sort((a, b) => (a[key] > b[key] ? -1 : 1)); return arr; }
 
