@@ -1,5 +1,5 @@
 
-const DB_PATH = '../omnifin/db/test.db'; // relative to omnifin dir
+const DB_PATH = '../omnifin/db/test2.db'; // relative to omnifin dir
 
 onload = start;
 onscroll = handleSticky;
@@ -8,7 +8,11 @@ async function start() { await prelims(); test6(); }
 
 async function test6(){
 
-	await switchToMainMenu('sql');
+	await switchToMainMenu('overview');
+
+	let recs = M.transactionRecords = dbToList(qTTCols());
+	console.log(recs)
+
 
 	//createNewDatabase();
 }

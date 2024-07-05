@@ -4744,7 +4744,7 @@ function isEmptyOrWhiteSpace(s) { return isEmpty(s.trim()); }
 
 function isExactly(n, num = 1) { return n == num; }
 
-function isExpressionSeparator(ch) { return ',-.!?;:'.includes(ch); }
+function isExpressionSeparator(ch,charsAllowed) { return ',-.!?;:'.includes(ch); }
 
 function isFilename(s) { return s.includes('../'); }
 

@@ -9,7 +9,9 @@ async function dbInit(path) {
 		const buffer = await response.arrayBuffer();
 		// const SQL = await initSqlJs({ locateFile: filename => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.2/${filename}` });
 		const SQL = DA.SQL = await initSqlJs({ locateFile: filename => `../omnifin/libs/${filename}` });
-		const db = new SQL.Database(new Uint8Array(buffer));
+		let db=null;
+		if (nundef(path)) db = dbLoadFromLocalStorage();
+		if (!db) db = new SQL.Database(new Uint8Array(buffer));
 		return db;
 	} catch (error) {
 		console.error('Error:', error);
@@ -17,8 +19,26 @@ async function dbInit(path) {
 		return null;
 	}
 }
+function dbLoadFromLocalStorage() {
+	// Load existing database or create a new one
+	if (localStorage.getItem('database')) {
+		const storedData = JSON.parse(localStorage.getItem('database'));
+		const Uints = new Uint8Array(storedData);
+		db = new DA.SQL.Database(Uints);
+		return db;
+	} else {
+		console.log('database not found in localStorage!');
+		return null;
+	}
+
+}
 function dbRaw(q) { return DB.exec(q); }
 
+function dbSaveToLocalStorage(){
+	// Save the database
+	const data = DB.export();
+	localStorage.setItem('database', JSON.stringify(Array.from(data)));
+}
 function dbToDict(q, keyprop = 'id') { return list2dict(dbToList(q), keyprop); }
 
 function dbToList(q) {
@@ -49,11 +69,14 @@ async function menuOpenOverview() {
 	let gap = 5;
 	UI.commands.showSchema = mCommand(side.d, 'showSchema', 'DB Structure'); mNewline(side.d, gap);
 	mLinebreak(side.d, 10);
-	UI.commands.transactions = mCommand(side.d, 'transactions', 'transactions'); mNewline(side.d, gap);
-	UI.commands.flex = mCommand(side.d, 'flex', 'flex-perks'); mNewline(side.d, gap);
-	UI.commands.tagged = mCommand(side.d, 'tagged', 'tagged'); mNewline(side.d, gap);
-	UI.commands.multiTagged = mCommand(side.d, 'multiTagged', 'multi-tagged'); mNewline(side.d, gap);
-	UI.commands.limit20 = mCommand(side.d, 'limit20', 'just 20'); mNewline(side.d, gap);
+	UI.commands.testtrans = mCommand(side.d, 'testtrans', 'test'); mNewline(side.d, gap);
+	UI.commands.translist = mCommand(side.d, 'translist', 'translist'); mNewline(side.d, gap);
+	UI.commands.transcols = mCommand(side.d, 'transcols', 'transcols'); mNewline(side.d, gap);
+	// UI.commands.transactions = mCommand(side.d, 'transactions', 'transactions'); mNewline(side.d, gap);
+	// UI.commands.flex = mCommand(side.d, 'flex', 'flex-perks'); mNewline(side.d, gap);
+	// UI.commands.tagged = mCommand(side.d, 'tagged', 'tagged'); mNewline(side.d, gap);
+	// UI.commands.multiTagged = mCommand(side.d, 'multiTagged', 'multi-tagged'); mNewline(side.d, gap);
+	// UI.commands.limit20 = mCommand(side.d, 'limit20', 'just 20'); mNewline(side.d, gap);
 	mLinebreak(side.d, 10);
 	UI.commands.reports = mCommand(side.d, 'reports', 'reports'); mNewline(side.d, gap);
 	UI.commands.assets = mCommand(side.d, 'assets', 'assets'); mNewline(side.d, gap);
@@ -64,7 +87,7 @@ async function menuOpenOverview() {
 	UI.commands.tRevisions = mCommand(side.d, 'tRevisions', 'transaction revisions'); mNewline(side.d, gap);
 
 	UI.d = mDom('dMain', { className: 'section' });
-	onclickLimit20();
+	onclickTesttrans();
 }
 async function menuCloseOverview() { closeLeftSidebar(); mClear('dMain') }
 
@@ -79,6 +102,9 @@ function onclickShowSchema() {
 	mText(`<h2>Schema</h2>`, d, { maleft: 12 })
 	mDom(d, {}, { tag: 'pre', html: text });
 }
+function onclickTesttrans() { let records = dbToList(qTT()); showTableSortedBy(UI.d, 'TEST', 'transactions', records); }
+function onclickTranslist() { let records = dbToList(qTTList()); showTableSortedBy(UI.d, 'tag list', 'transactions', records); }
+function onclickTranscols() { let records = dbToList(qTTCols()); showTableSortedBy(UI.d, 'tag columns', 'transactions', records); }
 function onclickTransactions() { let records = dbToList(qTransactions()); showTableSortedBy(UI.d, 'transactions', 'transactions', records); }
 function onclickFlex() { let records = dbToList(qTransFlex()); showTableSortedBy(UI.d, 'flex-perks', 'transactions', records); }
 function onclickTagged() { let records = dbToList(qTranstags()); showTableSortedBy(UI.d, 'tagged transactions', 'transactions', records); }
@@ -122,4 +148,25 @@ async function onclickExecute() {
 //#endregion
 
 //#region show functions
+function showTableSortedBy(dParent, title, tablename, records, headers, header) {
+	if (DA.sortedBy == header) { sortByDescending(records, header); DA.sortedBy = null; }
+	else { sortBy(records, header); DA.sortedBy = header; }
+	mClear(dParent);
+	mText(`<h2>${title} (${tablename})</h2>`, dParent, { maleft: 12 })
+	let t = UI.dataTable = mDataTable(records, dParent, null, headers, 'records');
+	if (nundef(t)) return;
+	let d = t.div;
+	mStyle(d, { 'caret-color': 'transparent' });
+	let headeruis = Array.from(d.firstChild.getElementsByTagName('th'));
+	for (const ui of headeruis) {
+		mStyle(ui, { cursor: 'pointer' });
+		ui.onclick = () => showTableSortedBy(dParent, title, tablename, records, headers, ui.innerHTML);
+	}
+	if (tablename != 'transactions') return records;
+	for (const ri of t.rowitems) {
+		let r = iDiv(ri);
+		let id = ri.o.id;
+		let h = hFunc('tag', 'onclickAddTag', id, ri.index); let c = mAppend(r, mCreate('td')); c.innerHTML = h;
+	}
+}
 

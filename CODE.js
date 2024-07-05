@@ -1,3 +1,245 @@
+function _generateTagColumns() {
+  // Get unique tag names
+  //const tagNamesResult = DB.exec(`SELECT DISTINCT tag_name FROM tags WHERE tag_name NOT GLOB '*[0-9]*'`);
+  const tagNamesResult = db.exec(`SELECT DISTINCT tag_name FROM tags WHERE tag_name NOT GLOB '*[0-9]*'`);
+  const tagNames = tagNamesResult[0].values.map(row => row[0]);
+
+  // Construct the dynamic SQL part for tag columns
+  const tagColumns = tagNames.map(tagName => 
+    `MAX(CASE WHEN tg.tag_name = '${tagName}' THEN 'X' ELSE '' END) AS ${tagName}`
+  ).join(', ');
+
+  return tagColumns;
+}
+function _generateTagColumns() {
+  // Get unique tag names
+  const tagNamesResult = DB.exec(`SELECT DISTINCT tag_name FROM tags WHERE tag_name NOT GLOB '*[0-9]*';`);
+
+
+  
+  // Extract tag names from the query result
+  const tagNames = tagNamesResult[0].values.map(row => row[0]);
+
+  // Construct the dynamic SQL part for tag columns
+  const tagColumns = tagNames.map(tagName => 
+    `MAX(CASE WHEN tg.tag_name = '${tagName}' THEN 'X' ELSE '' END) AS ${tagName.replace(/\s+/g, '_')}`
+  ).join(', ');
+
+  return tagColumns;
+}
+function _qTT() {
+  const tagColumns = generateTagColumns();
+  
+  return `
+    SELECT 
+      t.id, 
+      t.dateof, 
+      sender.account_name AS sender_name, 
+      receiver.account_name AS receiver_name, 
+      t.amount, 
+      a.asset_name AS unit, 
+      ${tagColumns}
+    FROM 
+      transactions t
+    JOIN 
+      accounts sender ON t.sender = sender.id
+    JOIN 
+      accounts receiver ON t.receiver = receiver.id
+    JOIN 
+      assets a ON t.unit = a.id
+    LEFT JOIN 
+      transaction_tags tt ON t.id = tt.id
+    LEFT JOIN 
+      tags tg ON tt.tag_id = tg.id
+    GROUP BY 
+      t.id, t.dateof, sender_name, receiver_name, t.amount, unit;
+  `;
+}
+function qTT() {
+
+	let recs = dbToList('select * from tags');
+	console.log(recs)
+	let names = recs.map(x=>x.tag_name);
+	names = names.filter(x=>!isNumber(x));
+	console.log(names);
+	let s='';
+	for(const name of names){
+		s+=`MAX(CASE WHEN tg.tag_name = '${name}' THEN 'X' ELSE '' END) AS ${name},\n`
+	}
+
+  return `
+    SELECT 
+      t.id, 
+      t.dateof, 
+      sender.account_name AS sender_name, 
+      receiver.account_name AS receiver_name, 
+      t.amount, 
+      a.asset_name AS unit, 
+      MAX(CASE WHEN tg.tag_name = 'utility' THEN 'X' ELSE '' END) AS utility,
+      MAX(CASE WHEN tg.tag_name = 'tag2' THEN 'X' ELSE '' END) AS tag2,
+      MAX(CASE WHEN tg.tag_name = 'tag3' THEN 'X' ELSE '' END) AS tag3
+    FROM 
+      transactions t
+    JOIN 
+      accounts sender ON t.sender = sender.id
+    JOIN 
+      accounts receiver ON t.receiver = receiver.id
+    JOIN 
+      assets a ON t.unit = a.id
+    JOIN 
+      transaction_tags tt ON t.id = tt.id
+    JOIN 
+      tags tg ON tt.tag_id = tg.id
+    GROUP BY 
+      t.id, t.dateof, sender_name, receiver_name, t.amount, unit
+		HAVING 
+			COUNT(tg.tag_name) > 1
+		Limit 20;
+  `;
+}
+function qTransactions() {
+	return `
+    SELECT 
+      t.id, 
+      t.dateof, 
+      sender.account_name AS sender_name, 
+      receiver.account_name AS receiver_name, 
+      t.amount, 
+      a.asset_name AS unit, 
+      GROUP_CONCAT(tg.tag_name) AS tag_names 
+    FROM 
+      transactions t
+    JOIN 
+      accounts sender ON t.sender = sender.id
+    JOIN 
+      accounts receiver ON t.receiver = receiver.id
+    JOIN 
+      assets a ON t.unit = a.id
+    LEFT JOIN 
+      transaction_tags tt ON t.id = tt.id
+    LEFT JOIN 
+      tags tg ON tt.tag_id = tg.id
+    GROUP BY 
+      t.id, t.dateof, sender_name, receiver_name, t.amount, unit;
+
+  `;
+}
+function qTransFlex() {
+	return `
+    SELECT 
+      t.id, 
+      t.dateof, 
+      sender.account_name AS sender_name, 
+      receiver.account_name AS receiver_name, 
+      t.amount, 
+      a.asset_name AS unit, 
+      GROUP_CONCAT(tg.tag_name) AS tag_names 
+    FROM 
+      transactions t
+    JOIN 
+      accounts sender ON t.sender = sender.id
+    JOIN 
+      accounts receiver ON t.receiver = receiver.id
+    JOIN 
+      assets a ON t.unit = a.id
+    LEFT JOIN 
+      transaction_tags tt ON t.id = tt.id
+    LEFT JOIN 
+      tags tg ON tt.tag_id = tg.id
+		WHERE
+				sender_name = 'flex-perks'
+    GROUP BY 
+      t.id, t.dateof, sender_name, receiver_name, t.amount, unit;
+
+  `;
+}
+function qTranstags() {
+	return `
+		SELECT 
+				t.id, 
+				t.dateof, 
+				sender.account_name AS sender_name, 
+				receiver.account_name AS receiver_name, 
+				t.amount, 
+				a.asset_name AS unit, 
+				GROUP_CONCAT(tg.tag_name) AS tag_names 
+		FROM 
+				transactions t
+		JOIN 
+				accounts sender ON t.sender = sender.id
+		JOIN 
+				accounts receiver ON t.receiver = receiver.id
+		JOIN 
+				assets a ON t.unit = a.id
+		JOIN 
+				transaction_tags tt ON t.id = tt.id
+		JOIN 
+				tags tg ON tt.tag_id = tg.id
+		GROUP BY 
+				t.id;
+
+		`;
+}
+function qTransmultitag() {
+	return `
+		SELECT 
+				t.id, 
+				t.dateof, 
+				sender.account_name AS sender_name, 
+				receiver.account_name AS receiver_name, 
+				t.amount, 
+				a.asset_name AS unit, 
+				GROUP_CONCAT(tg.tag_name) AS tag_names 
+		FROM 
+				transactions t
+		JOIN 
+				accounts sender ON t.sender = sender.id
+		JOIN 
+				accounts receiver ON t.receiver = receiver.id
+		JOIN 
+				assets a ON t.unit = a.id
+		JOIN 
+				transaction_tags tt ON t.id = tt.id
+		JOIN 
+				tags tg ON tt.tag_id = tg.id
+		GROUP BY 
+				t.id
+		HAVING 
+				COUNT(tg.tag_name) > 1;
+	
+		`;
+}
+function qLimit20() {
+	return `
+		SELECT 
+				t.id, 
+				t.dateof, 
+				sender.account_name AS sender_name, 
+				receiver.account_name AS receiver_name, 
+				t.amount, 
+				a.asset_name AS unit, 
+				GROUP_CONCAT(tg.tag_name) AS tag_names 
+		FROM 
+				transactions t
+		JOIN 
+				accounts sender ON t.sender = sender.id
+		JOIN 
+				accounts receiver ON t.receiver = receiver.id
+		JOIN 
+				assets a ON t.unit = a.id
+		JOIN 
+				transaction_tags tt ON t.id = tt.id
+		JOIN 
+				tags tg ON tt.tag_id = tg.id
+		GROUP BY 
+				t.id
+		HAVING 
+				COUNT(tg.tag_name) > 1
+		LIMIT 20;	
+		`;
+}
+
+
 async function restOnclickTag(){
 
 	//transaction id 3 hat tag id 51
