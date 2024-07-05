@@ -47,6 +47,43 @@ function qTT() {
 		Limit 20;
   `;
 }
+function qTTList() {
+	return `
+		SELECT 
+			t.id, 
+			t.dateof, 
+			sender.account_name AS sender_name, 
+			receiver.account_name AS receiver_name, 
+			t.amount, 
+			a.asset_name AS unit, 
+			GROUP_CONCAT(
+				CASE 
+					WHEN tg.category = 'MCC' THEN tg.tag_name 
+					ELSE NULL 
+				END
+			) AS MCC,
+			GROUP_CONCAT(
+				CASE 
+					WHEN tg.category <> 'MCC' AND tg.tag_name NOT GLOB '*[0-9]*' THEN tg.tag_name 
+					ELSE NULL 
+				END
+			) AS tag_names 
+		FROM 
+			transactions t
+		JOIN 
+			accounts sender ON t.sender = sender.id
+		JOIN 
+			accounts receiver ON t.receiver = receiver.id
+		JOIN 
+			assets a ON t.unit = a.id
+		LEFT JOIN 
+			transaction_tags tt ON t.id = tt.id
+		LEFT JOIN 
+			tags tg ON tt.tag_id = tg.id
+		GROUP BY 
+			t.id, t.dateof, sender_name, receiver_name, t.amount, unit;
+		`;
+}
 function qTTCols() {
 	let recs = dbToList('select * from tags');
 	//console.log(recs)
@@ -90,43 +127,6 @@ function qTTCols() {
     GROUP BY 
       t.id, t.dateof, sender_name, receiver_name, t.amount, unit
   `;
-}
-function qTTList() {
-	return `
-		SELECT 
-			t.id, 
-			t.dateof, 
-			sender.account_name AS sender_name, 
-			receiver.account_name AS receiver_name, 
-			t.amount, 
-			a.asset_name AS unit, 
-			GROUP_CONCAT(
-				CASE 
-					WHEN tg.category = 'MCC' THEN tg.tag_name 
-					ELSE NULL 
-				END
-			) AS MCC,
-			GROUP_CONCAT(
-				CASE 
-					WHEN tg.category <> 'MCC' AND tg.tag_name NOT GLOB '*[0-9]*' THEN tg.tag_name 
-					ELSE NULL 
-				END
-			) AS tag_names 
-		FROM 
-			transactions t
-		JOIN 
-			accounts sender ON t.sender = sender.id
-		JOIN 
-			accounts receiver ON t.receiver = receiver.id
-		JOIN 
-			assets a ON t.unit = a.id
-		LEFT JOIN 
-			transaction_tags tt ON t.id = tt.id
-		LEFT JOIN 
-			tags tg ON tt.tag_id = tg.id
-		GROUP BY 
-			t.id, t.dateof, sender_name, receiver_name, t.amount, unit;
-		`;
 }
 function qTransactions() {
 	return `

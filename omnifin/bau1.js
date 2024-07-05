@@ -1,5 +1,6 @@
 
 function showChunkedSortedBy(dParent, title, tablename, records, headers, header) {
+  console.log('hallo')
 	if (DA.sortedBy == header) { sortByDescending(records, header); DA.sortedBy = null; }
 	else { sortBy(records, header); DA.sortedBy = header; }
 	mClear(dParent);
@@ -13,9 +14,9 @@ function showChunkedSortedBy(dParent, title, tablename, records, headers, header
 function showChunk(inc){
 	let o=DA.tinfo;
 	let [dParent,title,tablename,dTable,records,headers,header,ifrom]=[o.dParent,o.title,o.tablename,o.dTable,o.records,o.headers,o.header,o.ifrom+inc*o.size];
-	records = records.slice(ifrom,ifrom+100);
+	let chunkRecords = records.slice(ifrom,ifrom+100);
 	mClear(dTable);
-	let t = UI.dataTable = mDataTable(records, dTable, null, headers, 'records');
+	let t = UI.dataTable = mDataTable(chunkRecords, dTable, null, headers, 'records');
 	if (nundef(t)) return;
 	let d = t.div;
 	mStyle(d, { 'caret-color': 'transparent' });
