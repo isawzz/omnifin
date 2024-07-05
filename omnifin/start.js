@@ -10,7 +10,7 @@ async function test6(){
 
 	await switchToMainMenu('overview');
 
-	let recs = M.transactionRecords = dbToList(qTTCols());
+	//let recs = M.transactionRecords = dbToList(qTTCols()); db calls sind eh urschnell!!!
 	//console.log(recs)
 
 
