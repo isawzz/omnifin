@@ -155,7 +155,8 @@ function showTableSortedBy(dParent, title, tablename, records, headers, header) 
   console.log('___ show Full Table',Counter++,DA.tinfo);
   console.log(DA.sortedBy,header);
 
-	if (DA.sortedBy == header) { sortBy(records, header); DA.sortedBy = null; }
+	if (isList(header)) DA.sortedBy = null; //ist multi-sorted!
+  else if (DA.sortedBy == header) { sortBy(records, header); DA.sortedBy = null; }
 	else { sortByDescending(records, header); DA.sortedBy = header; }
 	if (isdef(UI.dataTable)) mRemove(UI.dataTable.div); mClear(dParent);
 	mText(`<h2>${title} (${tablename})</h2>`, dParent, { maleft: 12 })

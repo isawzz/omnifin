@@ -1,22 +1,3 @@
-function _INTERRUPT() {
-	clearEvents();
-}
-function _showPaletteNames(dParent, colors) {
-	let d1 = mDom(dParent, { padding: 10, gap: 4 }); mFlexWrap(d1);
-	for (var c of colors) {
-		let bg = c.hex;
-		let html = `${c.name}`;
-		let dmini = mDom(d1, { padding: 10, bg, fg: colorIdealText(bg) }, { html, class: 'colorbox', dataColor: bg });
-	}
-}
-function addAREA(id, o) {
-	if (AREAS[id]) {
-		error('AREAS ' + id + ' exists already!!! ');
-		error(o);
-		return;
-	}
-	AREAS[id] = o;
-}
 function addDummy(dParent, place) {
 	let b = mButton('', null, dParent, { opacity: 0, h: 0, w: 0, padding: 0, margin: 0, outline: 'none', border: 'none', bg: 'transparent' });
 	if (isdef(place)) mPlace(b, place);
@@ -39,104 +20,6 @@ function addIf(arr, el) { if (!arr.includes(el)) arr.push(el); }
 
 function addKeys(ofrom, oto) { for (const k in ofrom) if (nundef(oto[k])) oto[k] = ofrom[k]; return oto; }
 
-function addPeepToCrowd() {
-	const peep = removeRandomFromArray(availablePeeps)
-	const walk = getRandomFromArray(walks)({
-		peep,
-		props: resetPeep({
-			peep,
-			stage,
-		})
-	}).eventCallback('onComplete', () => {
-		removePeepFromCrowd(peep)
-		addPeepToCrowd()
-	})
-	peep.walk = walk
-	crowd.push(peep)
-	crowd.sort((a, b) => a.anchorY - b.anchorY)
-	return peep
-}
-function addToolX(cropper, d) {
-	let img = cropper.img;
-	function createCropTool() {
-		let rg = mRadioGroup(d, {}, 'rSizes', 'Select crop area: '); mClass(rg, 'input');
-		let handler = cropper.setSize;
-		mRadio('manual', [0, 0], 'rSizes', rg, {}, handler, 'rSizes', true)
-		let [w, h] = [img.offsetWidth, img.offsetHeight];
-		if (w >= 128 && h >= 128) mRadio('128 x 128 (emo)', [128, 128], 'rSizes', rg, {}, handler, 'rSizes', false)
-		if (w >= 200 && h >= 200) mRadio('200 x 200 (small)', [200, 200], 'rSizes', rg, {}, handler, 'rSizes', false)
-		if (w >= 300 && h >= 300) mRadio('300 x 300 (medium)', [300, 300], 'rSizes', rg, {}, handler, 'rSizes', false)
-		if (w >= 400 && h >= 400) mRadio('400 x 400 (large)', [400, 400], 'rSizes', rg, {}, handler, 'rSizes', false)
-		if (w >= 500 && h >= 500) mRadio('500 x 500 (xlarge)', [500, 500], 'rSizes', rg, {}, handler, 'rSizes', false)
-		if (w >= 140 && h >= 200) mRadio('140 x 200 (card)', [140, 200], 'rSizes', rg, {}, handler, 'rSizes', false)
-		else {
-			let [w1, h1] = [w, w / .7];
-			let [w2, h2] = [h * .7, h];
-			if (w1 < w2) mRadio(`${w1} x ${h1} (card)`, [w1, h1], 'rSizes', rg, {}, handler, 'rSizes', false)
-			else mRadio(`${w2} x ${h2} (card)`, [w2, h2], 'rSizes', rg, {}, handler, 'rSizes', false)
-		}
-		if (w >= 200 && h >= 140) mRadio('200 x 140 (landscape)', [200, 140], 'rSizes', rg, {}, handler, 'rSizes', false)
-		else {
-			let [w1, h1] = [w, w * .7];
-			let [w2, h2] = [h / .7, h];
-			if (w1 < w2) mRadio(`${w1} x ${h1} (landscape)`, [w1, h1], 'rSizes', rg, {}, handler, 'rSizes', false)
-			else mRadio(`${w2} x ${h2} (landscape)`, [w2, h2], 'rSizes', rg, {}, handler, 'rSizes', false)
-		}
-		mDom(rg, { fz: 14, margin: 12 }, { html: '(or use mouse to select)' });
-		return rg;
-	}
-	function createSquareTool() {
-		let rg = mRadioGroup(d, {}, 'rSquare', 'Resize (cropped area) to height: '); mClass(rg, 'input');
-		let handler = x => squareTo(cropper, x);
-		mRadio(`${'just crop'}`, 0, 'rSquare', rg, {}, cropper.crop, 'rSquare', false)
-		for (const h of [128, 200, 300, 400, 500, 600, 700, 800]) {
-			mRadio(`${h}`, h, 'rSquare', rg, {}, handler, 'rSquare', false)
-		}
-		return rg;
-	}
-	let rgCrop = createCropTool();
-	let rgResize = createSquareTool();
-}
-function adjustComplex(panData) {
-	let [x0, y0] = [panData.posStart.x, panData.posStart.y];
-	let [dx, dy] = [panData.mouse.x - panData.mouseStart.x, panData.mouse.y - panData.mouseStart.y];
-	let [wImg, hImg] = [panData.img.width, panData.img.height];
-	let ideal = panData.cropStartSize.w;
-	let [cx0, cy0] = [panData.cropStartPos.l + ideal / 2, panData.cropStartPos.t + ideal / 2];
-	let [cx, cy] = [cx0 + dx, cy0 + dy];
-	cx = clamp(cx, ideal / 2, wImg - ideal / 2); cy = clamp(cy, ideal / 2, hImg - ideal / 2);
-	let lNew = clamp(cx - ideal / 2, 0, wImg);
-	let tNew = clamp(cy - ideal / 2, 0, hImg);
-	let rNew = clamp(cx + ideal / 2, 0, wImg);
-	let bNew = clamp(cy + ideal / 2, 0, hImg);
-	let wNew = Math.min(Math.abs(cx - lNew) * 2, Math.abs(rNew - cx) * 2);
-	let hNew = Math.min(Math.abs(cy - tNew) * 2, Math.abs(bNew - cy) * 2);
-	mStyle(panData.dCrop, { left: cx - wNew / 2, top: cy - hNew / 2, w: wNew, h: hNew });
-}
-function adjustCropper(img, dc, sz) {
-	let [w, h] = [img.width, img.height]; console.log('sz', w, h,)
-	let [cx, cy, radx, rady, rad] = [w / 2, h / 2, sz / 2, sz / 2, sz / 2];
-	mStyle(dc, { left: cx - radx, top: cy - rady, w: sz, h: sz });
-}
-function adjustCropperBy(dc, x, y, dx, dy, wImg, hImg, szIdeal) {
-	console.log('_________\ndx', dx, 'dy', dy)
-	if (nundef(wImg)) {
-		mStyle(dc, { left: x + dx, top: y + dy }); //,w:sz,h:sz});
-		return;
-	}
-	console.log('image sz', wImg, hImg)
-	let [l, t, w, h] = [mGetStyle(dc, 'left'), mGetStyle(dc, 'top'), mGetStyle(dc, 'w'), mGetStyle(dc, 'h')]; console.log('dims', l, t, w, h);
-	let [cx, cy] = [l + w / 2, t + h / 2];
-	let [cxNew, cyNew] = [cx + dx, cy + dy]; console.log('new center', cxNew, cyNew)
-	let newDist = Math.min(cxNew, cyNew, wImg - cxNew, hImg - cyNew); console.log('newDist', newDist)
-	let wNew = Math.min(szIdeal, newDist * 2);
-	let hNew = Math.min(szIdeal, newDist * 2);
-	let xNew = cxNew - wNew / 2;
-	let yNew = cyNew - hNew / 2;
-	mStyle(dc, { left: xNew, top: yNew, w: wNew, h: hNew }); //,w:sz,h:sz});
-}
-function adjustCropperBySimple(dc, x, y, dx, dy) { mStyle(dc, { left: x + dx, top: y + dy }); }
-
 function agColoredShape(g, shape, w, h, color) {
 	SHAPEFUNCS[shape](g, w, h);
 	gBg(g, color);
@@ -153,38 +36,17 @@ function allNumbers(s, func) {
 	if (isdef(func)) arr = arr.map(x => func(x));
 	return arr;
 }
-function allPlToPlayer(name) {
-	let allPl = DA.allPlayers[name];
-	return jsCopyExceptKeys(allPl, ['div', 'isSelected']);
-}
 function alphaToHex(a01) {
 	a01 = Math.round(a01 * 100) / 100;
 	var alpha = Math.round(a01 * 255);
 	var hex = (alpha + 0x10000).toString(16).slice(-2).toUpperCase();
 	return hex;
 }
-function amIHuman(table) { return isPlayerHuman(table, getUname()); }
-
 function animatedTitle(msg = 'DU BIST DRAN!!!!!') {
 	TO.titleInterval = setInterval(() => {
 		let corner = CORNERS[WhichCorner++ % CORNERS.length];
 		document.title = `${corner} ${msg}`; //'⌞&amp;21543;    U+231E \0xE2Fo\u0027o Bar';
 	}, 1000);
-}
-function annotate(sp) {
-	for (const k in sp) {
-		let node = sp[k];
-		node.pool = [];
-		let pool = makePool(node);
-		for (const oid in pool) {
-			let o = pool[oid];
-			if (!evalCond(o, node)) continue;
-			if (nundef(o.RSG)) o.RSG = {};
-			let rsg = o.RSG;
-			rsg[k] = true;
-			node.pool.push(oid);
-		}
-	}
 }
 function arrAllSameOrDifferent(arr) {
 	if (arr.length === 0) {
@@ -313,21 +175,6 @@ function assertion(cond) {
 }
 function bgImageFromPath(path) { return isdef(path) ? `url('${path}')` : null; }
 
-function buyProgressCard(ev) {
-	let o = evToAttrElem(ev, 'key');
-	console.log('player buys', o.val);
-	o.elem.remove();
-	let spot = M.selectedCivSpot
-	if (isdef(spot)) {
-		spot.innerHTML = '';
-		let [w, h] = [mGetStyle(spot, 'w'), mGetStyle(spot, 'h')];
-		mAppend(spot, o.elem);
-		mStyle(o.elem, { h: h, w: w });
-		o.elem.onclick = () => selectCivSpot(spot)
-		mClassRemove(M.selectedCivSpot, 'shadow');
-		M.selectedCivSpot = null;
-	}
-}
 function cBlank(dParent, styles = {}, opts = {}) {
 	if (nundef(styles.h)) styles.h = valf(styles.sz, 100);
 	if (nundef(styles.w)) styles.w = styles.h * .7;
@@ -389,69 +236,12 @@ function cRound(dParent, styles = {}, opts = {}) {
 	styles.rounding = '50%';
 	return cBlank(dParent, styles, opts);
 }
-function calcBotLevel(table) {
-	let humanPlayers = dict2list(table.players).filter(x => x.playmode == 'human');
-	if (isEmpty(humanPlayers) || getGameOption('use_level') == 'no') return null;
-	let level = arrAverage(humanPlayers, 'level');
-	return level;
-}
-function calcBotSpeed(table) {
-	let speed = 2000 + Math.round(Math.random() * 2000);
-	let botLevel = calcBotLevel(table);
-	return botLevel ? botLevel == 1 ? speed : speed * 4 / botLevel : speed;
-}
 function calcHeightLeftUnder(div) {
 	let hwin = window.innerHeight;
 	let r = getRect(div);
 	let top = r.b;
 	let h = hwin - top;
 	return h;
-}
-function calcLifespan(s) {
-	let arr = allNumbers(s, Math.abs);
-	let num, unit, lifespan;
-	if (!isEmpty(arr)) {
-		if (arr.length > 2) arr = arr.slice(0, 2)
-		let n = arrAverage(arr);
-		unit = s.includes('year') ? 'y' : s.includes('month') ? 'm' : s.includes('week') ? 'w' : s.includes('day') ? 'd' : s.includes('hour') ? 'h' : 'y';
-		num = calcYears(n, unit);
-		lifespan = yearsToReadable(num);
-	} else {
-		let s1 = s.toLowerCase();
-		let words = toWords(s1);
-		if (s1.includes('a few')) {
-			unit = wordAfter(words, 'few');
-			let n = calcYears(3, unit);
-			arr.push(n);
-		}
-		if (s1.includes('several')) {
-			unit = wordAfter(words, 'several'); //console.log('unit',unit)
-			let n = calcYears(3, unit);
-			arr.push(n);
-			let next = wordAfter(words, unit);
-			if (next == 'to') {
-				unit = wordAfter(words, 'to'); //console.log('unit',unit)
-				if (['day', 'week', 'month', 'year'].some(x => unit.startsWith(x))) {
-					let n = calcYears(3, unit);
-					arr.push(n);
-				}
-			}
-		}
-		let di = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, fifteen: 15, twenty: 20 };
-		for (const w of Object.keys(di)) {
-			if (s.includes(w)) {
-				let n = calcYears(di[w], stringAfter(s, w));
-				arr.push(n);
-			}
-		}
-		let n = arrAverage(arr);
-		unit = 'year';
-		lifespan = yearsToReadable(n);
-		num = allNumbers(lifespan)[0];
-		unit = stringAfter(lifespan, ' ');
-	}
-	unit = unit[0];
-	return { s, text: lifespan, num, unit };
 }
 function calcNumericInfo(str, diunit, base) {
 	if (nundef(str)) return { str: '', num: 0, base, text: '' };
@@ -485,34 +275,6 @@ function calcNumericInfo(str, diunit, base) {
 	text = `${num.toFixed(1)} ${unit}`;
 	return { str, num, unit, text, avg };
 }
-function calcOffsprings(str) {
-	let s = str.toLowerCase(); s = replaceAll(s, '-', ' '); s = replaceAll(s, ',', '');
-	if (s.includes('incub')) s = stringBefore(s, 'incub');
-	let arr = allNumbers(s);
-	if (isEmpty(arr) && s.includes('hundred') && s.includes('thousand')) { s = s.replace('hundred', '100 '); s = s.replace('thousand', '1000 '); arr = [100, 1000]; }
-	else if (isEmpty(arr) && s.includes('hundred')) { s = s.replace('hundred', '100 '); arr = [100]; }
-	else if (isEmpty(arr) && s.includes('thousand')) { s = s.replace('thousand', '1000 '); arr = [1000]; }
-	else if (isEmpty(arr) && s.includes('ten')) { s = s.replace('ten', '10 '); arr = [10]; }
-	else if (isEmpty(arr) && s.includes('dozen')) { s = s.replace('dozen', '20 '); arr = [20]; }
-	let words = toWords(s).filter(x => x != 's');
-	if (isEmpty(arr)) return 1;
-	let newarr = [];
-	for (const n of arr) {
-		let w = wordAfter(words, n);
-		if (isdef(w) && ['day', 'month', 'week', 'year'].some(x => w.includes(x))) break;
-		newarr.push(n);
-	}
-	let num = arrAverage(newarr);
-	let text = newarr.length > 1 ? `${newarr[0]}-${newarr[1]} children}` : `${num} child${num == 1 ? '' : 'ren'}`;
-	return { str, num, unit: 'child', text };
-}
-function calcRestHeight(dtop) {
-	let hwin = window.innerHeight;
-	let r = getRect(dtop);
-	let top = r.y;
-	let hmax = hwin - top - 20;
-	return hmax;
-}
 function calcRows(fontSize, fontFamily, content, maxWidth) {
 	const canvas = document.createElement('canvas');
 	const ctx = canvas.getContext('2d');
@@ -536,84 +298,9 @@ function calcRows(fontSize, fontFamily, content, maxWidth) {
 	}
 	return rows;
 }
-function calcScoreSum(table) {
-	let res = 0;
-	for (const name in table.players) {
-		res += table.players[name].score;
-	}
-	return res;
-}
-function calcSize(str) {
-	return calcNumericInfo(str, { cm: .01, centimeter: .01, centimeters: .01, mm: .001, millimeter: .001, millimeters: .001, meter: 1, meters: 1, m: 1 }, 'm');
-}
-async function calcUserPalette(name) {
-	if (nundef(name)) name = U.name;
-	let user = await getUser(name);
-	let dParent = mPopup(null, { opacity: 0 });
-	return await showPaletteFor(dParent, user.texture, user.color, user.blendMode);
-}
-function calcWeight(str) {
-	return calcNumericInfo(str, { kg: 1, kilogram: 1, kilograms: 1, mg: .000001, milligram: .000001, milligrams: .000001, grams: .001, gram: .001, g: .001, ton: 1000, tons: 1000 }, 'kg');
-}
-function calcYears(n, unit) {
-	let ch = unit[0];
-	let frac = ch == 'y' ? 1 : ch == 'm' ? 12 : ch == 'w' ? 52 : ch == 'd' ? 365 : ch == 'h' ? 365 * 24 : 1;
-	return n / frac;
-}
-function calculateGoodColors(bg, fg) {
-	let fgIsLight = isdef(fg) ? colorIdealText(fg) == 'black' : colorIdealText(bg) == 'white';
-	let bgIsDark = colorIdealText(bg) == 'white';
-	if (nundef(fg)) fg = colorIdealText(bg);
-	let bgNav = bg;
-	fg = colorToHex79(fg);
-	if (fgIsLight) {
-		if (isEmpty(U.texture)) { bgNav = '#00000040'; }
-		else if (bgIsDark) { bgNav = colorTrans(bg, .8); }
-		else { bgNav = colorTrans(colorDark(bg, 50), .8); }
-	} else {
-		if (isEmpty(U.texture)) { bgNav = '#ffffff40'; }
-		else if (!bgIsDark) { bgNav = colorTrans(bg, .8); }
-		else { bgNav = colorTrans(colorLight(bg, 50), .8); }
-	}
-	let realBg = bg;
-	if (bgNav == realBg) bgNav = fgIsLight ? colorDark(bgNav, .2) : colorLight(bgNav, .2);
-	let bgContrast = fgIsLight ? colorDark(bgNav, .2) : colorLight(bgNav, .2);
-	let fgContrast = fgIsLight ? '#ffffff80' : '#00000080';
-	return [realBg, bgContrast, bgNav, fg, fgContrast];
-}
-function canAct() { return (aiActivated || uiActivated) && !auxOpen; }
-
 function capitalize(s) {
 	if (typeof s !== 'string') return '';
 	return s.charAt(0).toUpperCase() + s.slice(1);
-}
-function cardRect(ctx, x, y, color) {
-	let dark = '#635651';
-	let light = '#D9C7BD';
-	delta = 20;
-	let ybar = y + 33;
-	let o = findNextBar(ctx, x, x + 100, ybar, ybar + 20, color, 10);
-	if (nundef(o)) o = findNextBar(ctx, x, x + 100, ybar, ybar + 20, color, 15);
-	console.log('bar', o);
-	let xnew = o.x;
-	let o1 = findNextBar(ctx, xnew, xnew + 20, ybar, ybar + 20, dark, delta);
-	if (nundef(o1)) o1 = findNextBar(ctx, xnew, xnew + 20, ybar, ybar + 20, dark, delta + 10);
-	console.log('dark', o1)
-	let xx = o1.x + 30;
-	let o2 = findNextBar(ctx, xx, xx + 100, ybar, ybar + 20, color, delta);
-	console.log('bar', o2)
-	let xline = x + 33;
-	let o3 = findNextLine(ctx, xline, xline + 20, y, y + 100, color)
-	if (nundef(o3)) o3 = findNextLine(ctx, xline, xline + 20, y, y + 100, color, delta)
-	console.log('line', o3)
-	let ynew = o3.y;
-	let o4 = findNextLine(ctx, xline, xline + 20, ynew, ynew + 20, dark, delta)
-	if (nundef(o4)) o4 = findNextLine(ctx, xline, xline + 20, ynew, ynew + 20, dark, delta + 10)
-	console.log('line', o4)
-	ynew = o4.y + 80;
-	let o5 = findNextLine(ctx, xline, xline + 20, ynew, ynew + 100, color)
-	console.log('line', o5)
-	return { x: o1.x, y: o4.y, w: o2.x - o1.x, h: o5.y - o4.y };
 }
 function checkToInput(ev, inp, grid) {
 	let checklist = Array.from(grid.querySelectorAll('input[type="checkbox"]')); //chks=items.map(x=>iDiv(x).firstChild);
@@ -687,22 +374,10 @@ function clearZones() {
 		clearElement(Zones[k].dData);
 	}
 }
-async function clickFirstTable() {
-	let table = Serverdata.tables.find(x => x.status != 'open' && x.playerNames.includes(getUname()));
-	if (table) { await onclickTable(table.id); return T; }
-}
 function clickOnElemWithAttr(prop, val) {
 	let d = document.querySelectorAll(`[${prop}="${val}"]`)[0];
 	if (isdef(d)) d.click();
 	return d;
-}
-async function clickOnGame(gamename) { await showGameMenu(gamename); }
-
-async function clickOnPlayer(name) { return await showGameMenuPlayerDialog(name); }
-
-function cloneIfNecessary(value, optionsArgument) {
-	var clone = optionsArgument && optionsArgument.clone === true
-	return (clone && isMergeableObject(value)) ? deepmerge(emptyTarget(value), value, optionsArgument) : value
 }
 function closeLeftSidebar() { mClear('dLeft'); mStyle('dLeft', { w: 0, wmin: 0 }) }
 
@@ -712,129 +387,8 @@ function cmdDisable(key) { mClass(mBy(key), 'disabled') }
 
 function cmdEnable(key) { mClassRemove(mBy(key), 'disabled') }
 
-function codeParseBlock(lines, i) {
-	let l = lines[i];
-	let type = l[0] == 'a' ? ithWord(l, 1) : ithWord(l, 0);
-	let key = l[0] == 'a' ? ithWord(l, 2, true) : ithWord(l, 1, true);
-	let code = l + '\n'; i++; l = lines[i];
-	while (i < lines.length && !(['var', 'const', 'cla', 'func', 'async'].some(x => l.startsWith(x)) && !l.startsWith('}'))) {
-		if (!(l.trim().startsWith('//') || isEmptyOrWhiteSpace(l))) code += l + '\n';
-		i++; l = lines[i];
-	}
-	code = replaceAllSpecialChars(code, '\t', '  ');
-	code = code.trim();
-	return [{ key: key, type: type, code: code }, i];
-}
-function codeParseBlocks(text) {
-	let lines = text.split('\r\n');
-	lines = lines.map(x => removeTrailingComments(x));
-	let i = 0, o = null, res = [];
-	while (i < lines.length) {
-		let l = lines[i];
-		if (['var', 'const', 'cla', 'func', 'async'].some(x => l.startsWith(x))) {
-			[o, iLineAfterBlock] = codeParseBlock(lines, i);
-			i = iLineAfterBlock;
-			res.push(o)
-		} else i++;
-	}
-	return res;
-}
-async function codeParseFile(path) {
-	let text = await route_path_text(path);
-	let olist = codeParseBlocks(text);
-	return olist;
-}
-async function codebaseExtendFromProject(project) {
-	let globlist = await codeParseFile('../basejs/allghuge.js');
-	let funclist = await codeParseFile('../basejs/allfhuge.js');
-	let list = globlist.concat(funclist);
-	let bykey = list2dict(list, 'key');
-	let bytype = {};
-	for (const k in bykey) { let o = bykey[k]; lookupAddIfToList(bytype, [o.type], o); }
-	let htmlFile = `../${project}/index.html`;
-	let html = await route_path_text(htmlFile);
-	html = removeCommentLines(html, '<!--', '-->');
-	let dirhtml = `../${project}`;
-	let files = extractFilesFromHtml(html, htmlFile);
-	files = files.filter(x => !x.includes('../all'));
-	console.log('files', files)
-	let [globtext, functext, functextold] = await codebaseFromFiles(files, bykey, bytype, list);
-	return [globtext, functext, functextold];
-}
-async function codebaseFromFiles(files, bykey, bytype, list) {
-	let olist = [];
-	for (const path of files) {
-		let opath = await codeParseFile(path);
-		olist = olist.concat(opath);
-	}
-	let mytype = {}, mykey = {};
-	for (const o of olist) { mykey[o.key] = o; }
-	for (const k in mykey) { let o = mykey[k]; lookupAddIfToList(mytype, [o.type], o); }
-	let dupltext = '';
-	for (const k in mykey) {
-		let onew = mykey[k];
-		let oold = bykey[k];
-		if (isdef(oold) && onew.code == oold.code) {
-			console.log('override w/ SAME code', k);
-		} else if (isdef(oold)) {
-			console.log('override w/ DIFFERENT code', k);
-			oold.oldcode = oold.code;
-			oold.code = onew.code;
-			dupltext += oold.oldcode + '\n' + oold.code + '\n';
-		} else {
-			bykey[k] = onew;
-			lookupAddIfToList(bytype, [onew.type], onew);
-			list.push(onew);
-		}
-	}
-	let globtext = '', functext = '', functextold = '';
-	for (const type of ['const', 'var', 'class']) {
-		if (nundef(bytype[type])) continue;
-		for (const o of bytype[type]) { if (!isEmptyOrWhiteSpace(o.code)) globtext += o.code + '\n'; }
-	}
-	let sortedFuncKeys = sortCaseInsensitive(bytype.function.map(x => x.key)).filter(x => !['step', 'Number'].includes(x));
-	sortedFuncKeys.map(x => functext += isEmptyOrWhiteSpace(bykey[x].code) ? '' : (bykey[x].code + '\n'));
-	sortedFuncKeys.map(x => functextold += (isdef(bykey[x].oldcode) ? bykey[x].oldcode : bykey[x].code) + '\n');
-	return [globtext, functext, functextold]
-}
 function coin(percent = 50) { return Math.random() * 100 < percent; }
 
-function collFilterImages(coll, s) {
-	let di = {};
-	for (const k of coll.masterKeys) { di[k] = true; }
-	let list = isEmpty(s) ? Object.keys(di) : isdef(M.byCat[s]) ? M.byCat[s].filter(x => isdef(di[x])) : [];
-	if (nundef(list) || isEmpty(list)) {
-		list = [];
-		for (const k of coll.masterKeys) {
-			let o = M.superdi[k];
-			if (k.includes(s) || o.friendly.toLowerCase().includes(s)) list.push(k);
-		}
-	}
-	return list;
-}
-function collectCats(klist) {
-	let cats = [];
-	for (const k of klist) {
-		M.superdi[k].cats.map(x => addIf(cats, x));
-	}
-	return cats;
-}
-function collectOptions() {
-	let poss = getGameConfig(DA.gamename).options;
-	let options = DA.options = {};
-	if (nundef(poss)) return options;
-	for (const p in poss) {
-		let fs = mBy(`d_${p}`);
-		let val = getCheckedRadios(fs)[0];
-		options[p] = isNumber(val) ? Number(val) : val;
-	}
-	return options;
-}
-function collectPlayers() {
-	let players = {};
-	for (const name of DA.playerList) { players[name] = allPlToPlayer(name); }
-	return players;
-}
 function colorBlendMode(c1, c2, blendMode) {
 	function colorBurn(base, blend) {
 		return (blend === 0) ? 0 : Math.max(0, 255 - Math.floor((255 - base) / blend));
@@ -1810,22 +1364,6 @@ function copyKeys(ofrom, oto, except = {}, only = null) {
 	}
 	return oto;
 }
-function correctFuncName(specType) {
-	switch (specType) {
-		case 'list': specType = 'liste'; break;
-		case 'dict': specType = 'dicti'; break;
-		case undefined: specType = 'panel'; break;
-	}
-	return specType;
-}
-async function correctUsersDeleteKeyImageKey() {
-	for (const name in Serverdata.users) {
-		let u = Serverdata.users[name];
-		delete u.key;
-		delete u.imageKey;
-		await postUserChange(u, true);
-	}
-}
 function createBatchGridCells(d, w, h, styles = {}, opts = {}) {
 	let gap = valf(styles.gap, 4);
 	if (nundef(styles.w)) styles.w = 128;
@@ -2079,108 +1617,6 @@ function cropTo(tool, wnew, hnew) {
 }
 function deckDeal(deck, n) { return deck.splice(0, n); }
 
-function deepMerge(target, source) {
-	if (Array.isArray(target) && Array.isArray(source)) {
-		return mergeArrays(target, source);
-	} else if (isObject(target) && isObject(source)) {
-		const output = Object.assign({}, target);
-		Object.keys(source).forEach(key => {
-			if (isObject(source[key]) || Array.isArray(source[key])) {
-				if (!(key in target)) {
-					Object.assign(output, { [key]: source[key] });
-				} else {
-					output[key] = deepMerge(target[key], source[key]);
-				}
-			} else {
-				Object.assign(output, { [key]: source[key] });
-			}
-		});
-		return output;
-	}
-	return source;
-}
-function deepMergeConcatLists(target, source) {
-	if (Array.isArray(target) && Array.isArray(source)) {
-		return [...target, ...source];
-	} else if (isObject(target) && isObject(source)) {
-		const output = Object.assign({}, target);
-		Object.keys(source).forEach(key => {
-			if (isObject(source[key])) {
-				if (!(key in target)) {
-					Object.assign(output, { [key]: source[key] });
-				} else {
-					output[key] = deepMergeConcatLists(target[key], source[key]);
-				}
-			} else if (Array.isArray(source[key])) {
-				output[key] = target[key] ? deepMergeConcatLists(target[key], source[key]) : source[key];
-			} else {
-				Object.assign(output, { [key]: source[key] });
-			}
-		});
-		return output;
-	}
-	return source;
-}
-function deepMergeIndex(target, source) {
-	if (typeof target !== 'object' || typeof source !== 'object') {
-		throw new Error('Both arguments must be objects');
-	}
-	for (const key in source) {
-		if (source.hasOwnProperty(key)) {
-			if (target.hasOwnProperty(key)) {
-				if (typeof target[key] === 'object' && typeof source[key] === 'object') {
-					target[key] = deepMergeIndex(target[key], source[key]);
-				} else {
-					target[key] = source[key];
-				}
-			} else {
-				target[key] = source[key];
-			}
-		}
-	}
-	return target;
-}
-function deepMergeOverrideLists(target, source) {
-	let output = Object.assign({}, source);
-	if (isObject(source) && isObject(target)) {
-		Object.keys(target).forEach(key => {
-			if (isObject(target[key])) {
-				if (!(key in source))
-					Object.assign(output, { [key]: target[key] });
-				else
-					output[key] = deepMergeOverrideLists(source[key], target[key]);
-			} else {
-				Object.assign(output, { [key]: target[key] });
-			}
-		});
-	}
-	return output;
-}
-function deepmerge(target, source, optionsArgument) {
-	var array = Array.isArray(source);
-	var options = optionsArgument || { arrayMerge: defaultArrayMerge }
-	var arrayMerge = options.arrayMerge || defaultArrayMerge
-	if (array) {
-		return Array.isArray(target) ? arrayMerge(target, source, optionsArgument) : cloneIfNecessary(source, optionsArgument)
-	} else {
-		return mergeObject(target, source, optionsArgument)
-	}
-}
-function deepmergeOverride(base, drueber) { return mergeOverrideArrays(base, drueber); }
-
-function defaultArrayMerge(target, source, optionsArgument) {
-	var destination = target.slice()
-	source.forEach(function (e, i) {
-		if (typeof destination[i] === 'undefined') {
-			destination[i] = cloneIfNecessary(e, optionsArgument)
-		} else if (isMergeableObject(e)) {
-			destination[i] = deepmerge(target[i], e, optionsArgument)
-		} else if (target.indexOf(e) === -1) {
-			destination.push(cloneIfNecessary(e, optionsArgument))
-		}
-	})
-	return destination
-}
 async function deleteEvent(id) {
 	let result = await simpleUpload('postEvent', { id });
 	delete Items[id];
@@ -2218,35 +1654,6 @@ function dict2list(d, keyName = 'id') {
 }
 function disableButton(b) { mClass(toElem(b), 'disabled') }
 
-function disableUI() { mShield('dGameDiv'); }
-
-function doYourThing(inp, grid) {
-	let words = extractWords(inp.value, ' ').map(x => x.toLowerCase());
-	let checklist = Array.from(grid.querySelectorAll('input[type="checkbox"]')); //chks=items.map(x=>iDiv(x).firstChild);
-	let allNames = checklist.map(x => x.name);
-	let names = checklist.filter(x => x.checked).map(x => x.name);
-	for (const w of words) {
-		if (!allNames.includes(w)) {
-			let div = mCheckbox(grid, w);
-			let chk = div.firstChild;
-			chk.checked = true;
-			chk.addEventListener('click', ev => checkToInput(ev, inp, grid))
-			needToSortChildren = true;
-		} else {
-			let chk = checklist.find(x => x.name == w);
-			if (!chk.checked) chk.checked = true;
-		}
-	}
-	for (const name of names) {
-		if (!words.includes(name)) {
-			let chk = checklist.find(x => x.name == name);
-			chk.checked = false;
-		}
-	}
-	sortCheckboxes(grid);
-	words.sort();
-	inp.value = words.join(', ') + ', ';
-}
 function downloadAsText(s, filename, ext = 'txt') {
 	saveFileAtClient(
 		filename + "." + ext,
@@ -2457,11 +1864,6 @@ function ensureColorNames() {
 		ColorNames[names[i].toLowerCase()] = '#' + hexes[i];
 	}
 }
-function enterInterruptState() {
-	clearTimeouts();
-	if (isdef(G.instance)) G.instance.clear();
-	auxOpen = true;
-}
 function error(msg) {
 	let fname = getFunctionsNameThatCalledThisFunction();
 	console.log(fname, 'ERROR!!!!! ', msg);
@@ -2515,11 +1917,6 @@ function evalConds(o, conds) {
 		if (!evalCond(o, f, v)) return false;
 	}
 	return true;
-}
-function exitToAddon(callback) {
-	AD.callback = callback;
-	enterInterruptState(); auxOpen = false;
-	AD.run();
 }
 function extendRect(r4) { r4.l = r4.x; r4.t = r4.y; r4.r = r4.x + r4.w; r4.b = r4.t + r4.h; }
 
@@ -2748,109 +2145,10 @@ function findColor(colorhex) {
 	}
 	return [x, y];
 }
-function findDarkBars(ctx, w, h, cgoal, diffleft, diffright) {
-	let [restlist, _] = findPoints(ctx, 0, w, 0, h, cgoal, 20);
-	let num = 201;
-	let colors = ['yellow', 'orange', 'red', 'pink', 'violet', 'blue', 'teal', 'green', 'sienna', 'grey', 'black'], i = 0;
-	let res = [];
-	while (num > 100 && i < colors.length) {
-		let color = colors[i++];
-		let o = nextBar(ctx, restlist, color);
-		restlist = o.rest;
-		num = o.line.length;
-		res.push(o)
-	}
-	console.log('result', res);
-	let diff = 243;
-	let cand = res.filter(o => o.val >= 40 && o.val <= 500);
-	let [kleinere, groessere] = findMidlines(cand, diff);
-	let topmost, bottommost;
-	for (const l3 of res) {
-		let distleft = kleinere.val - l3.val;
-		let distright = l3.val - groessere.val;
-		if (isWithinDelta(distleft, diffleft, 2)) {
-			topmost = l3;
-		}
-		if (isWithinDelta(distright, diffright, 2)) {
-			bottommost = l3;
-		}
-	}
-	let [ytop, ybottom] = [nundef(topmost) ? 0 : topmost.val, nundef(bottommost) ? w : bottommost.val]
-	return [ytop, kleinere.val, groessere.val, ybottom, topmost, kleinere, groessere, bottommost];
-}
-function findDarkLines(ctx, w, h, cgoal) {
-	let [_, restlist] = findPoints(ctx, 0, w, 0, h, cgoal, 20);
-	let y, num = 201;
-	let colors = ['yellow', 'orange', 'red', 'pink', 'violet', 'blue', 'crimson', 'seagreen', 'skyblue', 'teal', 'green', 'sienna', 'grey', 'black'], i = 0;
-	let res = [];
-	while (i < colors.length) {
-		let color = colors[i++];
-		let o = nextLine(ctx, restlist, color);
-		if (!o.line) { console.log('o', o); break; }
-		restlist = o.rest;
-		num = o.line.length;
-		if (num > 112) res.push(o)
-	}
-	console.log('result', res);
-	let diff = 261, diff2 = 22;
-	let [kleinere, groessere] = findMidlines(res, diff);
-	let topmost, bottommost;
-	for (const l3 of res) {
-		if (isWithinDelta(kleinere.val - l3.val, diff2, 2)) {
-			topmost = l3;
-		}
-		if (isWithinDelta(l3.val - groessere.val, diff2, 2)) {
-			bottommost = l3;
-		}
-	}
-	let [ytop, ybottom] = [nundef(topmost) ? 0 : topmost.val, nundef(bottommost) ? h : bottommost.val]
-	return [ytop, kleinere.val, groessere.val, ybottom, topmost, kleinere, groessere, bottommost];
-}
 function findDragTarget(ev) {
 	let targetElem = ev.target;
 	while (!targetElem.ondragover) targetElem = targetElem.parentNode;
 	return targetElem;
-}
-function findEdgeHor(ctx, x1, x2, h, cgoal, lighting = true) {
-	let [list, _] = findPoints(ctx, x1, x2, 0, h, cgoal, 20);
-	if (lighting) list = list.filter(o => isLightAfter(ctx, o.x, o.y) && isLightBefore(ctx, o.x, o.y));
-	let vfreq = findMostFrequentVal(list, 'x');
-	return list.filter(o => o.x == vfreq);
-}
-function findEdgeVert(ctx, y1, y2, w, cgoal, lighting = true) {
-	let [_, list] = findPoints(ctx, 0, w, y1, y2, cgoal, 20);
-	let vfreq = findMostFrequentVal(list, 'y');
-	return list.filter(o => o.y == vfreq);
-}
-function findEdgesApart(list, dx, dy, prop) {
-	list.map(o => o.nei = findPointAtDistance(o, dx, dy, list, 10))
-	list = list.filter(o => o.nei)
-	let vfreq = findMostFrequentVal(list, prop); console.log(prop, vfreq)
-	let good = list.filter(o => isWithinDelta(o[prop], vfreq, 3));
-	let rest = list.filter(o => !isWithinDelta(o[prop], vfreq, 3));
-	vfreq = findMostFrequentVal(rest, prop); console.log(prop, vfreq)
-	let good2 = list.filter(o => o[prop] == vfreq);
-	list = good.concat(good2);
-	return list;
-}
-function findLeftLine(ct, w, h, cgoal, xStart = 0) {
-	let [restlist, _] = findPointsBoth(ct, xStart, xStart + 40, 0, h, cgoal, 20);
-	let o = nextBar(ct, restlist, 'red');
-	return o.val;
-}
-function findMidlines(res, diff) {
-	let mid1, mid2;
-	for (const l1 of res) {
-		for (const l2 of res) {
-			if (isWithinDelta(Math.abs(l1.val - l2.val), diff, 2)) {
-				mid1 = l1; mid2 = l2;
-			}
-		}
-		if (isdef(mid1)) break;
-	}
-	let kleinere = mid1.val < mid2.val ? mid1 : mid2;
-	let groessere = mid1 == kleinere ? mid2 : mid1;
-	return [kleinere, groessere];
 }
 function findMostFrequentVal(arr, prop, delta = 0) {
 	if (!Array.isArray(arr) || arr.length === 0) {
@@ -2871,116 +2169,10 @@ function findMostFrequentVal(arr, prop, delta = 0) {
 	}
 	return mostFrequentY;
 }
-function findNextBar(ctx, x1, x2, y1, y2, cgoal, delta = 10) {
-	for (let x = x1; x < x2; x++) {
-		for (let y = y1; y < y2; y++) {
-			let c = isPix(ctx, x, y, cgoal, delta);
-			if (c) {
-				drawPixFrame(ctx, x - 1, y - 1, 'red', 3)
-				let len = 1, yy = y + 1; xx = x;
-				while (yy < y2) {
-					let p = getPixRgb(ctx, xx, yy);
-					let c1 = isPix(ctx, xx, yy, cgoal, delta + 10);
-					yy++;
-					if (c1) len++;
-				}
-				return { c, x, y, len };
-			}
-		}
-	}
-}
-function findNextLine(ctx, x1, x2, y1, y2, cgoal, delta = 10) {
-	for (let y = y1; y < y2; y++) {
-		for (let x = x1; x < x2; x++) {
-			let c = isPix(ctx, x, y, cgoal, delta);
-			if (c) {
-				drawPixFrame(ctx, x - 1, y - 1, 'red', 3)
-				let len = 1, xx = x + 1; yy = y;
-				while (xx < x2) {
-					let p = getPixRgb(ctx, xx, yy);
-					let c1 = isPix(ctx, xx, yy, cgoal, delta + 10);
-					xx++;
-					if (c1) len++;
-				}
-				return { c, x, y, len };
-			}
-		}
-	}
-}
 function findParentWithClass(elem, className) { while (elem && !mHasClass(elem, className)) { elem = elem.parentNode; } return elem; }
 
 function findParentWithId(elem) { while (elem && !(elem.id)) { elem = elem.parentNode; } return elem; }
 
-function findPointAtDistance(pt, dx, dy, list, delta = 0) {
-	for (const p1 of list) {
-		if (isWithinDelta(Math.abs(pt.x - p1.x), dx, delta) && isWithinDelta(Math.abs(pt.y - p1.y), dy, delta)) return p1;
-	}
-	return null;
-}
-function findPoints(ctx, x1, x2, y1, y2, cgoal, delta = 10) {
-	let p;
-	let resy = [], resx = [];
-	for (let y = y1; y < y2; y++) {
-		for (let x = x1; x < x2; x++) {
-			p = isPixDark(ctx, x, y);
-			if (p) {
-				let l = isLightBeforeV(ctx, x, y);
-				let d = isLightAfterV(ctx, x, y);
-				if (l || d) resy.push({ x, y })
-				l = isLightBefore(ctx, x, y);
-				d = isLightAfter(ctx, x, y);
-				if (l || d) resx.push({ x, y })
-			}
-		}
-	}
-	return [resx, resy];
-}
-function findPointsBoth(ctx, x1, x2, y1, y2, cgoal, delta = 10) {
-	let p;
-	let resy = [], resx = [];
-	for (let y = y1; y < y2; y++) {
-		for (let x = x1; x < x2; x++) {
-			p = isPix(ctx, x, y, cgoal, delta);
-			if (p) {
-				let l = isLightBeforeV(ctx, x, y);
-				let d = isLightAfterV(ctx, x, y);
-				if (l && d) resy.push({ x, y })
-				l = isLightBefore(ctx, x, y);
-				d = isLightAfter(ctx, x, y);
-				if (l && d) resx.push({ x, y })
-			}
-		}
-	}
-	return [resx, resy];
-}
-function findRectSample(ctx, x1, x2, y1, y2, cgoal, sz = 4, lightCounts = false) {
-	let p;
-	for (let yStart = y1; yStart <= y2; yStart += sz) {
-		for (let xStart = x1; xStart <= x2; xStart += sz) {
-			let found = true;
-			for (let x = xStart; x < xStart + sz; x++) {
-				for (let y = yStart; y < yStart + sz; y++) {
-					p = isPix(ctx, x, y, cgoal, 20);
-					if (lightCounts && isPix(ctx, x, y, 'white', 10)) p = true;
-					if (!p) { found = false; break; }
-				}
-				if (!found) break;
-			}
-			if (found) return true;
-		}
-	}
-	return false;
-}
-function findRightLine(ct, w, h, cgoal) {
-	let [restlist, _] = findPointsBoth(ct, w - 40, w, 0, h, cgoal, 20);
-	let o = nextBar(ct, restlist, 'orange');
-	return o.val;
-}
-function findTopLine(ct, w, h, cgoal) {
-	let [_, restlist] = findPointsBoth(ct, 0, w, 0, 40, cgoal, 20);
-	let o = nextLine(ct, restlist, 'blue');
-	return o.val;
-}
 function findUniqueSuperdiKey(friendly) {
 	console.log('friendly', friendly)
 	let name = friendly;
@@ -3031,64 +2223,6 @@ function fisherYates(arr) {
 		arr[rnd] = temp;
 	}
 	return arr;
-}
-function fishgame() {
-	function setup(table) { wsSetup(table); }
-	function stats(table) { wsStats(table); }
-	function present(table) { wsPresent(table); }
-	async function activate(table, items) {
-		await instructionStandard(table, 'may pick your initial cards'); //browser tab and instruction if any
-		for (const item of items) {
-			let d = iDiv(item);
-			d.onclick = wsOnclickCard;
-		}
-		return;
-		if (!isMyTurn(table)) { return; }
-		for (const item of items) {
-			let d = iDiv(item);
-			mStyle(d, { cursor: 'pointer' });
-			d.onclick = ev => onclickCard(table, item, items);
-		}
-		if (isEmpty(table.fen.cards)) return gameoverScore(table);
-		if (amIHuman(table) && table.options.gamemode == 'multi') return;
-		let name = amIHuman(table) && table.options.gamemode == 'solo' ? someOtherPlayerName(table) : getUname();
-		if (nundef(name)) return;
-		await botMove(name, table, items);
-	}
-	async function botMove(name, table, items) {
-		let ms = rChoose(range(2000, 5000));
-		TO.bot = setTimeout(async () => {
-			let item = rChoose(items);
-			toggleItemSelection(item);
-			TO.bot1 = setTimeout(async () => await evalMove(name, table, item.key), 500);
-		}, rNumber(ms, ms + 2000));
-	}
-	async function onclickCard(table, item, items) {
-		toggleItemSelection(item);
-		try { await mSleep(200); } catch (err) { return; }
-		await evalMove(getUname(), table, item.key);
-	}
-	async function evalMove(name, table, key) {
-		clearEvents();
-		mShield('dTable', { bg: 'transparent' });
-		let id = table.id;
-		let step = table.step;
-		let best = arrMinMax(table.fen.cards).min;
-		let succeed = key == best;
-		if (succeed) {
-			table.players[name].score += 1;
-			let fen = table.fen;
-			let newCards = deckDeal(fen.deck, 1);
-			if (newCards.length > 0) arrReplace1(fen.cards, key, newCards[0]); else removeInPlace(fen.cards, key);
-		} else {
-			table.players[name].score -= 1;
-		}
-		lookupAddToList(table, ['moves'], { step, name, move: key, change: succeed ? '+1' : '-1', score: table.players[name].score });
-		let o = { id, name, step, table };
-		if (succeed) o.stepIfValid = step + 1;
-		let res = await mPostRoute('table', o);
-	}
-	return { setup, present, stats, activate };
 }
 function fleetingMessage(msg, d, styles, ms, fade) {
 	if (isString(msg)) {
@@ -3319,19 +2453,6 @@ function getAbstractSymbol(n) {
 	else if (isList(n)) n = rChoose(n);
 	return `abstract_${String(n).padStart(3, '0')}`;
 }
-function getAllHabitats() {
-	let res = [];
-	for (const k in M.details) {
-		let hab = M.details[k].habitat;
-		toWords(hab.toLowerCase()).map(x => addIf(res, x));
-	}
-	res.sort();
-	return res;
-}
-function getBar(ctx, list, val) {
-	let res = list.filter(p => isWithinDelta(p.x, val, 2) && (isLightBefore(ctx, p.x, p.y) || isLightAfter(ctx, p.x, p.y)));
-	return res;
-}
 function getBeautifulColors() {
 	let res = getColormapColors();
 	res = res.concat(colorSchemeRYB());
@@ -3463,43 +2584,6 @@ function getCheckedRadios(rg) {
 		if (ch.checked) list.push(ch.value);
 	}
 	return list;
-}
-function getCivSpot(civ, row, col, fact = 1) {
-	let rAdvisor = { x: 11, y: 27, w: 87, h: 136 }; //von persia
-	let rColony1 = { x: 10, y: 193, w: 87, h: 137 }; //von japan
-	let rColony2 = { x: 122, y: 192, w: 87, h: 136 }; //von india
-	let rColonyUpPersia = { x: 122, y: 26, w: 87, h: 136 }; //von portugal
-	let rBuilding1 = { x: 132, y: 26, w: 87, h: 136 }; //von portugal
-	let rBuilding1Persia = { x: 243, y: 26, w: 87, h: 136 }; //von persia
-	let rBuilding2 = { x: 243, y: 28, w: 87, h: 136 };
-	let dxBuildings = rBuilding2.x - (rBuilding1.x + rBuilding1.w);
-	let rWic = { x: 700, y: 26, w: 87, h: 136 }; //calculated
-	let rLastWonder = { x: 700, y: 193, w: 87, h: 136 };
-	let rWonder = { x: 674, y: 193, w: 87, h: 136 };
-	let dxWonders = 25;
-	for (const r of [rAdvisor, rColony1, rColony2, rColonyUpPersia, rBuilding1, rBuilding1Persia, rBuilding2, rWic, rLastWonder, rWonder]) {
-		r.x *= fact; r.y *= fact; r.w *= fact; r.h *= fact;
-	}
-	dxBuildings *= fact;
-	dxWonders *= fact;
-	if (row == 0 && col == 0) return rAdvisor;
-	if (row == 0 && col == 1 && civ == 'persia') return rColonyUpPersia;
-	if (row == 0 && col == 1) return rBuilding1;
-	if (row == 0 && col == 2 && civ == 'persia') return rBuilding1Persia;
-	if (row == 0 && col == 2) return rBuilding2;
-	if (row == 0 && col == 6) return rWic;
-	let r, dist;
-	if (row == 0) {
-		r = rBuilding2;
-		dist = dxBuildings + r.w
-		return { x: r.x + dist * (col - 2), y: r.y, w: r.w, h: r.h };
-	}
-	if (row == 1 && col == 0) return rColony1;
-	if (row == 1 && col == 1 && civ != 'china' && civ != 'poland') return rColony2;
-	if (row == 1 && col == 6) return rLastWonder;
-	r = rLastWonder;
-	dist = dxWonders + r.w;
-	return { x: r.x - dist * (6 - col), y: r.y, w: r.w, h: r.h };
 }
 function getColorHexes(x) {
 	return [
@@ -3861,21 +2945,6 @@ function getDetails(key) {
 }
 function getDivId(key) { return 'd' + capitalize(key); }
 
-function getDynId(loc, oid) { return loc + '@' + oid; }
-
-async function getEvent(id, cachedOk = true) {
-	let res = lookup(Serverdata, ['events', id]);
-	if (!cachedOk) Serverdata.events[id] = await mGetRoute('event', { id });
-	return res;
-}
-function getEventValue(o) {
-	if (isEmpty(o.time)) return o.text;
-	return o.time + ' ' + stringBefore(o.text, '\n');
-}
-async function getEvents(cachedOk = false) {
-	if (!cachedOk) Serverdata.events = await mGetRoute('events');
-	return Serverdata.events;
-}
 function getFunctionsNameThatCalledThisFunction() {
 	let c1 = getFunctionsNameThatCalledThisFunction.caller;
 	if (nundef(c1)) return 'no caller!';
@@ -3883,44 +2952,6 @@ function getFunctionsNameThatCalledThisFunction() {
 	if (nundef(c2)) return 'no caller!';
 	return c2.name;
 }
-function getGameColor(gamename) { return getGameConfig(gamename).color; }
-
-function getGameConfig(gamename) { return Serverdata.config.games[gamename]; }
-
-function getGameFriendly(gamename) { return getGameConfig(gamename).friendly; }
-
-function getGameOption(prop) { return lookup(T, ['options', prop]); }
-
-function getGameOptions(gamename) { return getGameConfig(gamename).options; }
-
-function getGamePlayerOptions(gamename) { return getGameConfig(gamename).ploptions; }
-
-function getGamePlayerOptionsAsDict(gamename) { return valf(getGamePlayerOptions(gamename), {}); }
-
-function getGameProp(prop) { return getGameConfig(T.game)[prop]; }
-
-function getGameValues() {
-	let user = U.id;
-	let game = G.id;
-	let level = G.level;
-	let settings = { numColors: 1, numRepeat: 1, numPics: 1, numSteps: 1, colors: ColorList };
-	settings = mergeOverride(settings, DB.settings);
-	if (isdef(U.settings)) settings = mergeOverride(settings, U.settings);
-	if (isdef(DB.games[game])) settings = mergeOverride(settings, DB.games[game]);
-	let next = lookup(DB.games, [game, 'levels', level]); if (next) settings = mergeOverride(settings, next);
-	next = lookup(U, ['games', game]); if (next) settings = mergeOverride(settings, next);
-	next = lookup(U, ['games', game, 'levels', level]); if (next) settings = mergeOverride(settings, next);
-	delete settings.levels;
-	Speech.setLanguage(settings.language);
-	return settings;
-}
-function getHeaderNames(arr) {
-	let di = { dateof: 'date', sender_name: 'from', sender_owner: 'owner', receiver_name: 'to', receiver_owner: 'owner', description: 'note' };
-	let headers = arr.map(x => valf(di[x], x));
-	return headers;
-}
-function getIdKey(elem) { let id = mBy(elem).id; return id.substring(1).toLowerCase(); }
-
 function getImageData(src) {
 	return new Promise((resolve, reject) => {
 		const img = new Image();
@@ -3940,57 +2971,12 @@ function getImageData(src) {
 		};
 	});
 }
-function getItem(k) { return infoToItem(Syms[k]); }
-
-function getLevelColor(n) {
-	const levelColors = [LIGHTBLUE, BLUE, GREEN, YELLOW, 'orange', RED, '#222',
-		GREEN, BLUE, PURPLE, YELLOW2, 'deepskyblue', 'deeppink', //** MAXLEVEL 10 */
-		TEAL, ORANGE, 'seagreen', FIREBRICK, OLIVE, '#ffd8b1', '#000075', '#a9a9a9', '#ffffff', '#000000', 'gold', 'orangered', 'skyblue', 'pink', 'palegreen', '#e6194B'];
-	return levelColors[n - 1];
-}
-function getLine(ctx, list, val) {
-	let res = list.filter(p => isWithinDelta(p.y, val, 2) && (isLightBeforeV(ctx, p.x, p.y) || isLightAfterV(ctx, p.x, p.y)));
-	let ls = sortBy(res, 'x');
-	let segments = [], seg = [];
-	let i = -1; let lastx = -1;
-	while (++i < ls.length) {
-		let el = ls[i];
-		if (lastx >= 0 && el.x > lastx + 1) {
-			segments.push(seg); seg = [];
-		} else {
-			if (el.x != lastx) seg.push(el);
-		}
-		lastx = el.x;
-	}
-	segments.push(seg);
-	let len = 0, best = null;
-	for (const s of segments) { if (s.length > len) { len = s.length; best = s } }
-	return best;
-}
 function getListAndDicts(list) {
 	let dicts = {}, lists = [];
 	for (const arg of Array.from(arguments).slice(1)) {
 		lists.push(list2dict(list, arg));
 	}
 	return [list].concat(lists);
-}
-function getListAndDictsForDicolors() {
-	let bucketlist = Object.keys(M.dicolor);
-	bucketlist = arrCycle(bucketlist, 8);
-	let dicolorlist = [];
-	for (const bucket of bucketlist) {
-		let list = dict2list(M.dicolor[bucket]);
-		for (const c of list) {
-			let o = w3color(c.value);
-			o.name = c.id;
-			o.hex = c.value;
-			o.bucket = bucket;
-			dicolorlist.push(o);
-		}
-	}
-	let byhex = list2dict(dicolorlist, 'hex');
-	let byname = list2dict(dicolorlist, 'name');
-	return [dicolorlist, byhex, byname];
 }
 function getMenu() { return isdef(Menu) ? Menu.key : null; }
 
@@ -4020,261 +3006,9 @@ function getMouseCoordinatesRelativeToElement(ev, elem) {
 	const y = ev.clientY - rect.top;
 	return { x, y };
 }
-function getMyColors1() {
-	const colors = [
-		{ hex: '#336699', name: 'Dark Slate Blue', bucket: 'blue' },
-		{ hex: '#3366cc', name: 'Royal Blue', bucket: 'blue' },
-		{ hex: '#000099', name: 'Dark Blue', bucket: 'blue' },
-		{ hex: '#0000cc', name: 'Medium Blue', bucket: 'blue' },
-		{ hex: '#000066', name: 'Navy Blue', bucket: 'blue' },
-		{ hex: '#006666', name: 'Medium Teal', bucket: 'cyanblue' },
-		{ hex: '#006699', name: 'Sea Bluegreen', bucket: 'cyanblue' },
-		{ hex: '#0099cc', name: 'Deep Sky Blue', bucket: 'cyanblue' },
-		{ hex: '#0066cc', name: 'Dodger Blue', bucket: 'cyanblue' },
-		{ hex: '#0033cc', name: 'Bright Blue', bucket: 'blue' },
-		{ hex: '#3333ff', name: 'Electric Blue', bucket: 'blue' },
-		{ hex: '#009999', name: 'Strong Cyan', bucket: 'cyan' },
-		{ hex: '#33cccc', name: 'Sea Sky', bucket: 'cyan' },
-		{ hex: '#0099ff', name: 'Spring Sky', bucket: 'cyanblue' },
-		{ hex: '#0066ff', name: 'Brilliant Blue', bucket: 'cyanblue' },
-		{ hex: '#3366ff', name: 'Summer Sky', bucket: 'blue' },
-		{ hex: '#3333cc', name: 'Indigo Sky', bucket: 'blue' },
-		{ hex: '#339966', name: 'Sea Green', bucket: 'greencyan' },
-		{ hex: '#00ffcc', name: 'Aquagreen', bucket: 'cyan' },
-		{ hex: '#33ccff', name: 'Light Sky Blue', bucket: 'cyanblue' },
-		{ hex: '#6699ff', name: 'Light Royal Blue', bucket: 'blue' },
-		{ hex: '#6600ff', name: 'Vivid Violet', bucket: 'bluemagenta' },
-		{ hex: '#6600cc', name: 'Deep Purple', bucket: 'bluemagenta' },
-		{ hex: '#339933', name: 'Forest Green', bucket: 'green' },
-		{ hex: '#00cc66', name: 'Medium Spring Green', bucket: 'greencyan' },
-		{ hex: '#00ff99', name: 'Spring Green', bucket: 'greencyan' },
-		{ hex: '#66ffcc', name: 'Light Aqua', bucket: 'cyan' },
-		{ hex: '#66ffff', name: 'bleach', bucket: 'cyan' },
-		{ hex: '#66ccff', name: 'Light Azure', bucket: 'cyanblue' },
-		{ hex: '#99ccff', name: 'Pale Sky Blue', bucket: 'cyanblue' },
-		{ hex: '#9999ff', name: 'Pale Lilac', bucket: 'bluemagenta' },
-		{ hex: '#9966ff', name: 'Medium Violet', bucket: 'bluemagenta' },
-		{ hex: '#9933ff', name: 'Electric Lilac', bucket: 'bluemagenta' },
-		{ hex: '#9900ff', name: 'Bright Violet', bucket: 'bluemagenta' },
-		{ hex: '#00cc00', name: 'Lime Green', bucket: 'green' },
-		{ hex: '#66ff99', name: 'Spearmint', bucket: 'greencyan' },
-		{ hex: '#99ffcc', name: 'Pale Mint', bucket: 'greencyan' },
-		{ hex: '#ccffff', name: 'Very Pale Cyan', bucket: 'cyan' },
-		{ hex: '#cc66ff', name: 'Medium Orchid', bucket: 'magenta' },
-		{ hex: '#cc33ff', name: 'Bright Orchid', bucket: 'magenta' },
-		{ hex: '#9900cc', name: 'Dark Violet', bucket: 'bluemagenta' },
-		{ hex: '#003300', name: 'Dark Green', bucket: 'green' },
-		{ hex: '#009933', name: 'Jungle Green', bucket: 'green' },
-		{ hex: '#33cc33', name: 'Light Green', bucket: 'green' },
-		{ hex: '#99ff99', name: 'Pale Green', bucket: 'green' },
-		{ hex: '#ccffcc', name: 'Very Pale Green', bucket: 'green' },
-		{ hex: '#ffccff', name: 'Rosa', bucket: 'magenta' },
-		{ hex: '#ffcccc', name: 'Pale Pink', bucket: 'magenta' },
-		{ hex: '#ff99ff', name: 'Light Pink', bucket: 'magenta' },
-		{ hex: '#ff66ff', name: 'Magentapink', bucket: 'magenta' },
-		{ hex: '#660066', name: 'Purple', bucket: 'magenta' },
-		{ hex: '#336600', name: 'Young Olive', bucket: 'green' },
-		{ hex: '#009900', name: 'Strong Green', bucket: 'green' },
-		{ hex: '#66ff33', name: 'Spring Leaf', bucket: 'yellowgreen' },
-		{ hex: '#99ff66', name: 'Light Lime', bucket: 'yellowgreen' },
-		{ hex: '#ccff99', name: 'Very Light Green', bucket: 'yellowgreen' },
-		{ hex: '#cc0099', name: 'Strong Magenta', bucket: 'magenta' },
-		{ hex: '#993399', name: 'Dark Magenta', bucket: 'magenta' },
-		{ hex: '#333300', name: 'Very Dark Olive', bucket: 'green' },
-		{ hex: '#669900', name: 'Olive Drab', bucket: 'yellowgreen' },
-		{ hex: '#99ff33', name: 'Light Chartreuse', bucket: 'yellowgreen' },
-		{ hex: '#ccff66', name: 'Pale Yellow Green', bucket: 'yellowgreen' },
-		{ hex: '#ff6699', name: 'Light Red Violet', bucket: 'magenta' },
-		{ hex: '#ff3399', name: 'Deep Pink', bucket: 'magenta' },
-		{ hex: '#cc3399', name: 'Medium Red Violet', bucket: 'magenta' },
-		{ hex: '#990099', name: 'Dark Red Violet', bucket: 'magenta' },
-		{ hex: '#99cc00', name: 'Lime', bucket: 'yellowgreen' },
-		{ hex: '#ccff33', name: 'Light Lime Green', bucket: 'yellowgreen' },
-		{ hex: '#ffcc66', name: 'Light Orange', bucket: 'orangeyellow' },
-		{ hex: '#ff6666', name: 'Dark Salmon', bucket: 'red' },
-		{ hex: '#ff0066', name: 'Hot Pink', bucket: 'magenta' },
-		{ hex: '#cc6699', name: 'Medium Pink', bucket: 'magenta' },
-		{ hex: '#993366', name: 'Dark Mauve', bucket: 'magenta' },
-		{ hex: '#ff5050', name: 'Strawberry', bucket: 'red' },
-		{ hex: '#cc0066', name: 'Vivid Raspberry', bucket: 'magenta' },
-		{ hex: '#660033', name: 'Dark Red', bucket: 'red' },
-		{ hex: '#996633', name: 'Medium Brown', bucket: 'orange' },
-		{ hex: '#cc6600', name: 'Orange Brown', bucket: 'orange' },
-		{ hex: '#ff3300', name: 'Red Orange', bucket: 'orangered' },
-		{ hex: '#cc0000', name: 'Jolly Red', bucket: 'red' },
-		{ hex: '#990033', name: 'Dark Crimson', bucket: 'red' },
-		{ hex: '#663300', name: 'Darkbrown', bucket: 'orange' },
-		{ hex: '#cc3300', name: 'Carrot', bucket: 'orangered' },
-		{ hex: '#993333', name: 'Indian Red', bucket: 'red' },
-		{ hex: '#fc600a', name: 'Tangerine', bucket: 'orange' },
-		{ hex: '#fccc1a', name: 'Bright Yellow', bucket: 'yellow' },
-		{ hex: '#b2d732', name: 'Lime Green', bucket: 'yellowgreen' },
-		{ hex: '#4424d6', name: 'Violetblue', bucket: 'bluemagenta' },
-		{ hex: '#c21460', name: 'Raspberry', bucket: 'magenta' },
-		{ hex: '#afff45', name: 'Apple Green', bucket: 'yellowgreen' },
-		{ hex: '#42d4f4', name: 'Sky Blue', bucket: 'cyanblue' },
-		{ hex: '#ffe119', name: 'Sunshine Yellow', bucket: 'yellow' },
-		{ hex: '#e6194b', name: 'Deep Raspberry', bucket: 'red' },
-		{ hex: '#3cb44b', name: 'Pleasant Green', bucket: 'green' },
-		{ hex: '#4363d8', name: 'Cobalt Blue', bucket: 'blue' },
-		{ hex: '#911eb4', name: 'Violet', bucket: 'bluemagenta' },
-		{ hex: '#fff620', name: 'Buttercup Yellow', bucket: 'yellow' },
-		{ hex: '#f58231', name: 'Orange', bucket: 'orange' },
-		{ hex: '#ffd8b1', name: 'Peach', bucket: 'orangeyellow' },
-		{ hex: '#000075', name: 'Deep Blue', bucket: 'blue' },
-		{ hex: '#ff6f61', name: 'Watermelon', bucket: 'orangered' },
-		{ hex: '#c68e17', name: 'Caramel', bucket: 'yellow' },
-		{ hex: '#f7cac9', name: 'Light Pink', bucket: 'magenta' },
-		{ hex: '#009b77', name: 'Seaglass', bucket: 'cyan' },
-		{ hex: '#dd4124', name: 'Rust Red', bucket: 'orangered' },
-		{ hex: '#d65076', name: 'Blush', bucket: 'magenta' },
-		{ hex: '#efc050', name: 'Goldenrod', bucket: 'orangeyellow' },
-		{ hex: '#9b2335', name: 'Carmine', bucket: 'red' },
-		{ hex: '#e15d44', name: 'Terracotta', bucket: 'orangered' },
-		{ hex: '#bc243c', name: 'Red', bucket: 'red' },
-		{ hex: '#c3447a', name: 'Berry Pink', bucket: 'magenta' },
-		{ hex: '#ffd662', name: 'Banana', bucket: 'orangeyellow' },
-		{ hex: '#f4b9b8', name: 'Pale Blush', bucket: 'magenta' },
-		{ hex: '#ff968a', name: 'Light Coral', bucket: 'orangered' },
-		{ hex: '#83781b', name: 'Olive', bucket: 'yellowgreen' },
-		{ hex: '#d01013', name: 'Scarlet', bucket: 'red' },
-		{ hex: '#58a813', name: 'Lawn Green', bucket: 'yellowgreen' },
-		{ hex: '#fad302', name: 'Golden Yellow', bucket: 'yellow' },
-		{ hex: '#55038c', name: 'Deep Violet', bucket: 'bluemagenta' },
-		{ hex: '#ed527a', name: 'Raspberry Pink', bucket: 'magenta' },
-		{ hex: '#d99559', name: 'Sand', bucket: 'orange' },
-		{ hex: '#049dd9', name: 'Ocean Blue', bucket: 'cyanblue' },
-		{ hex: '#ff4057', name: 'Salmon Pink', bucket: 'orangered' },
-		{ hex: '#00b8a9', name: 'Sea Green', bucket: 'greencyan' },
-		{ hex: '#f46036', name: 'Orange Red', bucket: 'orangered' },
-		{ hex: '#e71d36', name: 'Crimson Red', bucket: 'red' },
-		{ hex: '#2ec4b6', name: 'Aqua', bucket: 'cyan' },
-		{ hex: '#ffd166', name: 'Apricot', bucket: 'orangeyellow' },
-		{ hex: '#06d6a0', name: 'Medium Spring Green', bucket: 'greencyan' },
-		{ hex: '#ef476f', name: 'Pale Red', bucket: 'orangered' },
-		{ hex: '#26547c', name: 'Winter Blue', bucket: 'blue' },
-		{ hex: '#ff9f1c', name: 'Vivid Orange', bucket: 'orange' },
-		{ hex: '#00bbf9', name: 'Bright Sky Blue', bucket: 'cyanblue' },
-		{ hex: '#118ab2', name: 'Blue Green', bucket: 'cyanblue' },
-		{ hex: '#073b4c', name: 'Dark Teal', bucket: 'cyanblue' },
-		{ hex: '#ffd32d', name: 'Bright Yellow', bucket: 'yellow' },
-		{ hex: '#8338ec', name: 'Bright Purple', bucket: 'bluemagenta' },
-		{ hex: '#fb5607', name: 'Bright Orange Red', bucket: 'orangered' },
-		{ hex: '#ff006e', name: 'Hot Magenta', bucket: 'magenta' },
-		{ hex: '#3a86ff', name: 'Bright Blue', bucket: 'blue' },
-		{ hex: '#ffbe0b', name: 'Bright Yellow Orange', bucket: 'orangeyellow' },
-		{ hex: '#ff006e', name: 'Hot Magenta', bucket: 'magenta' },
-		{ hex: '#f94144', name: 'Strong Red', bucket: 'red' },
-		{ hex: '#f3722c', name: 'Deep Orange', bucket: 'orangered' },
-		{ hex: '#9b5de5', name: 'Bright Violet', bucket: 'bluemagenta' },
-		{ hex: '#f15bb5', name: 'Light Magenta', bucket: 'magenta' },
-		{ hex: '#fee440', name: 'Bright Yellow', bucket: 'yellow' },
-		{ hex: '#00f5d4', name: 'Bright Aqua', bucket: 'cyan' },
-		{ hex: '#7209b7', name: 'Dark Purple', bucket: 'bluemagenta' },
-		{ hex: '#ff9aa2', name: 'Light Pink', bucket: 'magenta' },
-		{ hex: '#ffb7b2', name: 'Light Blush', bucket: 'magenta' },
-		{ hex: '#ffdac1', name: 'Peach Puff', bucket: 'orangeyellow' },
-		{ hex: '#e2f0cb', name: 'Pale Green', bucket: 'yellowgreen' },
-		{ hex: '#b5ead7', name: 'Mint Green', bucket: 'greencyan' },
-		{ hex: '#fddb3a', name: 'Bright Yellow', bucket: 'yellow' },
-		{ hex: '#f49ac2', name: 'Orchid Pink', bucket: 'magenta' },
-		{ hex: '#836fff', name: 'Medium Slate Blue', bucket: 'bluemagenta' },
-		{ hex: '#ffd1dc', name: 'Pale Blush Pink', bucket: 'magenta' },
-		{ hex: '#a23bec', name: 'Bright Purple', bucket: 'bluemagenta' },
-		{ hex: '#450920', name: 'Dark Crimson', bucket: 'red' },
-		{ hex: '#004346', name: 'Dark Cyan', bucket: 'cyan' },
-		{ hex: '#540b0e', name: 'Dark Maroon', bucket: 'red' },
-		{ hex: '#0b132b', name: 'Dark Blue', bucket: 'blue' },
-		{ hex: '#3c1874', name: 'Deep Purple', bucket: 'bluemagenta' },
-		{ hex: '#08415c', name: 'Dark Cyan Blue', bucket: 'cyanblue' },
-		{ hex: '#650d1b', name: 'Deep Red', bucket: 'red' },
-		{ hex: '#005f73', name: 'Teal Blue', bucket: 'cyanblue' },
-		{ hex: '#6622cc', name: 'Bright Violet', bucket: 'bluemagenta' },
-		{ hex: '#6a040f', name: 'Dark Red', bucket: 'red' },
-		{ hex: '#230c33', name: 'Dark Purple', bucket: 'bluemagenta' },
-		{ hex: '#3a0ca3', name: 'Dark Violet', bucket: 'bluemagenta' },
-		{ hex: '#240046', name: 'Very Dark Violet', bucket: 'bluemagenta' },
-		{ hex: '#10002b', name: 'Midnight Purple', bucket: 'bluemagenta' }
-	];
-	let res = [];
-	for (const c of colors) {
-		let o = w3color(c.hex);
-		o.name = transformColorName(c.name);
-		o.bucket = c.bucket;
-		o.hex = c.hex;
-		res.push(o)
-	}
-	return res;
-}
-function getMyColors2() {
-	const colors = [
-		{ hex: '#669999', name: 'Desaturated Cyan', bucket: 'cyan' },
-		{ hex: '#666699', name: 'Dark Lavender', bucket: 'bluemagenta' },
-		{ hex: '#ffffff', name: 'White', bucket: 'black' },
-		{ hex: '#a9a9a9', name: 'Dark Gray', bucket: 'blue' },
-		{ hex: '#000000', name: 'Black', bucket: 'black' },
-		{ hex: '#cb99c9', name: 'Lavender Pink', bucket: 'magenta' },
-		{ hex: '#aec6cf', name: 'Pastel Blue', bucket: 'cyanblue' },
-		{ hex: '#dea5a4', name: 'Pastel Red', bucket: 'red' },
-		{ hex: '#779ecb', name: 'Periwinkle', bucket: 'bluemagenta' },
-		{ hex: '#b39eb5', name: 'Pastel Purple', bucket: 'bluemagenta' },
-		{ hex: '#cfcfc4', name: 'Light Gray', bucket: 'black' },
-		{ hex: '#666633', name: 'Dark Olive Green', bucket: 'yellowgreen' },
-		{ hex: '#999966', name: 'Pale Olive', bucket: 'yellowgreen' },
-		{ hex: '#347c98', name: 'Steel Blue', bucket: 'cyanblue' },
-		{ hex: '#469990', name: 'Teal', bucket: 'cyan' },
-		{ hex: '#6b5b95', name: 'Royal Purple', bucket: 'bluemagenta' },
-		{ hex: '#88b04b', name: 'Lime Green', bucket: 'yellowgreen' },
-		{ hex: '#92a8d1', name: 'Pale Blue', bucket: 'cyanblue' },
-		{ hex: '#955251', name: 'Rosewood', bucket: 'red' },
-		{ hex: '#b565a7', name: 'Orchid', bucket: 'magenta' },
-		{ hex: '#45b8ac', name: 'Medium Turquoise', bucket: 'cyan' },
-		{ hex: '#5b5ea6', name: 'Medium Blue', bucket: 'blue' },
-		{ hex: '#dfcfbe', name: 'Beige Grey', bucket: 'yellow' },
-		{ hex: '#55b4b0', name: 'Dark Turquoise', bucket: 'cyan' },
-		{ hex: '#7fcdcd', name: 'Light Cyan', bucket: 'cyan' },
-		{ hex: '#98b4d4', name: 'Pale Blue', bucket: 'cyanblue' },
-		{ hex: '#8d9440', name: 'Olive', bucket: 'yellowgreen' },
-		{ hex: '#a4b086', name: 'Sage Green', bucket: 'yellowgreen' },
-		{ hex: '#774d8e', name: 'Purple', bucket: 'bluemagenta' },
-		{ hex: '#6e81a0', name: 'Slate Blue', bucket: 'cyanblue' },
-		{ hex: '#5a7247', name: 'Military Green', bucket: 'yellowgreen' },
-		{ hex: '#d2c29d', name: 'Pale Tan', bucket: 'yellow' },
-		{ hex: '#f2e2e0', name: 'Very Pale Pink', bucket: 'magenta' },
-		{ hex: '#e1ede9', name: 'Very Pale Cyan', bucket: 'cyan' },
-		{ hex: '#5e3d26', name: 'Dark Brown', bucket: 'orange' },
-		{ hex: '#a65f46', name: 'Copper Brown', bucket: 'orange' },
-		{ hex: '#48bf84', name: 'Light Emerald', bucket: 'greencyan' },
-		{ hex: '#90be6d', name: 'Light Olive Green', bucket: 'yellowgreen' },
-		{ hex: '#577590', name: 'Airforce Greyblue', bucket: 'blue' },
-		{ hex: '#c7ceea', name: 'Lavender Blue', bucket: 'bluemagenta' },
-		{ hex: '#2b2d42', name: 'Gun Grey', bucket: 'blue' },
-		{ hex: '#3f3351', name: 'Dark Lavender', bucket: 'bluemagenta' },
-		{ hex: '#423629', name: 'Dark Taupe', bucket: 'orange' },
-		{ hex: '#283618', name: 'Dark Olive', bucket: 'yellowgreen' },
-		{ hex: '#462255', name: 'Purple', bucket: 'bluemagenta' },
-		{ hex: '#1b263b', name: 'Prussian Blue', bucket: 'blue' },
-		{ hex: '#353535', name: 'Dark Gray', bucket: 'black' },
-		{ hex: '#101820', name: 'Eerie Black', bucket: 'black' },
-		{ hex: '#1a1423', name: 'Raisin Black', bucket: 'black' },
-		{ hex: '#4a4e69', name: 'Independence2', bucket: 'bluemagenta' },
-		{ hex: '#264653', name: 'Greengrey', bucket: 'cyanblue' }
-	];
-	let res = [];
-	for (const c of colors) {
-		let o = w3color(c.hex);
-		o.name = transformColorName(c.name);
-		o.bucket = c.bucket;
-		o.hex = c.hex;
-		res.push(o)
-	}
-	return res;
-}
 function getNavBg() { return mGetStyle('dNav', 'bg'); }
 
 function getNow() { return Date.now(); }
-
-function getO(n, R) { let oid = n.oid; if (isdef(oid)) return R.getO(oid); else return null; }
 
 function getPaletteFromCanvas(canvas) {
 	if (nundef(ColorThiefObject)) ColorThiefObject = new ColorThief();
@@ -4291,46 +3025,10 @@ function getPaletteFromCanvas(canvas) {
 		};
 	});
 }
-function getParams(areaName, oSpec, oid) {
-	let params = oSpec.params ? oSpec.params : {};
-	let panels = oSpec.panels ? oSpec.panels : [];
-	let num = panels.length;
-	let or = params.orientation ? params.orientation == 'h' ? 'rows'
-		: 'columns' : DEF_ORIENTATION;
-	let split = params.split ? params.split : DEF_SPLIT;
-	let bg = oSpec.color ? oSpec.color : randomColor();
-	let fg = bg ? colorIdealText(bg) : null;
-	let id = oSpec.id ? oSpec.id : areaName;
-	if (oid) { id = getDynId(id, oid); }
-	let parent = mBy(areaName);
-	if (oSpec.id) {
-		parent.id = id;
-		addAREA(id, oSpec);
-		parent.innerHTML = id;
-	}
-	if (bg) { mColor(parent, bg, fg); }
-	return [num, or, split, bg, fg, id, panels, parent];
-}
 function getPixRgb(ctx, x, y) {
 	var pix = ctx.getImageData(x, y, 1, 1).data;
 	var red = pix[0]; var green = pix[1]; var blue = pix[2];
 	return { r: red, g: green, b: blue };
-}
-function getPlayerProp(prop) { let pl = T.players[getUname()]; return pl[prop]; }
-
-function getPlayersWithMaxScore(table) {
-	let list = dict2list(table.players, 'name');
-	list = sortByDescending(list, 'score');
-	maxlist = arrTakeWhile(list, x => x.score == list[0].score);
-	return maxlist.map(x => x.name);
-}
-function getPlaymode(idOrTable, name) {
-	if (isDict(idOrTable)) {
-		let table = idOrTable;
-		return table.players[name].playmode;
-	} else if (T) {
-		return T.id == idOrTable ? T.players[name].playmode : 'wrong table';
-	} else return 'NO table!';
 }
 function getPresentableDetails(o) {
 	if (!o || nundef(M.details[o.key])) return null;
@@ -4349,8 +3047,6 @@ function getRadioValue(prop) {
 	let val = getCheckedRadios(fs)[0];
 	return isNumber(val) ? Number(val) : val;
 }
-function getRandomFromArray(array) { return (array[randomIndex(array) | 0]) }
-
 function getRect(elem, relto) {
 	if (isString(elem)) elem = document.getElementById(elem);
 	let res = elem.getBoundingClientRect();
@@ -4407,8 +3103,6 @@ function getStyleProp(elem, prop) { return getComputedStyle(elem).getPropertyVal
 
 function getSuperdi(key) { return valf(M.superdi[key], {}); }
 
-function getTable() { assertion(!Tid, `getTable!!! ${T.id} !!! ${Tid}`); return T; }
-
 function getTextureStyle(bg, t) {
 	let bgRepeat = t.includes('marble_') || t.includes('wall') ? 'no-repeat' : 'repeat';
 	let bgSize = t.includes('marble_') || t.includes('wall') ? `cover` : t.includes('ttrans') ? '' : 'auto';
@@ -4424,13 +3118,8 @@ function getThemeDark() { return getCSSVariable('--bgNav'); }
 
 function getThemeFg() { return getCSSVariable('--fgButton'); }
 
-function getTid() { return Tid; }
-
 function getTimestamp() { return Date.now(); }
 
-function getTurnPlayers(table) {
-	return table.turn.join(', ');
-}
 function getTypeOf(param) {
 	let type = typeof param;
 	if (type == 'string') {
@@ -4509,38 +3198,6 @@ function hide(elem) {
 }
 function highlightPlayerItem(item) { mStyle(iDiv(item), { bg: getUserColor(item.name), fg: 'white', border: `white` }); }
 
-async function homeOnclickDeleteBlog() {
-	let ta = mByTag('textarea');
-	if (nundef(ta)) return;
-	let val = ta.value;
-	let me = getUname();
-	if (isEmptyOrWhiteSpace(val)) return;
-	U.blog = [];
-	await postUserChange();
-}
-async function homeOnclickEditBlog() {
-	let ta = mByTag('textarea');
-	if (nundef(ta)) return;
-	ta.value = U.blog.map(x => x.text).join('\n');
-}
-async function homeOnclickSaveBlog() {
-	let ta = mByTag('textarea');
-	if (nundef(ta)) return;
-	let val = ta.value;
-	let me = getUname();
-	if (isEmptyOrWhiteSpace(val)) return;
-	lookupAddToList(U, ['blog'], { text: val, ts: getNow() });
-	await postUserChange();
-}
-function homeSidebar(wmin = 150) {
-	mStyle('dLeft', { wmin });
-	let d = mDom('dLeft', { wmin: wmin - 10, matop: 20, h: window.innerHeight - getRect('dLeft').y - 102 }); //, bg:'#00000020'  }); 
-	let gap = 5;
-	let stylesTitles = { matop: 10, bg: '#ffffff80', fg: 'black' };
-	let cmds = {};
-	cmds.homeNew = mCommand(d, 'homeNew', 'New Entry'); mNewline(d, gap);
-	UI.commands = cmds;
-}
 function iAdd(item, liveprops = {}, addprops = {}) {
 	let id, l;
 	if (isString(item)) { id = item; item = valf(Items[id], {}); }
@@ -4646,18 +3303,6 @@ async function imgToServer(canvas, path) {
 }
 function infoToItem(x) { let item = { info: x, key: x.key }; item.id = iRegister(item); return item; }
 
-function initCodingUI() {
-	mStyle('dMain', { bg: 'silver' });
-	[dTable, dSidebar] = mCols100('dMain', '1fr auto', 0);
-	let [dtitle, dta] = mRows100(dTable, 'auto 1fr', 2);
-	mDiv(dtitle, { padding: 10, fg: 'white', fz: 24 }, null, 'OUTPUT:');
-	AU.ta = mTextArea100(dta, { fz: 20, padding: 10, family: 'opensans' });
-}
-function initCrowd() {
-	while (availablePeeps.length) {
-		addPeepToCrowd().walk.progress(Math.random())
-	}
-}
 function inpToChecklist(ev, grid) {
 	let key = ev.key;
 	let inp = ev.target;
@@ -4690,8 +3335,6 @@ async function instructionStandard(table, instruction) {
         `;
 	} else { html = `waiting for: ${getTurnPlayers(table)}` }
 	mDom(dinst, styleInstruction, { html });
-}
-function instructionUpdate() {
 }
 function intersection(arr1, arr2) {
 	let res = [];
@@ -4742,7 +3385,7 @@ function isEmptyOrWhiteSpace(s) { return isEmpty(s.trim()); }
 
 function isExactly(n, num = 1) { return n == num; }
 
-function isExpressionSeparator(ch,charsAllowed) { return ',-.!?;:'.includes(ch); }
+function isExpressionSeparator(ch, charsAllowed) { return ',-.!?;:'.includes(ch); }
 
 function isFilename(s) { return s.includes('../'); }
 
@@ -4772,14 +3415,6 @@ function isList(arr) { return Array.isArray(arr); }
 
 function isLiteral(x) { return isString(x) || isNumber(x); }
 
-function isMergeableObject(val) {
-	var nonNullObject = val && typeof val === 'object'
-	return nonNullObject
-		&& Object.prototype.toString.call(val) !== '[object RegExp]'
-		&& Object.prototype.toString.call(val) !== '[object Date]'
-}
-function isMyTurn(table) { return table.turn.includes(getUname()) }
-
 function isNumber(x) { return x !== ' ' && x !== true && x !== false && isdef(x) && (x == 0 || !isNaN(+x)); }
 
 function isNumeric(x) { return !isNaN(+x); }
@@ -4802,8 +3437,6 @@ function isPixLight(ctx, x, y) {
 	var red = pix[0]; var green = pix[1]; var blue = pix[2];
 	return red + green + blue > 520;
 }
-function isPlayerHuman(table, name) { return table.players[name].playmode != 'bot'; }
-
 function isPointOutsideOf(form, x, y) { const r = form.getBoundingClientRect(); return (x < r.left || x > r.right || y < r.top || y > r.bottom); }
 
 function isSameDate(date1, date2) {
@@ -4811,38 +3444,10 @@ function isSameDate(date1, date2) {
 		date1.getMonth() === date2.getMonth() &&
 		date1.getDate() === date2.getDate();
 }
-function isSameTableOpen(id) { return T && T.id == id; }
-
-function isSet(x) { return (isDict(x) && (x.set || x._set)); }
-
 function isString(param) { return typeof param == 'string'; }
 
 function isSvg(elem) { return startsWith(elem.constructor.name, 'SVG'); }
 
-function isTimeForAddon() {
-	if (nundef(ADS)) return false;
-	if (isEmpty(U.avAddons)) return false;
-	if (isdef(AD) && AD.running && AD.checkEndCondition()) {
-		console.log('END!')
-		AD.die();
-		U.addons[AD.key].open = false;
-		AD = null;
-	}
-	if (isdef(AD)) return AD.isTimeForAddon();
-	let open = allCondDict(U.addons, x => x.open == true);
-	if (isEmpty(open)) {
-		console.log('open is empty! choosing a random addon!')
-		let k = chooseRandom(U.avAddons);
-		AD = new ADS[k].cl(k, ADS[k], {});
-	} else if (open.length == 1) {
-		let k = open[0];
-		AD = new ADS[k].cl(k, ADS[k], U.addons[k]);
-	} else {
-		let k = chooseRandom(open);
-		AD = new ADS[k].cl(k, ADS[k], U.addons[k]);
-	}
-	return AD.isTimeForAddon();
-}
 function isWhiteSpace(s) { let white = new RegExp(/^\s$/); return white.test(s.charAt(0)); }
 
 function isWithinDelta(n, goal, delta) { return isBetween(n, goal - delta, goal + delta) }
@@ -4884,12 +3489,6 @@ function keyUpHandler(ev) {
 function last(arr) {
 	return arr.length > 0 ? arr[arr.length - 1] : null;
 }
-function lastOfLanguage(key, language) {
-	let y = symbolDict[key];
-	let w = y[language];
-	let last = stringAfterLast(w, '|');
-	return last.trim();
-}
 function lastWord(s) { return arrLast(toWords(s)); }
 
 function list2dict(arr, keyprop = 'id', uniqueKeys = true) {
@@ -4900,27 +3499,6 @@ function list2dict(arr, keyprop = 'id', uniqueKeys = true) {
 		else lookupAddToList(di, [key], a);
 	}
 	return di;
-}
-function liste(areaName, oSpec, oid, o) {
-	let [num, or, split, bg, fg, id, panels, parent] = getParams(areaName, oSpec, oid);
-	parent.style.display = 'inline-grid';
-	return parent;
-}
-async function loadAndMakeInteractive(imageUrl) {
-	try {
-		const canvas = await createInteractiveCanvas(imageUrl);
-		document.body.appendChild(canvas);
-	} catch (error) {
-		console.error("Error loading image:", error);
-	}
-}
-async function loadAndScaleImage(imageUrl) {
-	try {
-		const canvas = await createScaledCanvasFromImage(imageUrl);
-		document.body.appendChild(canvas);
-	} catch (error) {
-		console.error("Error loading image:", error);
-	}
 }
 async function loadAssets() {
 	M = await mGetYaml('../y/m.yaml');
@@ -6360,17 +4938,6 @@ function mergeOverride(base, drueber) { return _deepMerge(base, drueber, { array
 function mergeOverrideArrays(base, drueber) {
 	return deepmerge(base, drueber, { arrayMerge: overwriteMerge });
 }
-function mimali(c, m) {
-	let seasonColors = 'winter_blue midnightblue light_azure capri spring_frost light_green deep_green summer_sky yellow_pantone orange pale_fallen_leaves timberwolf'.split(' ');
-	let c2 = seasonColors[m - 1];
-	let colors = paletteMix(c, c2, 6).slice();
-	let wheel = [];
-	for (const x of colors) {
-		let pal1 = paletteShades(x);
-		for (const i of range(7)) wheel.push(pal1[i + 2]);
-	}
-	return wheel;
-}
 function mixColors(c1, c2, c2Weight01) {
 	let [color1, color2] = [colorFrom(c1), colorFrom(c2)]
 	const hex1 = color1.substring(1);
@@ -6387,31 +4954,8 @@ function mixColors(c1, c2, c2Weight01) {
 	const hex = colorRgbArgsToHex79(r, g, b);
 	return hex;
 }
-function modifyStat(name, prop, val) {
-	let id = `stat_${name}_${prop}`;
-	console.log('id', id)
-	let ui = mBy(id);
-	console.log('ui', ui)
-	if (isdef(ui)) ui.innerHTML = val;
-}
 function name2id(name) { return 'd_' + name.split(' ').join('_'); }
 
-function nextBar(ctx, rest, color) {
-	list = rest;
-	let val = findMostFrequentVal(list, 'x');
-	rest = list.filter(p => !isWithinDelta(p.x, val, 2));
-	let line = getBar(ctx, list, val);
-	line.map(p => drawPix(ctx, p.x, p.y, color));
-	return { val, line, rest, color };
-}
-function nextLine(ctx, rest, color) {
-	list = rest;
-	let val = findMostFrequentVal(list, 'y');
-	rest = list.filter(p => !isWithinDelta(p.y, val, 2));
-	let line = getLine(ctx, list, val);
-	if (line) line.map(p => drawPix(ctx, p.x, p.y, color));
-	return { val, line, rest, color };
-}
 function normalizeString(s, sep = '_', keep = []) {
 	s = s.toLowerCase().trim();
 	let res = '';
@@ -6420,481 +4964,17 @@ function normalizeString(s, sep = '_', keep = []) {
 }
 function nundef(x) { return x === null || x === undefined || x === 'undefined'; }
 
-async function onEventEdited(id, text, time) {
-	console.log('onEventEdited', id, text, time)
-	let e = Items[id];
-	if (nundef(time)) {
-		[time, text] = extractTime(text);
-	}
-	e.time = time;
-	e.text = text;
-	let result = await simpleUpload('postUpdateEvent', e);
-	console.log('result', result)
-	Items[id] = lookupSetOverride(Serverdata, ['events', id], e);
-	mBy(id).firstChild.value = getEventValue(e);
-	closePopup();
-}
-async function onchangeBotSwitch(ev) {
-	let elem = ev.target;
-	assertion(T, "NO TABLE!!!!!!!!!!!!!!!")
-	let name = getUname();
-	let id = T.id;
-	let playmode = (elem.checked) ? 'bot' : 'human';
-	let olist = [{ keys: ['players', name, 'playmode'], val: playmode }];
-	let res = await mPostRoute(`olist`, { id, name, olist }); //console.log(res)
-}
-async function onclickAddSelected() {
-	let keys = UI.selectedImages;
-	let cmd = UI.commands.addSelected;
-	let collist = M.collections.filter(x => !simpleLocked(x)).map(x => ({ name: x, value: false }));
-	let result = await mGather(iDiv(cmd), {}, { content: collist, type: 'checkList' });
-	if (!result || isEmpty(result)) { console.log('nothing added'); simpleClearSelections(); return; }
-	assertion(isList(result), 'uiCadgetTypeChecklist result is NOT a list!!!')
-	let di = {}, changed = false;
-	for (const key of keys) {
-		let o = M.superdi[key];
-		for (const collname of result) {
-			if (o.colls.includes(collname)) continue;
-			changed = true;
-			o.colls.push(collname);
-			di[key] = o;
-		}
-	}
-	if (!changed) { console.log('nothing added'); simpleClearSelections(); return; }
-	console.log('items changed:', Object.keys(di));
-	await updateSuperdi(di);
-	simpleInit();
-}
-function onclickClear(inp, grid) {
-	inp.value = '';
-	let checklist = Array.from(grid.querySelectorAll('input[type="checkbox"]'));
-	checklist.map(x => x.checked = false);
-	sortCheckboxes(grid);
-}
-async function onclickClearPlayers() {
-	let me = getUname();
-	DA.playerList = [me];
-	for (const name in DA.allPlayers) {
-		if (name != me) unselectPlayerItem(DA.allPlayers[name]);
-	}
-	assertion(!isEmpty(DA.playerList), "uname removed from playerList!!!!!!!!!!!!!!!")
-	DA.lastName = me;
-	mRemoveIfExists('dPlayerOptions')
-}
-async function onclickColor(color) {
-	let hex = colorToHex79(color);
-	U.color = hex; delete U.fg;
-	await updateUserTheme()
-}
 async function onclickCommand(ev) {
 	let key = evToAttr(ev, 'key'); //console.log(key);
 	let cmd = key == 'user' ? UI.nav.commands.user : UI.commands[key];
 	assertion(isdef(cmd), `command ${key} not in UI!!!`)
 	await cmd.open();
 }
-function onclickDay(d, styles) {
-	let tsDay = d.id;
-	let tsCreated = Date.now();
-	let id = generateEventId(tsDay, tsCreated);
-	let uname = U ? getUname() : 'guest';
-	let o = { id: id, created: tsCreated, day: tsDay, time: '', text: '', user: uname, shared: false, subscribers: [] };
-	Items[id] = o;
-	let x = uiTypeEvent(d, o, styles);
-	x.inp.focus();
-}
-async function onclickDeleteCollection(name) {
-	if (nundef(name) && UI.collSecondary.isOpen) name = UI.collSecondary.name;
-	if (nundef(name)) name = await mGather(iDiv(UI.deleteCollection), 'name');
-	if (!name) return;
-	if (collLocked(name)) { showMessage(`collection ${name} cannot be deleted!!!!`); return; }
-	let proceed = await mGather(iDiv(UI.deleteCollection), {}, { type: 'yesNo', content: `delete collection ${name}?` });
-	if (proceed) await collDelete(name);
-	if (UI.collSecondary.isOpen && UI.collSecondary.name == name) collCloseSecondary();
-	if (UI.collPrimary.name == name) { UI.collPrimary.name = 'all'; collOpenPrimary(); }
-}
-async function onclickDeleteSelected() {
-	let selist = UI.selectedImages;
-	let di = {}, deletedKeys = {};
-	for (const k of selist) {
-		let o = collKeyCollnameFromSelkey(k);
-		let key = o.key;
-		let collname = o.collname;
-		if (collLocked(collname)) continue;
-		if (nundef(deletedKeys[collname])) deletedKeys[collname] = [];
-		await collDeleteOrRemove(key, collname, di, deletedKeys[collname]);
-	}
-	if (isEmpty(di) && Object.keys(deletedKeys).every(x => isEmpty(deletedKeys[x]))) {
-		showMessage(`ERROR: cannot delete selected items!!!`);
-		collClearSelections();
-		return;
-	}
-	console.log('deletedKeys dict: ', deletedKeys);
-	for (const k in deletedKeys) {
-		let res = await mPostRoute('postUpdateSuperdi', { di, deletedKeys: deletedKeys[k], collname: k });
-		console.log('postUpdateSuperdi', k, res)
-		di = {};
-	}
-	await loadAssets();
-	collPostReload();
-}
-async function onclickDeleteTable(id) {
-	let res = await mPostRoute('deleteTable', { id });
-}
-async function onclickEditDetails() {
-	let key = UI.selectedImages[0];
-	let cmd = UI.commands.simpleNew;
-	await editDetailsFor(key, iDiv(cmd));
-}
-function onclickExistingEvent(ev) { evNoBubble(ev); showEventOpen(evToId(ev)); }
-
-async function onclickGameMenuItem(ev) {
-	let gamename = evToAttr(ev, 'gamename');
-	await showGameMenu(gamename);
-}
-async function onclickGameMenuPlayer(ev) {
-	let name = evToAttr(ev, 'username'); //console.log('name',name); return;
-	let shift = ev.shiftKey;
-	await showGameMenuPlayerDialog(name, shift);
-}
-function onclickHex(item, board) {
-	toggleItemSelectionUnique(item, board.items);
-	if (isdef(board.handler)) board.handler(item, board);
-}
-async function onclickHome() { UI.nav.activate(); await showDashboard(); }
-
-async function onclickHomeNew() {
-	let d = mDom('dMain'); mCenterCenterFlex(d);
-	let dt = mDom(d, { fg: getThemeFg(), box: true, w100: true, padding: 20 }, { html: `${me}'s blog` });
-	mDom(dt, { w100: true, margin: 'auto' }, { tag: 'textarea', rows: 15 });
-	let db = mDom(dt);
-	mButton('Save', homeOnclickSaveBlog, db, {}, 'button');
-}
-async function onclickJoinTable(id) {
-	let table = Serverdata.tables.find(x => x.id == id);
-	let me = getUname();
-	assertion(table.status == 'open', 'too late to join! game has already started!')
-	assertion(!table.playerNames.includes(me), `${me} already joined!!!`);
-	table.players[me] = createGamePlayer(me, table.game);
-	table.playerNames.push(me);
-	let res = await mPostRoute('postTable', { id, players: table.players, playerNames: table.playerNames });
-}
-async function onclickLeaveTable(id) {
-	let table = Serverdata.tables.find(x => x.id == id);
-	let me = getUname();
-	assertion(table.status == 'open', 'too late to leave! game has already started!')
-	assertion(table.playerNames.includes(me), `${me} NOT in joined players!!!!`);
-	delete table.players[me];
-	removeInPlace(table.playerNames, me);
-	let res = await mPostRoute('postTable', { id, players: table.players, playerNames: table.playerNames });
-}
 function onclickMenu(ev) {
 	let keys = evToAttr(ev, 'key');
 	let [menuKey, cmdKey] = keys.split('_');
 	let menu = UI[menuKey];
 	switchToMenu(menu, cmdKey);
-}
-async function onclickNATIONS() {
-	if (nundef(M.natCards)) M.natCards = await mGetYaml('../assets/games/nations/cards.yaml');
-	M.civs = ['america', 'arabia', 'china', 'egypt', 'ethiopia', 'greece', 'india', 'japan', 'korea', 'mali', 'mongolia', 'persia', 'poland', 'portugal', 'rome', 'venice', 'vikings'];
-	let player = M.player = { civ: rChoose(M.civs) };
-	M.ages = { 1: { events: [], progress: [] }, 2: { events: [], progress: [] }, 3: { events: [], progress: [] }, 4: { events: [], progress: [] } };
-	for (const k in M.natCards) {
-		let c = M.natCards[k];
-		if (c.age == 0) continue;
-		let age = c.age == 0 ? 1 : c.age;
-		if (c.Type == 'event') M.ages[age].events.push(k); else M.ages[age].progress.push(k);
-	}
-	M.age = 1;
-	M.events = M.ages[M.age].events;
-	M.progress = M.ages[M.age].progress;
-	arrShuffle(M.progress);
-	arrShuffle(M.events);
-	let d1 = mDiv('dMain'); mFlex(d1);
-	UI.coll.rows = 3; UI.coll.cols = 7;
-	let bg = getNavBg();
-	let h = 180;
-	let dcost = M.costGrid = mGrid(UI.coll.rows, 1, d1, { 'align-self': 'start' });
-	for (let cost = 3; cost >= 1; cost--) {
-		let d2 = mDom(dcost, { display: 'flex', 'justify-content': 'center', 'flex-flow': 'column', box: true, margin: 2, h: h, overflow: 'hidden' }, {});
-		for (let i = 0; i < cost; i++) mDom(d2, { h: 40 }, { tag: 'img', src: `../assets/games/nations/templates/gold.png` });
-	}
-	UI.coll.grid = mGrid(UI.coll.rows, UI.coll.cols, d1, { 'align-self': 'start' });
-	UI.coll.cells = [];
-	for (let i = 0; i < UI.coll.rows * UI.coll.cols; i++) {
-		let d = mDom(UI.coll.grid, { box: true, margin: 2, h: h, overflow: 'hidden' });
-		mCenterCenterFlex(d);
-		UI.coll.cells.push(d);
-	}
-	let n = UI.coll.rows * UI.coll.cols;
-	M.market = [];
-	for (let i = 0; i < n; i++) {
-		let k = M.progress.shift();
-		M.market.push(k);
-		let card = M.natCards[k];
-		let img = mDom(UI.coll.cells[i], { h: h, w: 115 }, { tag: 'img', src: `../assets/games/nations/cards/${k}.png` });
-		img.setAttribute('key', k)
-		img.onclick = buyProgressCard;
-	}
-	mDom('dMain', { h: 20 })
-	let dciv = mDom('dMain', { w: 800, h: 420, maleft: 52, bg: 'red', position: 'relative' });
-	let iciv = await loadImageAsync(`../assets/games/nations/civs/civ_${player.civ}.png`, mDom(dciv, { position: 'absolute' }, { tag: 'img' }));
-	M.civCells = [];
-	for (let i = 0; i < 2; i++) {
-		for (let j = 0; j < 7; j++) {
-			let r = getCivSpot(player.civ, i, j);
-			let [dx, dy, dw, dh] = [10, 10, 15, 20]
-			let d = mDom(dciv, { box: true, w: r.w + dw, h: r.h + dh, left: r.x - dx, top: r.y - dy, position: 'absolute', overflow: 'hidden' });
-			mCenterCenterFlex(d);
-			M.civCells.push(d);
-			d.onclick = () => selectCivSpot(d);
-		}
-	}
-}
-async function onclickOpenToJoinGame() {
-	let options = collectOptions();
-	let players = collectPlayers();
-	mRemove('dGameMenu');
-	let t = createOpenTable(DA.gamename, players, options);
-	let res = await mPostRoute('postTable', t);
-}
-function onclickPasteDetailObject(text, inputs, wIdeal, df, styles, opts) {
-	function parseToInputs(o) {
-		let keys = Object.keys(o);
-		if (keys.length == 1) { o = o[keys[0]]; }
-		let onorm = {};
-		for (const k in o) {
-			let k1 = normalizeString(k);
-			onorm[k1] = o[k];
-		}
-		if (isEmpty(inputs)) {
-			mBy('bParseIntoForm').remove();
-			fillMultiForm(o, inputs, wIdeal, df, styles, opts);
-		} else {
-			for (const oinp of inputs) {
-				let k = normalizeString(oinp.name);
-				if (isdef(o[k])) oinp.inp.value = o[k];
-			}
-		}
-	}
-	try {
-		let o = jsyaml.load(text);
-		if (isdef(o)) parseToInputs(o);
-	} catch {
-		try {
-			let o = JSON.parse(text);
-			if (isdef(o)) parseToInputs(o);
-		} catch { showMessage('text cannot be parsed into yaml or json object!') }
-	}
-}
-async function onclickPlan() { await showCalendarApp(); }
-
-async function onclickPlay() {
-	await showTables('onclickPlay');
-	showGames();
-}
-async function onclickSetAvatar(ev) { await simpleSetAvatar(UI.selectedImages[0]); }
-
-async function onclickSettAddYourTheme() {
-	let nameEntered = await mGather(iDiv(UI.commands.settAddYourTheme));
-	let name = normalizeString(nameEntered);
-	let ohne = replaceAll(name, '_', '');
-	if (isEmpty(ohne)) { showMessage(`name ${nameEntered} is not valid!`); return; }
-	let o = {};
-	for (const s of ['color', 'texture', 'blendMode', 'fg']) {
-		if (isdef(U[s])) o[s] = U[s];
-	}
-	o.name = name;
-	let themes = lookup(Serverdata.config, ['themes']);
-	let key = isdef(themes[name]) ? rUniqueId(6, 'th') : name;
-	Serverdata.config.themes[key] = o;
-	await mPostRoute('postConfig', Serverdata.config);
-	await onclickSettTheme();
-}
-async function onclickSettBlendMode() {
-	if (isEmpty(U.texture)) {
-		showMessage('You need to set a Texture in order to set a Blend Mode!');
-		return;
-	}
-	localStorage.setItem('settingsMenu', 'settBlendMode')
-	showBlendModes();
-}
-async function onclickSettColor() {
-	localStorage.setItem('settingsMenu', 'settColor')
-	await showColors();
-}
-async function onclickSettDeleteTheme() {
-	let nameEntered = await mGather(iDiv(UI.commands.settDeleteTheme));
-	let name = normalizeString(nameEntered);
-	if (!lookup(Serverdata.config, ['themes', name])) { showMessage(`theme ${name} does not exist!`); return; }
-	delete Serverdata.config.themes[name];
-	await mPostRoute('postConfig', Serverdata.config);
-	await onclickSettTheme();
-}
-async function onclickSettFg() {
-	localStorage.setItem('settingsMenu', 'settFg')
-	await showTextColors();
-}
-async function onclickSettMyTheme() {
-	localStorage.setItem('settingsMenu', 'settMyTheme')
-	let dSettings = mBy('dSettingsMenu'); mClear(dSettings);
-	let d = mDom(dSettings, { h: '100vh', bg: U.color })
-	let dOuter = mDom(d, { padding: 25 }); // { padding: 10, gap: 10, margin:'auto', w:500, align:'center', bg:'white' }); //mCenterFlex(dParent);
-	mCenterFlex(dOuter)
-	let ui = await uiTypePalette(dOuter, U.color, U.fg, U.texture, U.blendMode);
-}
-async function onclickSettRemoveTexture() {
-	if (isEmpty(U.texture)) return;
-	for (const prop of ['texture', 'palette', 'blendMode', 'bgImage', 'bgSize', 'bgBlend', 'bgRepeat']) delete U[prop];
-	await updateUserTheme();
-}
-async function onclickSettResetAll() {
-	assertion(isdef(DA.settings), "NO DA.settings!!!!!!!!!!!!!!!")
-	if (JSON.stringify(U) == JSON.stringify(DA.settings)) return;
-	U = jsCopy(DA.settings);
-	await postUserChange(U, true);
-	setUserTheme();
-	await settingsOpen();
-	settingsCheck();
-}
-async function onclickSettTexture() {
-	localStorage.setItem('settingsMenu', 'settTexture')
-	await showTextures();
-}
-async function onclickSettTheme() {
-	localStorage.setItem('settingsMenu', 'settTheme')
-	await showThemes();
-}
-async function onclickSimple() {
-	let name = valf(localStorage.getItem('sisi'), 'tierspiel'); //console.log(name);
-	simpleSidebar(150);
-	mAdjustPage(150);
-	let div = mDom100('dMain');
-	let sisi = UI.simple = { name, div };
-	let [w, h, bg, fg] = [sisi.w, sisi.h, sisi.bg, sisi.fg] = [mGetStyle(div, 'w'), mGetStyle(div, 'h'), getNavBg(), getThemeFg()];
-	let d1 = mDom(div); mCenterFlex(d1)
-	let dMenu = sisi.dMenu = mDom(d1, { gap: 10, padding: 12 }, { className: 'title' }); mFlexVWrap(dMenu);
-	let dInstruction = sisi.dInstruction = mDom(d1, { w100: true, align: 'center', fg }, { html: '* press Control key when hovering to magnify image! *' })
-	let dBatch = sisi.dBatch = mDom(d1);
-	let cellStyles = { bg, fg: 'contrast', box: true, margin: 8, w: 128, h: 128, overflow: 'hidden' };
-	let o = createBatchGridCells(dBatch, w * .9, h * .9, cellStyles);
-	addKeys(o, sisi);
-	mStyle(dInstruction, { w: mGetStyle(sisi.dGrid, 'w') });
-	mLinebreak(d1)
-	sisi.dPageIndex = mDom(d1, { fg });
-	simpleInit(name, sisi);
-	sisi.isOpen = true;
-	sisi.dInstruction.innerHTML = '* press Ctrl while hovering over an image for details *'; //'* drag images into the shaded area *'
-	let grid = sisi.dGrid;
-	mStyle(grid, { bg: '#00000030' })
-	enableDataDrop(grid, simpleOnDropImage)
-}
-async function onclickSimpleClearSelections(ev) { simpleClearSelections(); }
-
-async function onclickSimpleNew(name) {
-	let cmd = lookup(UI.commands, ['simpleNew']); assertion(cmd, "UI.commands.simpleNew!!!!!")
-	if (nundef(name)) name = await mGather(iDiv(cmd));
-	if (!name) return;
-	name = normalizeString(name);
-	if (isEmpty(name)) {
-		showMessage(`ERROR! you need to enter a valid name!!!!`);
-		return;
-	}
-	if (M.collections.includes(name)) {
-		showMessage(`collection ${name} already exists!`);
-	}
-	M.collections.push(name); M.collections.sort();
-	if (name != UI.simple) simpleInit(name, UI.simple);
-}
-async function onclickSimpleRemove() {
-	let selist = UI.selectedImages;
-	let di = {};
-	for (const key of selist) {
-		let collname = UI.simple.name;
-		if (simpleLocked(collname)) continue;
-		let item = M.superdi[key];
-		removeInPlace(item.colls, collname);
-		di[key] = item;
-	}
-	if (isEmpty(di)) {
-		showMessage(`ERROR: cannot delete selected items!!!`);
-		simpleClearSelections();
-		return;
-	}
-	await updateSuperdi(di);
-	simpleInit()
-}
-async function onclickSimpleSelectAll(ev) {
-	let sisi = UI.simple;
-	for (const cell of sisi.cells) {
-		let d = cell.firstChild;
-		if (nundef(d)) break;
-		mSelect(d);
-	}
-	for (const k of sisi.keys) { addIf(UI.selectedImages, k); }
-	simpleCheckCommands();
-}
-async function onclickSimpleSelectPage(ev) {
-	let sisi = UI.simple;
-	for (const cell of sisi.cells) {
-		let d = cell.firstChild;
-		if (nundef(d)) break;
-		mSelect(d);
-		let o = sisi.items[d.id];
-		addIf(UI.selectedImages, o.key);
-	}
-	simpleCheckCommands();
-}
-async function onclickStartGame() {
-	await saveDataFromPlayerOptionsUI(DA.gamename);
-	let options = collectOptions();
-	let players = collectPlayers();
-	await startGame(DA.gamename, players, options);
-}
-async function onclickStartTable(id) {
-	let table = Serverdata.tables.find(x => x.id == id);
-	if (nundef(table)) table = await mGetRoute('table', { id });
-	if (!table) { showMessage('table deleted!'); return await showTables('showTable'); }
-	console.log('table', jsCopy(table));
-	table = setTableToStarted(table);
-	let res = await mPostRoute('postTable', table);
-}
-async function onclickTable(id) {
-	Tid = id;
-	await switchToMainMenu('table');
-}
-async function onclickTableMenu() {
-	let id = getTid();
-	if (nundef(id)) {
-		let me = getUname();
-		let table = Serverdata.tables.find(x => x.status == 'started' && x.turn.includes(me));
-		if (nundef(table)) table = Serverdata.tables.find(x => x.status == 'started' && x.playerNames.includes(me));
-		if (nundef(table)) table = Serverdata.tables.find(x => x.status != 'open' && x.playerNames.includes(me));
-		if (nundef(table)) table = Serverdata.tables.find(x => x.status != 'open');
-		if (isdef(table)) id = table.id;
-	}
-	if (isdef(id)) { Tid = null; await showTable(id); } else await switchToMainMenu('play');
-}
-async function onclickTest() { console.log('nations!!!!'); }
-
-async function onclickTextColor(fg) {
-	let hex = colorToHex79(fg);
-	U.fg = hex;
-	await updateUserTheme();
-}
-async function onclickTexture(item) {
-	U.texture = pathFromBgImage(item.bgImage);
-	await updateUserTheme();
-}
-async function onclickThemeSample(ev) {
-	let key = evToAttr(ev, 'theme');
-	let theme = jsCopyExceptKeys(Serverdata.config.themes[key], ['name']);
-	copyKeys(theme, U);
-	await updateUserTheme();
-}
-async function onclickUser() {
-	let uname = await mGather(iDiv(UI.nav.commands.user), { w: 100, margin: 0 }, { content: 'username', align: 'br', placeholder: ' <username> ' });
-	if (!uname) return;
-	await switchToUser(uname);
 }
 async function ondropPreviewImage(dParent, url, key) {
 	if (isdef(key)) {
@@ -6929,53 +5009,6 @@ async function ondropShowImage(url, dDrop) {
 	console.log('DONE! now click on where you think the image should be centered!')
 	img.onclick = storeMouseCoords;
 }
-function onenterHex(item, board) {
-	colorSample(board.dSample, item.color);
-}
-function onleaveHex(item, board) {
-	let selitem = board.items.find(x => x.isSelected == true);
-	if (nundef(selitem)) return;
-	colorSample(board.dSample, selitem.color);
-}
-async function onsockConfig(x) {
-	console.log('SOCK::config', x)
-	Serverdata.config = x; console.log(Serverdata.config);
-}
-async function onsockEvent(x) {
-	console.log('SOCK::event', x)
-	if (isdef(Serverdata.events)) Serverdata.events[x.id] = x;
-}
-async function onsockMerged(x) {
-	if (!isSameTableOpen(x.id)) return;
-	await showTable(x);
-}
-async function onsockPending(id) {
-	if (!isSameTableOpen(id)) return;
-	await showTable(id);
-}
-async function onsockSuperdi(x) {
-	console.log('SOCK::superdi', x)
-}
-async function onsockTable(x) {
-	let [msg, id, turn, isNew] = [x.msg, x.id, x.turn, x.isNew];
-	let menu = getMenu();
-	let me = getUname();
-	if (turn.includes(me) && menu == 'play') { Tid = id; await switchToMainMenu('table'); }
-	else if (menu == 'table') await showTable(id);
-	else if (menu == 'play') await showTables();
-}
-async function onsockTables(x) {
-	let menu = getMenu();
-	if (menu == 'play') await showTables('onsockTables');
-	else if (menu == 'table') {
-		assertion(isdef(T), "menu table but no table!!!")
-		let id = T.id;
-		let exists = x.find(t => t.id == id);
-		if (nundef(exists)) { Tid = T = null; await switchToMenu(UI.nav, 'play'); }
-	}
-}
-function openGameMenuFor(gamename) { clickOnElemWithAttr('gamename', gamename); }
-
 function openPopup(name = 'dPopup') {
 	closePopup();
 	let popup = document.createElement('div');
@@ -6986,8 +5019,6 @@ function openPopup(name = 'dPopup') {
 	document.body.appendChild(popup);
 	return popup;
 }
-function overwriteMerge(destinationArray, sourceArray, options) { return sourceArray }
-
 function pSBC(p, c0, c1, l) {
 	let r, g, b, P, f, t, h, i = parseInt, m = Math.round, a = typeof c1 == 'string';
 	if (typeof p != 'number' || p < -1 || p > 1 || typeof c0 != 'string' || (c0[0] != 'r' && c0[0] != '#') || (c1 && !a)) return null;
@@ -7229,72 +5260,6 @@ async function postUserChange(data, override = false) {
 	data = valf(data, U);
 	return Serverdata.users[data.name] = override ? await mPostRoute('overrideUser', data) : await mPostRoute('postUser', data);
 }
-function present() {
-	if (Settings.perspective == 'me') presentFor(me);
-	else presentAll();
-}
-function presentAll() {
-	clearZones();
-	for (const pl of T.players) {
-		let zone = Zones[pl.id];
-		pl.hand.showDeck(zone.dData, 'right', 0, false);
-	}
-	showTrick();
-}
-function presentExtraWorker(item, dParent, styles = {}) {
-	let sz = styles.sz;
-	addKeys({ paright: 10, bg: 'white', rounding: '50%', hmargin: 8, h: 30, position: 'relative' }, styles)
-	let d = mDom(dParent, styles); mFlex(d);
-	let img = mDom(d, { h: '100%' }, { tag: 'img', src: '../assets/games/nations/templates/worker.png' })
-	let img2 = mDom(d, { h: sz * 2 / 3, w: sz * 2 / 3, position: 'absolute', top: '17%', left: '40%' }, { tag: 'img', src: `../assets/games/nations/templates/${item.o.res}.png` });
-	return d;
-}
-function presentFor(me) {
-	clearElement(dTable);
-	let others = arrWithout(T.players, [me]);
-	for (const pl of others) {
-		pl.hand.showDeck(dTable, 'right', 0, false);
-	}
-	mLinebreak(dTable);
-	T.trick.showDeck(dTable, 'right', 20, true);
-	mLinebreak(dTable);
-	me.hand.showDeck(dTable, 'right', 0, false);
-	showFleetingMessage('click to play a card!');
-}
-function presentImageCropper(url) {
-	let d = mDom('dMain', { position: 'absolute', h: 500, w: 500, bg: 'navy' });
-	let img = mDom(d, { w: 300, h: 300, 'object-fit': 'cover', 'object-position': 'center center' }, { tag: 'img', src: url });
-}
-function presentStandardBGA() {
-	let dTable = mDom('dMain');
-	mClass('dPage', 'wood');
-	let [dOben, dOpenTable, dMiddle, dRechts] = tableLayoutMR(dTable); mFlexWrap(dOpenTable)
-	mDom(dRechts, {}, { id: 'dStats' });
-}
-function presentStandardRoundTable() {
-	d = mDom('dMain'); mCenterFlex(d);
-	mDom(d, { className: 'instruction' }, { id: 'dInstruction' }); mLinebreak(d); // instruction
-	mDom(d, {}, { id: 'dStats' }); mLinebreak(d);
-	let minTableSize = 400;
-	let dTable = mDom(d, { hmin: minTableSize, wmin: minTableSize, margin: 20, round: true, className: 'wood' }, { id: 'dTable' });
-	mCenterCenter(dTable);
-}
-function proceed(nextLevel) {
-	if (nundef(nextLevel)) nextLevel = currentLevel;
-	if (nextLevel > MAXLEVEL) {
-		let iGame = gameSequence.indexOf(currentGame) + 1;
-		if (iGame == gameSequence.length) {
-			soundGoodBye();
-			mClass(document.body, 'aniSlowlyDisappear');
-			show(dLevelComplete);
-			dLevelComplete.innerHTML = 'CONGRATULATIONS! You are done!';
-		} else {
-			let nextGame = gameSequence[iGame];
-			setGoal(nextGame);
-		}
-	} else if (LevelChange) startLevel(nextLevel);
-	else startRound();
-}
 function rBgFor() { for (const d of Array.from(arguments)) { mStyle(d, { bg: rColor() }) } }
 
 function rBlend() { return rBlendCanvas(); }
@@ -7390,13 +5355,6 @@ function redrawImage(img, dParent, x, y, wold, hold, w, h, callback) {
 	img.src = imgDataUrl;
 	return imgDataUrl;
 }
-function reload() {
-	console.log('reload!!!')
-	if (radio_contacts.checked == true) get_contacts();
-	else if (radio_chat.checked == true) get_chats();
-	else if (radio_games.checked == true) get_games();
-	else if (radio_play.checked == true) get_play();
-}
 function removeCommentLines(text, cstart, cend) {
 	let lines = text.split('\n');
 	let inComment = false, res = '';
@@ -7446,129 +5404,12 @@ function replaceAll(str, sSub, sBy) {
 }
 function replaceAllSpecialChars(str, sSub, sBy) { return str.split(sSub).join(sBy); }
 
-function resetPeep({ stage, peep }) {
-	const direction = Math.random() > 0.5 ? 1 : -1
-	const offsetY = 100 - 250 * gsap.parseEase('power2.in')(Math.random())
-	const startY = stage.height - peep.height + offsetY
-	let startX
-	let endX
-	if (direction === 1) {
-		startX = -peep.width
-		endX = stage.width
-		peep.scaleX = 1
-	} else {
-		startX = stage.width + peep.width
-		endX = 0
-		peep.scaleX = -1
-	}
-	peep.x = startX
-	peep.y = startY
-	peep.anchorY = startY
-	return {
-		startX,
-		startY,
-		endX
-	}
-}
-function resetRound() {
-	clearTimeouts();
-	clearFleetingMessage();
-	clearEvents();
-}
-async function resetUsers() {
-	for (const name in Serverdata.users) {
-		let uold = Serverdata.users[name];
-		let unew = {};
-		let list = ['name', 'key', 'color', 'bgImage', 'bgBlend', 'bgRepeat', 'bgSize'];
-		for (const s of list) unew[s] = uold[s];
-		await postUserChange(unew, true);
-	}
-	console.log(Serverdata.users);
-}
-function resize() {
-	stage.width = Canvas.clientWidth
-	stage.height = Canvas.clientHeight
-	Canvas.width = stage.width * devicePixelRatio
-	Canvas.height = stage.height * devicePixelRatio
-	crowd.forEach((peep) => {
-		peep.walk.kill()
-	})
-	crowd.length = 0
-	availablePeeps.length = 0
-	availablePeeps.push(...allPeeps)
-	initCrowd()
-}
-function resizeTo(tool, wnew, hnew) {
-	let [img, dParent, cropBox, setRect] = [tool.img, tool.dParent, tool.cropBox, tool.setRect];
-	if (hnew == 0) hnew = img.height;
-	if (wnew == 0) {
-		let aspectRatio = img.width / img.height;
-		wnew = aspectRatio * hnew;
-	}
-	redrawImage(img, dParent, 0, 0, img.width, img.height, wnew, hnew, () => setRect(0, 0, wnew, hnew))
-}
-function root(areaName) {
-	setTableSize(areaName, 400, 300);
-	UIROOT = jsCopy(SPEC.staticSpec.root);
-	for (const k in AREAS) delete AREAS[k];
-	PROTO = {};
-	INFO = {};
-	staticArea(areaName, UIROOT);
-	addAREA('root', UIROOT);
-}
-async function rotateAndWriteAge(img, card) {
-	let diStage = { 0: 'I', 1: 'I', 2: 'II', 3: 'III', 4: 'II II' };
-	let [w, h] = [img.width, img.height];
-	mDom('dExtra', { h: 4 })
-	let cv2 = mDom('dExtra', {}, { tag: 'canvas', width: h, height: w });
-	let ctx2 = cv2.getContext('2d');
-	ctx2.translate(h, 0)
-	ctx2.rotate(90 * Math.PI / 180);
-	ctx2.drawImage(img, 0, 0, w, h);
-	mDom('dExtra', { h: 4 })
-	let cv3 = mDom('dExtra', {}, { tag: 'canvas', width: h, height: w });
-	let ctx3 = cv3.getContext('2d');
-	ctx3.drawImage(cv2, 0, 0);
-	let x = cv3.width / 2;
-	let y = cv3.height;
-	ctx3.fillStyle = 'white';
-	ctx3.font = '20px Arial';
-	ctx3.textAlign = 'center';
-	let text = diStage(card.age);
-	ctx3.fillText(text, x, y);
-	return cv3;
-}
 function sameList(l1, l2) {
 	if (l1.length != l2.length) return false;
 	for (const s of l1) {
 		if (!l2.includes(s)) return false;
 	}
 	return true;
-}
-async function saveAndUpdatePlayerOptions(allPl, gamename) {
-	let name = allPl.name;
-	let poss = getGamePlayerOptionsAsDict(gamename);
-	if (nundef(poss)) return;
-	let opts = {};
-	for (const p in poss) { allPl[p] = getRadioValue(p); if (p != 'playmode') opts[p] = allPl[p]; }
-	let id = 'dPlayerOptions'; mRemoveIfExists(id); //dont need UI anymore
-	let oldOpts = valf(getUserOptionsForGame(name, gamename), {});
-	let changed = false;
-	for (const p in poss) {
-		if (p == 'playmode') continue;
-		if (oldOpts[p] != opts[p]) { changed = true; break; }
-	}
-	if (changed) {
-		let games = valf(Serverdata.users[name].games, {});
-		games[gamename] = opts;
-		await postUserChange({ name, games })
-	}
-}
-async function saveDataFromPlayerOptionsUI(gamename) {
-	let id = 'dPlayerOptions';
-	let lastAllPl = DA.lastAllPlayerItem;
-	let dold = mBy(id);
-	if (isdef(dold)) { await saveAndUpdatePlayerOptions(lastAllPl, gamename); dold.remove(); }
 }
 function saveFileAtClient(name, type, data) {
 	if (data != null && navigator.msSaveBlob) return navigator.msSaveBlob(new Blob([data], { type: type }), name);
@@ -7635,13 +5476,6 @@ function selectAddItems(items, callback = null, instruction = null) {
 		el.onclick = callback;
 	}
 }
-function selectCivSpot(d) {
-	if (isdef(M.selectedCivSpot)) mClassRemove(M.selectedCivSpot, 'shadow');
-	M.selectedCivSpot = d;
-	mClass(d, 'shadow')
-}
-function selectExtraWorker(item) {
-}
 function selectText(el) {
 	if (el instanceof HTMLTextAreaElement) { el.select(); return; }
 	var sel, range;
@@ -7697,122 +5531,6 @@ function setDropPosition(ev, elem, targetElem, dropPos) {
 		dropPos(ev, elem, targetElem);
 	}
 }
-function setGoal(index) {
-	if (nundef(index)) {
-		let rnd = G.numPics < 2 ? 0 : randomNumber(0, G.numPics - 2);
-		if (G.numPics >= 2 && rnd == lastPosition && coin(70)) rnd = G.numPics - 1;
-		index = rnd;
-	}
-	lastPosition = index;
-	Goal = Pictures[index];
-}
-function setKeys({ allowDuplicates, nMin = 25, lang, key, keySets, filterFunc, param, confidence, sortByFunc } = {}) {
-	let keys = jsCopy(keySets[key]);
-	if (isdef(nMin)) {
-		let diff = nMin - keys.length;
-		let additionalSet = diff > 0 ? nMin > 100 ? firstCondDictKeys(keySets, k => k != key && keySets[k].length > diff) : 'best100' : null;
-		if (additionalSet) KeySets[additionalSet].map(x => addIf(keys, x));
-	}
-	let primary = [];
-	let spare = [];
-	for (const k of keys) {
-		let info = Syms[k];
-		info.best = info[lang];
-		if (nundef(info.best)) {
-			let ersatzLang = (lang == 'D' ? 'D' : 'E');
-			let klang = 'best' + ersatzLang;
-			if (nundef(info[klang])) info[klang] = lastOfLanguage(k, ersatzLang);
-		}
-		let isMatch = true;
-		if (isdef(filterFunc)) isMatch = isMatch && filterFunc(param, k, info.best);
-		if (isdef(confidence)) isMatch = info[klang + 'Conf'] >= confidence;
-		if (isMatch) { primary.push(k); } else { spare.push(k); }
-	}
-	if (isdef(nMin)) {
-		let len = primary.length;
-		let nMissing = nMin - len;
-		if (nMissing > 0) { let list = choose(spare, nMissing); spare = arrMinus(spare, list); primary = primary.concat(list); }
-	}
-	if (isdef(sortByFunc)) { sortBy(primary, sortByFunc); }
-	if (isdef(nMin)) console.assert(primary.length >= nMin);
-	if (nundef(allowDuplicates)) {
-		primary = removeDuplicates(primary);
-	}
-	return primary;
-}
-function setLanguage(x) { currentLanguage = x; startLevel(); }
-
-async function setPlayerNotPlaying(item, gamename) {
-	await saveDataFromPlayerOptionsUI(gamename);
-	removeInPlace(DA.playerList, item.name);
-	mRemoveIfExists('dPlayerOptions');
-	unselectPlayerItem(item);
-}
-async function setPlayerPlaying(allPlItem, gamename) {
-	let [name, da] = [allPlItem.name, allPlItem.div];
-	addIf(DA.playerList, name);
-	highlightPlayerItem(allPlItem);
-	await saveDataFromPlayerOptionsUI(gamename);
-	let id = 'dPlayerOptions';
-	DA.lastAllPlayerItem = allPlItem;
-	let poss = getGamePlayerOptions(gamename);
-	if (nundef(poss)) return;
-	let dParent = mBy('dGameMenu');
-	let bg = getUserColor(name);
-	let rounding = 6;
-	let d1 = mDom(dParent, { bg: colorLight(bg, 50), border: `solid 2px ${bg}`, rounding, display: 'inline-block', hpadding: 3, rounding }, { id });
-	mDom(d1, {}, { html: `${name}` }); //title
-	d = mDom(d1, {}); mCenterFlex(d);
-	mCenterCenter(d);
-	for (const p in poss) {
-		let key = p;
-		let val = poss[p];
-		if (isString(val)) {
-			let list = val.split(',');
-			let legend = formatLegend(key);
-			let fs = mRadioGroup(d, {}, `d_${key}`, legend);
-			let handler = key == 'playmode' ? updateUserImageToBotHuman(name) : null;
-			for (const v of list) { let r = mRadio(v, isNumber(v) ? Number(v) : v, key, fs, { cursor: 'pointer' }, handler, key, false); }
-			let userval = lookup(DA.allPlayers, [name, p]);
-			let chi = fs.children;
-			for (const ch of chi) {
-				let id = ch.id;
-				if (nundef(id)) continue;
-				let radioval = stringAfterLast(id, '_');
-				if (isNumber(radioval)) radioval = Number(radioval);
-				if (userval == radioval) ch.firstChild.checked = true;
-				else if (nundef(userval) && `${radioval}` == arrLast(list)) ch.firstChild.checked = true;
-			}
-			measureFieldset(fs);
-		}
-	}
-	let r = getRectInt(da, mBy('dGameMenu'));
-	let rp = getRectInt(d1);
-	let [y, w, h] = [r.y - rp.h - 4, rp.w, rp.h];
-	let x = r.x - rp.w / 2 + r.w / 2;
-	if (x < 0) x = r.x - 22;
-	if (x > window.innerWidth - w - 100) x = r.x - w + r.w + 14;
-	mIfNotRelative(dParent);
-	mPos(d1, x, y);
-	mButtonX(d1, ev => saveAndUpdatePlayerOptions(allPlItem, gamename), 18, 3, 'dimgray');
-}
-function setPlayersToMulti() {
-	for (const name in DA.allPlayers) {
-		lookupSetOverride(DA.allPlayers, [name, 'playmode'], 'human');
-		updateUserImageToBotHuman(name, 'human');
-	}
-	setRadioValue('playmode', 'human');
-}
-function setPlayersToSolo() {
-	for (const name in DA.allPlayers) {
-		if (name == getUname()) continue;
-		lookupSetOverride(DA.allPlayers, [name, 'playmode'], 'bot');
-		updateUserImageToBotHuman(name, 'bot');
-	}
-	let popup = mBy('dPlayerOptions');
-	if (isdef(popup) && popup.firstChild.innerHTML.includes(getUname())) return;
-	setRadioValue('playmode', 'bot');
-}
 function setRadioValue(prop, val) {
 	let input = mBy(`i_${prop}_${val}`);
 	if (nundef(input)) return;
@@ -7832,26 +5550,6 @@ function setRect(elem, options) {
 	}
 	return r;
 }
-function setScoresSameOrHigher(told, tnew) {
-	if (nundef(told)) return true;
-	let [plold, plnew] = [told.players, tnew.players];
-	for (const name in plnew) {
-		if (plold[name].score + plold[name].incScore != plnew[name].score) return false;
-		plnew[name].incScore = 0;
-	}
-	return true;
-}
-function setTableSize(w, h, unit = 'px') {
-	let d = mBy('areaTable');
-	mStyle(d, { 'min-width': w, 'min-height': h }, unit);
-}
-function setTableToStarted(table) {
-	table.status = 'started';
-	table.step = 0;
-	table.moves = [];
-	table.fen = DA.funcs[table.game].setup(table);
-	return table;
-}
 function setTexture(item) {
 	let d = document.body;
 	let bgImage = valf(item.bgImage, bgImageFromPath(item.texture), '');
@@ -7866,50 +5564,6 @@ function setUserTheme() {
 	setColors(U.color, U.fg);
 	setTexture(U);
 	settingsCheck();
-}
-function settingsCheck() {
-	if (isdef(DA.settings)) {
-		cmdDisable(UI.commands.settResetAll.key);
-		for (const k in DA.settings) {
-			if (isLiteral(U[k]) && DA.settings[k] != U[k]) {
-				cmdEnable(UI.commands.settResetAll.key); break;
-			}
-		}
-	}
-}
-async function settingsOpen() {
-	DA.settings = jsCopy(U);
-	mClear('dMain');
-	let d = mDom('dMain', {}, { id: 'dSettingsMenu' }); // { padding: 0, overy: 'auto', hmax: '100vh' }, { id: 'dSettingsMenu' }); //,calcRestHeight('dMain') }, { id: 'dSettingsMenu' });
-	let submenu = valf(localStorage.getItem('settingsMenu'), 'settTheme');
-	settingsSidebar();
-	await UI.commands[submenu].open();
-	settingsCheck();
-}
-function settingsSidebar() {
-	let wmin = 170;
-	mStyle('dLeft', { wmin: wmin });
-	let d = mDom('dLeft', { wmin: wmin - 10, margin: 10, matop: 160, h: window.innerHeight - getRect('dLeft').y - 102 }); //, bg:'#00000020'  }); 
-	let gap = 5;
-	UI.commands.settMyTheme = mCommand(d, 'settMyTheme', 'My Theme', { save: true }); mNewline(d, gap);
-	UI.commands.settTheme = mCommand(d, 'settTheme', 'Themes', { save: true }); mNewline(d, gap);
-	UI.commands.settColor = mCommand(d, 'settColor', 'Color', { save: true }); mNewline(d, gap);
-	UI.commands.settFg = mCommand(d, 'settFg', 'Text Color', { save: true }); mNewline(d, gap);
-	UI.commands.settTexture = mCommand(d, 'settTexture', 'Texture', { save: true }); mNewline(d, gap);
-	UI.commands.settBlendMode = mCommand(d, 'settBlendMode', 'Blend Mode', { save: true }); mNewline(d, 2 * gap);
-	UI.commands.settRemoveTexture = mCommand(d, 'settRemoveTexture', 'Remove Texture'); mNewline(d, gap);
-	UI.commands.settResetAll = mCommand(d, 'settResetAll', 'Revert Settings'); mNewline(d, gap);
-	UI.commands.settAddYourTheme = mCommand(d, 'settAddYourTheme', 'Add Your Theme'); mNewline(d, gap);
-	UI.commands.settDeleteTheme = mCommand(d, 'settDeleteTheme', 'Delete Theme'); mNewline(d, gap);
-}
-function show(elem, isInline = false) {
-	if (isString(elem)) elem = document.getElementById(elem);
-	if (isSvg(elem)) {
-		elem.setAttribute('style', 'visibility:visible');
-	} else {
-		elem.style.display = isInline ? 'inline-block' : null;
-	}
-	return elem;
 }
 async function showBlendMode(dParent, blendCSS) {
 	let src = U.texture;
@@ -8130,96 +5784,6 @@ function showFleetingMessage(msg, dParent, styles = {}, ms = 3000, msDelay = 0, 
 		TOFleetingMessage = setTimeout(() => fleetingMessage(msg, dFleetingMessage, styles, ms, fade), 10);
 	}
 }
-async function showGameMenu(gamename) {
-	let users = Serverdata.users = await mGetRoute('users');//console.log('users',users);
-	mRemoveIfExists('dGameMenu');
-	let dMenu = mDom('dMain', {}, { className: 'section', id: 'dGameMenu' });
-	mDom(dMenu, { maleft: 12 }, { html: `<h2>game options</h2>` });
-	let style = { display: 'flex', justify: 'center', w: '100%', gap: 10, matop: 6 };
-	let dPlayers = mDiv(dMenu, style, 'dMenuPlayers'); //mCenterFlex(dPlayers);
-	let dOptions = mDiv(dMenu, style, 'dMenuOptions'); //mCenterFlex(dOptions);
-	let dButtons = mDiv(dMenu, style, 'dMenuButtons');
-	DA.gamename = gamename;
-	DA.gameOptions = {};
-	DA.playerList = [];
-	DA.allPlayers = {};
-	DA.lastName = null;
-	await showGamePlayers(dPlayers, users);
-	await showGameOptions(dOptions, gamename);
-	let astart = mButton('Start', onclickStartGame, dButtons, {}, ['button', 'input']);
-	let ajoin = mButton('Open to Join', onclickOpenToJoinGame, dButtons, {}, ['button', 'input']);
-	let acancel = mButton('Cancel', () => mClear(dMenu), dButtons, {}, ['button', 'input']);
-	let bclear = mButton('Clear Players', onclickClearPlayers, dButtons, {}, ['button', 'input']);
-}
-async function showGameMenuPlayerDialog(name, shift = false) {
-	let allPlItem = DA.allPlayers[name];
-	let gamename = DA.gamename;
-	let da = iDiv(allPlItem);
-	if (!DA.playerList.includes(name)) await setPlayerPlaying(allPlItem, gamename);
-	else await setPlayerNotPlaying(allPlItem, gamename);
-}
-async function showGameOptions(dParent, gamename) {
-	let poss = getGameOptions(gamename);
-	if (nundef(poss)) return;
-	for (const p in poss) {
-		let key = p;
-		let val = poss[p];
-		if (isString(val)) {
-			let list = val.split(',');
-			let legend = formatLegend(key);
-			let fs = mRadioGroup(dParent, {}, `d_${key}`, legend);
-			for (const v of list) { mRadio(v, isNumber(v) ? Number(v) : v, key, fs, { cursor: 'pointer' }, null, key, true); }
-			measureFieldset(fs);
-		}
-	}
-	let inpsolo = mBy(`i_gamemode_solo`);//console.log('HALLO',inpsolo)
-	let inpmulti = mBy(`i_gamemode_multi`);
-	if (isdef(inpsolo)) inpsolo.onclick = setPlayersToSolo;
-	if (isdef(inpmulti)) inpmulti.onclick = setPlayersToMulti;
-}
-async function showGamePlayers(dParent, users) {
-	let me = getUname();
-	mStyle(dParent, { wrap: true });
-	let userlist = ['amanda', 'felix', 'mimi'];
-	for (const name in users) addIf(userlist, name);
-	for (const name of userlist) {
-		let d = mDom(dParent, { align: 'center', padding: 2, cursor: 'pointer', border: `transparent` });
-		let img = showUserImage(name, d, 40);
-		let label = mDom(d, { matop: -4, fz: 12, hline: 12 }, { html: name });
-		d.setAttribute('username', name)
-		d.onclick = onclickGameMenuPlayer;
-		let item = userToPlayer(name, DA.gamename); item.div = d; item.isSelected = false;
-		DA.allPlayers[name] = item;
-	}
-	await clickOnPlayer(me);
-}
-function showGameover(table, dParent) {
-	let winners = table.winners;
-	let msg = winners.length > 1 ? `GAME OVER - The winners are ${winners.join(', ')}!!!` : `GAME OVER - The winner is ${winners[0]}!!!`;
-	let d = showRibbon(dParent, msg);
-	updateTestButtonsLogin(table.playerNames);
-	mDom(d, { h: 12 }, { html: '<br>' })
-	mButton('PLAY AGAIN', () => onclickStartTable(table.id), d, { className: 'button', fz: 24 });
-}
-function showGames(ms = 500) {
-	let dParent = mBy('dGameList'); if (isdef(dParent)) { mClear(dParent); } else dParent = mDom('dMain', {}, { className: 'section', id: 'dGameList' });
-	mText(`<h2>start new game</h2>`, dParent, { maleft: 12 });
-	let d = mDiv(dParent, { fg: 'white' }, 'game_menu'); mFlexWrap(d);
-	let gamelist = 'accuse aristo bluff ferro nations spotit wise'; if (DA.TEST0) gamelist += ' a_game'; gamelist = toWords(gamelist);
-	gamelist = ['setgame', 'fishgame'];//, 'button96'];
-	for (const gname of gamelist) {
-		let g = getGameConfig(gname);
-		let [sym, bg, color, id] = [M.superdi[g.logo], g.color, null, getUID()];
-		let d1 = mDiv(d, { cursor: 'pointer', rounding: 10, margin: 10, padding: 0, patop: 10, w: 140, height: 100, bg: bg, position: 'relative' }, g.id);
-		d1.setAttribute('gamename', gname);
-		d1.onclick = onclickGameMenuItem;
-		mCenterFlex(d1);
-		let o = M.superdi[g.logo];
-		let el = mDom(d1, { matop: 0, mabottom: 6, fz: 65, hline: 65, family: 'emoNoto', fg: 'white', display: 'inline-block' }, { html: o.text });
-		mLinebreak(d1);
-		mDiv(d1, { fz: 18, align: 'center' }, null, g.friendly);
-	}
-}
 function showImage(key, dParent, styles = {}, useSymbol = false) {
 	let o = M.superdi[key];
 	if (nundef(o)) { console.log('showImage:key not found', key); return; }
@@ -8347,94 +5911,14 @@ function showPaletteText(dParent, list) {
 	}
 	return items;
 }
-function showPlaetze(dCard, item, gap, color = 'silver') {
-	let n = item.ooffsprings.num;
-	let sym = item.class == 'mammal' ? 'paw' : 'big_egg';
-	let html = wsGetChildInline(item, color);
-	let plaetze = nundef(n) ? 2 : n == 0 ? 0 : n == 1 ? 1 : n < 8 ? 2 : n < 25 ? 3 : n < 100 ? 4 : n < 1000 ? 5 : 6;
-	let [rows, cols, w] = [3, plaetze <= 3 ? 1 : 2, plaetze <= 3 ? gap : 3 * gap]
-	let dgrid = mGrid(3, cols, dCard, { gap: gap * .8 });//{w,h:5*gap,gap:gap/2});
-	for (const i of range(plaetze)) { mDom(dgrid, { w: gap, h: gap, fg: color }, { html }); }
-	return dgrid;
-}
 function showRibbon(dParent, msg) {
 	let d = mBy('ribbon'); if (isdef(d)) d.remove();
 	let bg = `linear-gradient(270deg, #fffffd, #00000080)`
 	d = mDom(dParent, { bg, mabottom: 10, align: 'center', vpadding: 10, fz: 30, w100: true }, { html: msg, id: 'ribbon' });
 	return d;
 }
-async function showTable(id) {
-	let me = getUname();
-	let table = await mGetRoute('table', { id });  //console.log('table',table)
-	if (!table) { showMessage('table deleted!'); return await showTables('showTable'); }
-	let func = DA.funcs[table.game];
-	T = table;
-	clearMain();
-	let d = mBy('dExtraLeft');
-	d.innerHTML = `<h2>${getGameProp('friendly').toUpperCase()}: ${table.friendly} (${table.step})</h2>`; // title
-	let items = func.present(table);
-	func.stats(table);
-	if (table.status == 'over') { showGameover(table, 'dTitle'); return; }
-	assertion(table.status == 'started', `showTable status ERROR ${table.status}`);
-	await updateTestButtonsPlayers(table);
-	func.activate(table, items);
-}
-async function showTables(from) {
-	await updateTestButtonsLogin();
-	let me = getUname();
-	let tables = Serverdata.tables = await mGetRoute('tables');
-	tables.map(x => x.prior = x.status == 'open' ? 0 : x.turn.includes(me) ? 1 : x.playerNames.includes(me) ? 2 : 3);
-	sortBy(tables, 'prior');
-	let dParent = mBy('dTableList');
-	if (isdef(dParent)) { mClear(dParent); }
-	else dParent = mDom('dMain', {}, { className: 'section', id: 'dTableList' });
-	if (isEmpty(tables)) { mText('no active game tables', dParent); return []; }
-	tables.map(x => x.game_friendly = capitalize(getGameFriendly(x.game)));
-	mText(`<h2>game tables</h2>`, dParent, { maleft: 12 })
-	let t = UI.tables = mDataTable(tables, dParent, null, ['friendly', 'game_friendly', 'playerNames'], 'tables', false);
-	mTableCommandify(t.rowitems.filter(ri => ri.o.status != 'open'), {
-		0: (item, val) => hFunc(val, 'onclickTable', item.o.id, item.id),
-	});
-	mTableStylify(t.rowitems.filter(ri => ri.o.status == 'open'), { 0: { fg: 'blue' }, });
-	let d = iDiv(t);
-	for (const ri of t.rowitems) {
-		let r = iDiv(ri);
-		let id = ri.o.id;
-		if (ri.o.prior == 1) mDom(r, {}, { tag: 'td', html: getWaitingHtml(24) });
-		if (ri.o.status == 'open') {
-			let playerNames = ri.o.playerNames;
-			if (playerNames.includes(me)) {
-				if (ri.o.owner != me) {
-					let h1 = hFunc('leave', 'onclickLeaveTable', ri.o.id); let c = mAppend(r, mCreate('td')); c.innerHTML = h1;
-				}
-			} else {
-				let h1 = hFunc('join', 'onclickJoinTable', ri.o.id); let c = mAppend(r, mCreate('td')); c.innerHTML = h1;
-			}
-		}
-		if (ri.o.owner != me) continue;
-		let h = hFunc('delete', 'onclickDeleteTable', id); let c = mAppend(r, mCreate('td')); c.innerHTML = h;
-		if (ri.o.status == 'open') { let h1 = hFunc('start', 'onclickStartTable', id); let c1 = mAppend(r, mCreate('td')); c1.innerHTML = h1; }
-	}
-}
 function showText(dParent, text, bg = 'black') {
 	return mDom(dParent, { align: 'center', wmin: 120, padding: 2, bg, fg: colorIdealText(bg) }, { html: text });
-}
-async function showTextColors() {
-	let d = mBy('dSettingsMenu'); mClear(d);
-	let d1 = mDom(d, { gap: 12, padding: 10 }); mFlexWrap(d1);
-	let colors = ['white', 'silver', 'dimgray', 'black'].map(x => w3color(x)); //, getCSSVariable('--fgButton'), getCSSVariable('--fgButtonHover')].map(x => w3color(x));
-	for (var c of colors) {
-		let bg = 'transparent';
-		let fg = c.hex = c.toHexString();
-		let d2 = mDom(d1, { border: fg, wmin: 250, bg, fg, padding: 20 }, { class: 'colorbox', dataColor: fg });
-		mDom(d2, { weight: 'bold', align: 'center' }, { html: 'Text Sample' });
-		let html = `<br>${fg}<br>hue:${c.hue}<br>sat:${Math.round(c.sat * 100)}<br>lum:${Math.round(c.lightness * 100)}`
-		let dmini = mDom(d2, { align: 'center', wmin: 120, padding: 2, bg, fg }, { html });
-	}
-	let divs = document.getElementsByClassName('colorbox');
-	for (const div of divs) {
-		div.onclick = async () => onclickTextColor(div.getAttribute('dataColor'));
-	}
 }
 async function showTextures() {
 	let d = mBy('dSettingsMenu'); mClear(d);
@@ -8484,22 +5968,6 @@ function showTitle(title, dParent = 'dTitle') {
 	mClear(dParent);
 	return mDom(dParent, { maleft: 20 }, { tag: 'h1', html: title, classes: 'title' });
 }
-function showTrick() {
-	let dZone = Zones.table.dData;
-	let d = mDiv(dZone);
-	mStyle(d, { display: 'flex', position: 'relative' });
-	let zIndex = 1;
-	for (let i = 0; i < T.trick.length; i++) {
-		let c = T.trick[i];
-		let direction = i == 0 ? { x: 0, y: -1 } : { x: 0, y: 1 };
-		let displ = 10;
-		let offset = { x: -35 + direction.x * displ, y: direction.y * displ };
-		let d1 = c.div;
-		mAppend(d, d1);
-		mStyle(d1, { position: 'absolute', left: offset.x, top: offset.y, z: zIndex });
-		zIndex += 1;
-	}
-}
 function showUserImage(uname, d, sz = 40) {
 	let u = Serverdata.users[uname];
 	let key = u.imgKey;
@@ -8508,13 +5976,6 @@ function showUserImage(uname, d, sz = 40) {
 		key = 'unknown_user';
 	}
 	return showim1(key, d, { 'object-position': 'center top', 'object-fit': 'cover', h: sz, w: sz, round: true, border: `${u.color} 3px solid` });
-}
-function showValidMoves(table) {
-	if (nundef(table.moves)) { console.log('no moves yet!'); return; }
-	console.log('________', table.step)
-	for (const m of table.moves) {
-		console.log(`${m.step} ${m.name}: ${m.move.map(x => x.substring(0, 5)).join(',')} (${m.change})=>${m.score}`);
-	}
 }
 function showim1(imgKey, d, styles = {}, opts = {}) {
 	let o = lookup(M.superdi, [imgKey]);
@@ -8551,264 +6012,6 @@ function showim2(imgKey, d, styles = {}, opts = {}) {
 }
 function shuffle(arr) { if (isEmpty(arr)) return []; else return fisherYates(arr); }
 
-function simpleCheckCommands() {
-	if (nundef(UI.selectedImages)) UI.selectedImages = [];
-	let n = UI.selectedImages.length;
-	for (const k in UI.commands) {
-		let cmd = UI.commands[k];
-		if (nundef(cmd) || nundef(iDiv(cmd)) || nundef(mBy(k))) continue;
-		if (nundef(cmd.fSel) || cmd.fSel(n)) cmdEnable(k); else cmdDisable(k);
-	}
-}
-function simpleClearSelections() {
-	mClearAllSelections();
-	simpleCheckCommands();
-}
-async function simpleFinishEditing(canvas, dPopup, inpFriendly, inpCats, sisi) {
-	const dataUrl = canvas.toDataURL('image/png'); //davon jetzt die dataUrl!
-	if (isEmpty(inpFriendly.value)) inpFriendly.value = 'pic'
-	let friendly = inpFriendly.value;
-	let [name, imgname] = findUniqueSuperdiKey(friendly);
-	console.log('key name will be', name, imgname);
-	let key = name, filename = name + '.png';
-	let o = { image: dataUrl, coll: sisi.name, filename };
-	let resp = await mPostRoute('postImage', o); //console.log('resp', resp); //sollte path enthalten!
-	filename = resp.filename;
-	let imgPath = `../assets/img/${sisi.name}/${filename}`;
-	let cats = extractWords(valf(inpCats.value, ''));
-	let item = isdef(M.superdi[key]) ? jsCopy(M.superdi[key]) : { key, friendly, cats, colls: [] };
-	item[valf(imgname, 'img')] = imgPath;
-	dPopup.remove();
-	await simpleOnDroppedItem(item, key, sisi);
-}
-function simpleInit(name, sisi) {
-	if (nundef(name) && isdef(UI.simple)) { sisi = UI.simple; name = sisi.name; }
-	let isReload = isdef(sisi.index) && sisi.name == name;
-	if (!isReload) { sisi.index = 0; sisi.pageIndex = 1; sisi.name = name; sisi.filter = null; }
-	let list = [];
-	if (name == 'all' || isEmpty(name)) { list = Object.keys(M.superdi); }
-	else if (isdef(M.byCollection[name])) { list = M.byCollection[name]; }
-	else list = [];
-	localStorage.setItem('sisi', name)
-	let dMenu = sisi.dMenu;
-	mClear(dMenu);
-	let d = mDom(dMenu); mFlexV(d);
-	mDom(d, { fz: 24, weight: 'bold' }, { html: 'Collection:' });
-	let collNames = M.collections;
-	let dlColl = mDatalist(d, collNames, { placeholder: "<select from list>" });
-	dlColl.inpElem.oninput = ev => { console.log(sisi.name, ev.target.value); simpleInit(ev.target.value, sisi); }
-	dlColl.inpElem.value = name;
-	list = sortByFunc(list, x => M.superdi[x].friendly);
-	sisi.masterKeys = list;
-	sisi.keys = sisi.filter ? collFilterImages(sisi, sisi.filter) : list;
-	let cats = collectCats(sisi.keys);
-	cats.sort();
-	d = mDom(dMenu); mFlexV(d);
-	let wLabel = sisi.cols < 6 ? 117 : 'auto';
-	mDom(d, { fz: 24, weight: 'bold', w: wLabel, align: 'right' }, { edit: true, html: 'Filter:' });
-	let dlCat = mDatalist(d, cats, { edit: false, placeholder: "<enter value>", value: sisi.filter });
-	dlCat.inpElem.oninput = ev => {
-		let coll = UI.simple;
-		let s = ev.target.value.toLowerCase().trim();
-		let list = collFilterImages(coll, s);
-		coll.keys = list;
-		coll.filter = s;
-		coll.index = 0; coll.pageIndex = 1; simpleClearSelections();
-		simpleShowImageBatch(coll, 0, false);
-	};
-	d = mDom(dMenu, { gap: 10, align: 'right' });
-	mButton('prev', () => simpleShowImageBatch(sisi, -1), d, { w: 70, margin: 0, maleft: 10 }, 'input', 'bPrev');
-	mButton('next', () => simpleShowImageBatch(sisi, 1), d, { w: 70, margin: 0, maleft: 10 }, 'input', 'bNext');
-	simpleClearSelections();
-	simpleShowImageBatch(sisi);
-}
-function simpleLocked(collname) {
-	if (nundef(collname)) collname = lookup(UI, ['simple', 'name']);
-	if (!collname) return true;
-	return getUname() != '_unsafe' && ['all', 'emo', 'fa6', 'icon', 'nations', 'users'].includes(collname);
-}
-async function simpleOnDropImage(ev, elem) {
-	let dt = ev.dataTransfer;
-	if (dt.types.includes('itemkey')) {
-		let data = ev.dataTransfer.getData('itemkey');
-		await simpleOnDroppedItem(data);
-	} else {
-		const files = ev.dataTransfer.files;
-		if (files.length > 0) {
-			const reader = new FileReader();
-			reader.onload = async (evReader) => {
-				let data = evReader.target.result;
-				await simpleOnDroppedUrl(data, UI.simple);
-			};
-			reader.readAsDataURL(files[0]);
-		}
-	}
-}
-async function simpleOnDroppedItem(itemOrKey, key, sisi) {
-	if (nundef(sisi)) sisi = UI.simple;
-	let item;
-	if (isString(itemOrKey)) { key = itemOrKey; item = M.superdi[key]; } else { item = itemOrKey; }
-	assertion(isdef(key), 'NO KEY!!!!!');
-	lookupAddIfToList(item, ['colls'], sisi.name);
-	let o = M.superdi[key];
-	if (isdef(o)) {
-		console.log(`HA! ${key} already there`);
-		let changed = false;
-		for (const k in item) {
-			let val = item[k];
-			if (isLiteral(val) && o[k] != item[k]) { changed = true; break; }
-			else if (isList(val) && !sameList(val, o[k])) { changed = true; break; }
-		}
-		if (!changed) return;
-	}
-	console.log(`........But changed!!!`);
-	let di = {}; di[key] = item;
-	await updateSuperdi(di);
-	simpleInit(sisi.name, sisi)
-}
-async function simpleOnDroppedUrl(src, sisi) {
-	let sz = 400;
-	let dPopup = mDom(document.body, { position: 'fixed', top: 40, left: 0, wmin: sz, hmin: sz, bg: 'pink' });
-	let dParent = mDom(dPopup);
-	let d = mDom(dParent, { w: sz, h: sz, border: 'dimgray', margin: 10 });
-	let canvas = createPanZoomCanvas(d, src, sz, sz);
-	let instr = mDom(dPopup, { align: 'center', mabot: 10 }, { html: `- panzoom image to your liking -` })
-	let dinp = mDom(dPopup, { padding: 10, align: 'right', display: 'inline-block' })
-	mDom(dinp, { display: 'inline-block' }, { html: 'Name: ' });
-	let inpFriendly = mDom(dinp, { outline: 'none', w: 200 }, { className: 'input', name: 'friendly', tag: 'input', type: 'text', placeholder: `<enter name>` });
-	let defaultName = '';
-	let iDefault = 1;
-	let k = sisi.masterKeys.find(x => x == `${sisi.name}${iDefault}`);
-	while (isdef(k)) { iDefault++; k = sisi.masterKeys.find(x => x == `${sisi.name}${iDefault}`); }
-	defaultName = `${sisi.name}${iDefault}`;
-	inpFriendly.value = defaultName;
-	mDom(dinp, { h: 1 });
-	mDom(dinp, { display: 'inline-block' }, { html: 'Categories: ' })
-	let inpCats = mDom(dinp, { outline: 'none', w: 200 }, { className: 'input', name: 'cats', tag: 'input', type: 'text', placeholder: `<enter categories>` });
-	let db2 = mDom(dPopup, { padding: 10, display: 'flex', gap: 10, 'justify-content': 'end' });
-	mButton('Cancel', () => dPopup.remove(), db2, { w: 70 }, 'input');
-	mButton('Save', () => simpleFinishEditing(canvas, dPopup, inpFriendly, inpCats, sisi), db2, { w: 70 }, 'input');
-}
-async function simpleOnclickItem(ev) {
-	let id = evToId(ev);
-	let item = UI.simple.items[id]; if (nundef(item)) return;
-	let selkey = item.key;
-	toggleSelectionOfPicture(iDiv(item), selkey, UI.selectedImages);
-	simpleCheckCommands();
-}
-async function simpleOnclickLabel(ev) {
-	evNoBubble(ev);
-	let id = evToId(ev); console.log('id', id)
-	let o = lookup(UI.simple, ['items', id]);
-	if (!o) return;
-	console.log('clicked label of', o);
-	let [key, elem, collname] = [o.key, o.name, iDiv(o)];
-	let newfriendly = await mGather(ev.target);
-	if (!newfriendly) return;
-	if (isEmpty(newfriendly)) {
-		showMessage(`ERROR: name invalid: ${newfriendly}`);
-		return;
-	}
-	console.log('rename friendly to', newfriendly)
-	let item = M.superdi[key];
-	item.friendly = newfriendly;
-	let di = {};
-	di[key] = item;
-	let res = await mPostRoute('postUpdateSuperdi', { di });
-	console.log('postUpdateSuperdi', res)
-	await loadAssets();
-	ev.target.innerHTML = newfriendly;
-}
-async function simpleSetAvatar(key) {
-	U.imgKey = key;
-	let res = await postUserChange(U);
-}
-function simpleShowImageBatch(sisi, inc = 0, alertEmpty = false) {
-	let [keys, index, numCells] = [sisi.keys, sisi.index, sisi.rows * sisi.cols];
-	if (isEmpty(keys) && alertEmpty) showMessage('nothing has been added to this collection yet!');
-	if (keys.length <= numCells) inc = 0;
-	let newPageIndex = sisi.pageIndex + inc;
-	let numItems = keys.length;
-	let maxPage = Math.max(1, Math.ceil(numItems / numCells));
-	if (newPageIndex > maxPage) newPageIndex = 1;
-	if (newPageIndex < 1) newPageIndex = maxPage;
-	index = numCells * (newPageIndex - 1);
-	let list = arrTakeFromTo(keys, index, index + numCells);
-	sisi.index = index; sisi.pageIndex = newPageIndex;
-	sisi.items = {};
-	let name = sisi.name;
-	for (let i = 0; i < list.length; i++) {
-		let key = list[i];
-		let d = sisi.cells[i];
-		mStyle(d, { opacity: 1 });
-		mClass(d, 'magnifiable')
-		let id = getUID();
-		let d1 = simpleShowImageInBatch(key, d, {}, { prefer: sisi.name == 'emo' ? 'img' : 'photo' });
-		d1.id = id;
-		let item = { div: d1, key, name, id, index: i, page: newPageIndex };
-		sisi.items[id] = item;
-		if (isList(UI.selectedImages) && UI.selectedImages.includes(key)) mSelect(d1);
-	}
-	for (let i = list.length; i < numCells; i++) {
-		mStyle(sisi.cells[i], { opacity: 0 })
-	}
-	sisi.dPageIndex.innerHTML = `page ${sisi.pageIndex}/${maxPage}`;
-	let [dNext, dPrev] = [mBy('bNext'), mBy('bPrev')];
-	if (maxPage == 1) { mClass(dPrev, 'disabled'); mClass(dNext, 'disabled'); }
-	else { mClassRemove(dPrev, 'disabled'); mClassRemove(dNext, 'disabled'); }
-}
-function simpleShowImageInBatch(key, dParent, styles = {}, opts = {}) {
-	let o = M.superdi[key]; o.key = key;
-	addKeys({ bg: rColor() }, styles);
-	mClear(dParent);
-	[w, h] = [dParent.offsetWidth, dParent.offsetHeight];
-	let [sz, fz] = [.9 * w, .8 * h];
-	let d1 = mDiv(dParent, { position: 'relative', w: '100%', h: '100%', padding: 11, box: true });//overflow: 'hidden', 
-	mCenterCenterFlex(d1)
-	let el = null;
-	let src = (opts.prefer == 'photo' && isdef(o.photo)) ? o.photo : valf(o.img, null);
-	if (isdef(src)) {
-		if (o.cats.includes('card')) {
-			el = mDom(d1, { h: '100%', 'object-fit': 'cover', 'object-position': 'center center' }, { tag: 'img', src });
-			mDom(d1, { h: 1, w: '100%' })
-		} else {
-			el = mDom(d1, { w: '100%', h: '100%', 'object-fit': 'cover', 'object-position': 'center center' }, { tag: 'img', src });
-		}
-	}
-	else if (isdef(o.text)) el = mDom(d1, { fz: fz, hline: fz, family: 'emoNoto', fg: rColor(), display: 'inline' }, { html: o.text });
-	else if (isdef(o.fa)) el = mDom(d1, { fz: fz, hline: fz, family: 'pictoFa', bg: 'transparent', fg: rColor(), display: 'inline' }, { html: String.fromCharCode('0x' + o.fa) });
-	else if (isdef(o.ga)) el = mDom(d1, { fz: fz, hline: fz, family: 'pictoGame', bg: 'beige', fg: rColor(), display: 'inline' }, { html: String.fromCharCode('0x' + o.ga) });
-	else if (isdef(o.fa6)) el = mDom(d1, { fz: fz, hline: fz, family: 'fa6', bg: 'transparent', fg: rColor(), display: 'inline' }, { html: String.fromCharCode('0x' + o.fa6) });
-	assertion(el, 'PROBLEM mit' + key);
-	let label = mDom(d1, { fz: 11, cursor: 'pointer' }, { html: o.friendly, className: 'ellipsis hoverHue' });
-	label.onclick = simpleOnclickLabel;
-	mStyle(d1, { cursor: 'pointer' });
-	d1.onclick = simpleOnclickItem;
-	d1.setAttribute('key', key);
-	d1.setAttribute('draggable', true)
-	d1.ondragstart = ev => { ev.dataTransfer.setData('itemkey', key); }
-	return d1;
-}
-function simpleSidebar(wmin) {
-	mStyle('dLeft', { wmin });
-	let d = mDom('dLeft', { wmin: wmin - 10, matop: 20, h: window.innerHeight - getRect('dLeft').y - 102 }); //, bg:'#00000020'  }); 
-	let gap = 5;
-	let stylesTitles = { matop: 10, bg: '#ffffff80', fg: 'black' };
-	let cmds = {};
-	cmds.simpleNew = mCommand(d, 'simpleNew', 'New'); mNewline(d, gap);
-	mDom(d, stylesTitles, { html: 'Selection:' })
-	cmds.simpleSelectAll = mCommand(d, 'simpleSelectAll', 'Select All'); mNewline(d, gap);
-	cmds.simpleSelectPage = mCommand(d, 'simpleSelectPage', 'Select Page'); mNewline(d, gap);
-	cmds.simpleClearSelections = mCommand(d, 'simpleClearSelections', 'Clear Selection', { fSel: x => x >= 1 }); mNewline(d, gap);
-	mDom(d, stylesTitles, { html: 'Item:' })
-	cmds.setAvatar = mCommand(d, 'setAvatar', 'Set Avatar', { fSel: x => x == 1 }); mNewline(d, gap);
-	cmds.editDetails = mCommand(d, 'editDetails', 'Edit Details', { fSel: x => x == 1 }); mNewline(d, gap);
-	mDom(d, stylesTitles, { html: 'Items:' })
-	cmds.addSelected = mCommand(d, 'addSelected', 'Add To', { fSel: x => (x >= 1) }); mNewline(d, gap);
-	cmds.simpleRemove = mCommand(d, 'simpleRemove', 'Remove', { fSel: x => (!simpleLocked() && x >= 1) }); mNewline(d, gap);
-	UI.commands = cmds;
-	simpleCheckCommands();
-}
 async function simpleUpload(route, o) {
 	let server = getServerurl();
 	server += `/${route}`;
@@ -8853,9 +6056,6 @@ function sockInit() {
 }
 function sockPostUserChange(oldname, newname) {
 	Socket.emit('userChange', { oldname, newname });
-}
-function someOtherPlayerName(table) {
-	return rChoose(arrWithout(table.playerNames, getUname()));
 }
 function sortBy(arr, key) { arr.sort((a, b) => isEmpty(a[key]) || (a[key] < b[key] ? -1 : 1)); return arr; }
 
@@ -8957,77 +6157,8 @@ function squareTo(tool, sznew = 128) {
 	let [x1, y1] = [x - (sz - w) / 2, y - (sz - h) / 2];
 	redrawImage(img, dParent, x1, y1, sz, sz, sznew, sznew, () => tool.setRect(0, 0, sznew, sznew))
 }
-async function startGame(gamename, players, options) {
-	let table = createOpenTable(gamename, players, options);
-	table = setTableToStarted(table);
-	let res = await mPostRoute('postTable', table);
-}
-function startLevel() {
-	Speech.setLanguage(Settings.language);
-	getGameValues(Username, G.id, G.level);
-	G.instance.startLevel();
-	if (G.keys.length < G.numPics) { updateKeySettings(G.numPics + 5); }
-	startRound();
-}
-function startPanning(ev) {
-	console.log('_________startPanning!')
-	const panData = {};
-	function panStart(ev) {
-		evNoBubble(ev);
-		assertion(nundef(panData.panning), panData)
-		let dc = panData.dCrop = ev.target;
-		panData.cropStartSize = { w: mGetStyle(dc, 'w'), h: mGetStyle(dc, 'h') }
-		panData.cropStartPos = { l: mGetStyle(dc, 'left'), t: mGetStyle(dc, 'top') }
-		panData.elParent = panData.dCrop.parentNode;
-		panData.img = panData.elParent.querySelector('img, canvas');//console.log('img',panData.img);
-		panData.panning = true;
-		panData.counter = -1;
-		panData.mouseStart = getMouseCoordinatesRelativeToElement(ev, panData.elParent);
-		panData.posStart = { x: mGetStyle(dc, 'left'), y: mGetStyle(dc, 'top') };
-		addEventListener('mouseup', panEnd);
-		panData.elParent.addEventListener('mousemove', panMove);
-		console.log('panStart!', panData.mouseStart);
-	}
-	function panMove(ev) {
-		evNoBubble(ev);
-		if (!panData.panning || ++panData.counter % 3) return;
-		panData.mouse = getMouseCoordinatesRelativeToElement(ev, panData.elParent);
-		let [x, y] = [panData.posStart.x, panData.posStart.y];
-		let [dx, dy] = [panData.mouse.x - panData.mouseStart.x, panData.mouse.y - panData.mouseStart.y];
-		[dx, dy] = [Math.round(dx / 10) * 10, Math.round(dy / 10) * 10];
-		adjustComplex(panData)
-	}
-	function panEnd(ev) {
-		assertion(panData.panning == true);
-		let d = evToClass(ev, 'imgWrapper');
-		if (d == panData.elParent) {
-			evNoBubble(ev);
-			panData.mouse = getMouseCoordinatesRelativeToElement(ev, panData.elParent);
-			console.log('SUCCESS!', panData.mouse)
-		}
-		removeEventListener('mouseup', panEnd);
-		panData.elParent.removeEventListener('mousemove', panMove);
-		panData.panning = false;
-		console.log('* THE END *', panData)
-	}
-	panStart(ev);
-}
-function startRound() {
-	if (G.addonActive != true && isTimeForAddon()) {
-		G.addonActive = true;
-		exitToAddon(startRound); return;
-	} else G.addonActive = false;
-	resetRound();
-	uiActivated = false;
-	G.instance.startRound();
-	TOMain = setTimeout(() => prompt(), 300);
-}
 function startsWith(s, sSub) {
 	return s.substring(0, sSub.length) == sSub;
-}
-function staticArea(areaName, oSpec) {
-	func = correctFuncName(oSpec.type);
-	oSpec.ui = window[func](areaName, oSpec);
 }
 function staticTitle(table) {
 	clearInterval(TO.titleInterval);
@@ -9046,10 +6177,6 @@ function stdRowsColsContainer(dParent, cols, styles = {}) {
 		'grid-template-columns': `repeat(${cols}, 1fr)`
 	}, styles);
 	return mDiv(dParent, styles);
-}
-function stopAutobot() {
-	if (isdef(TO.SLEEPTIMEOUT)) clearTimeout(TO.SLEEPTIMEOUT);
-	DA.stopAutobot = true;
 }
 function strRemoveTrailing(s, sub) {
 	return s.endsWith(sub) ? stringBeforeLast(s, sub) : s;
@@ -9107,8 +6234,6 @@ async function switchToOtherUser() {
 	let uname = await mGetRoute('otherUser', arguments);
 	await switchToUser(uname);
 }
-async function switchToTables() { return await switchToMainMenu('play'); }
-
 async function switchToUser(uname, menu) {
 	if (!isEmpty(uname)) uname = normalizeString(uname);
 	if (isEmpty(uname)) uname = 'guest';
@@ -9141,85 +6266,6 @@ function takeFromTo(ad, from, to) {
 		let keys = Object.keys(ad);
 		return keys.slice(from, to).map(x => (ad[x]));
 	} else return ad.slice(from, to);
-}
-function test1(map) {
-	var baseballIcon = L.icon({
-		iconUrl: '../leaf94/baseball-marker.png',
-		iconSize: [32, 37],
-		iconAnchor: [16, 37],
-		popupAnchor: [0, -28]
-	});
-	function onEachFeature(feature, layer) {
-		var popupContent = '<p>I started out as a GeoJSON ' +
-			feature.geometry.type + ", but now I'm a Leaflet vector!</p>";
-		if (feature.properties && feature.properties.popupContent) {
-			popupContent += feature.properties.popupContent;
-		}
-		layer.bindPopup(popupContent);
-	}
-	var bicycleRentalLayer = L.geoJSON([bicycleRental, campus], {
-		style: function (feature) {
-			return feature.properties && feature.properties.style;
-		},
-		onEachFeature: onEachFeature,
-		pointToLayer: function (feature, latlng) {
-			return L.circleMarker(latlng, {
-				radius: 8,
-				fillColor: '#ff7800',
-				color: '#000',
-				weight: 1,
-				opacity: 1,
-				fillOpacity: 0.8
-			});
-		}
-	}).addTo(map);
-	var freeBusLayer = L.geoJSON(freeBus, {
-		filter: function (feature, layer) {
-			if (feature.properties) {
-				return feature.properties.underConstruction !== undefined ? !feature.properties.underConstruction : true;
-			}
-			return false;
-		},
-		onEachFeature: onEachFeature
-	}).addTo(map);
-	var coorsLayer = L.geoJSON(coorsField, {
-		pointToLayer: function (feature, latlng) {
-			return L.marker(latlng, { icon: baseballIcon });
-		},
-		onEachFeature: onEachFeature
-	}).addTo(map);
-}
-function testHelpers() {
-	if (activatedTests.includes('helpers')) {
-		console.log(...arguments);
-	}
-}
-async function testOnclickBot(ev) {
-	for (const b of [UI.bTestBot, UI.bTestHuman, UI.bTestHybrid]) {
-		if (isdef(b)) mStyle(b, { bg: 'silver', fg: 'black' });
-	}
-	mStyle(UI.bTestBot, { bg: 'red', fg: 'white' });
-	await onclickBot();
-}
-async function testOnclickHuman(ev) {
-	for (const b of [UI.bTestBot, UI.bTestHuman, UI.bTestHybrid]) {
-		if (isdef(b)) mStyle(b, { bg: 'silver', fg: 'black' });
-	}
-	mStyle(UI.bTestHuman, { bg: 'red', fg: 'white' });
-	await onclickHuman();
-}
-async function testOnclickHybrid(ev) {
-	for (const b of [UI.bTestBot, UI.bTestHuman, UI.bTestHybrid]) {
-		if (isdef(b)) mStyle(b, { bg: 'silver', fg: 'black' });
-	}
-	mStyle(UI.bTestHybrid, { bg: 'red', fg: 'white' });
-	await onclickHybrid();
-}
-async function testOnclickPlaymode(ev) {
-	let b = UI.bPlaymode;
-	let caption = b.innerHTML;
-	if (caption.includes('human')) await onclickHuman();
-	else await onclickBot();
 }
 function toElem(d) { return isString(d) ? mBy(d) : d; }
 
@@ -9296,19 +6342,6 @@ function tryJSONParse(astext) {
 		return { message: 'ERROR', text: astext }
 	}
 }
-function turtle() {
-	background(51);
-	stroke(255);
-	translate(width / 2, height);
-	for (let i = 0; i < sentence.length; i++) {
-		let x = sentence.charAt(i);
-		if ('ABF'.includes(x)) { line(0, 0, 0, -len); translate(0, -len); }
-		else if (x == '+') rotate(angle);
-		else if (x == '-') rotate(-angle);
-		else if (x == '[') push();
-		else if (x == ']') pop();
-	}
-}
 function uiGadgetTypeCheckList(dParent, content, resolve, styles = {}, opts = {}) {
 	addKeys({ hmax: 500, wmax: 200, bg: 'white', fg: 'black', padding: 10, rounding: 10, box: true }, styles)
 	let dOuter = mDom(dParent, styles);
@@ -9320,7 +6353,7 @@ function uiGadgetTypeCheckList(dParent, content, resolve, styles = {}, opts = {}
 	return dOuter;
 }
 function uiGadgetTypeCheckListInput(form, content, resolve, styles, opts) {
-	addKeys({ wmax: '100vw', hmax: valf(styles.hmax,500), bg: 'white', fg: 'black', padding: 10, rounding: 10, box: true }, styles)
+	addKeys({ wmax: '100vw', hmax: valf(styles.hmax, 500), bg: 'white', fg: 'black', padding: 10, rounding: 10, box: true }, styles)
 	let dOuter = mDom(form, styles);
 	opts.handler = resolve;
 	let ui = uiTypeCheckListInput(content, dOuter, styles, opts);
@@ -9528,10 +6561,10 @@ function uiTypeCheckListInput(any, dParent, styles = {}, opts = {}) {
 	mButton('done', () => opts.handler(extractWords(inp.value, ' ')), db, { maleft: 10 }, 'input');
 	mStyle(dg, { w: wgrid, box: true, padding: 10 }); //, w: wgrid })
 	//let hmax = isdef(styles.hmax) ? styles.hmax - 150 : 300;
-	console.log('...hmax',styles.hmax)
+	console.log('...hmax', styles.hmax)
 	//addKeys({hmax:450},styles);
-	let hmax = valf(styles.hmax,450); //isdef(styles.hmax) ? styles.hmax - 150 : 300;
-	let grid = mGrid(null, cols, dg, { w100: true, gap: 10, matop: 4, hmax:hmax-150}); //, bg:'red' });
+	let hmax = valf(styles.hmax, 450); //isdef(styles.hmax) ? styles.hmax - 150 : 300;
+	let grid = mGrid(null, cols, dg, { w100: true, gap: 10, matop: 4, hmax: hmax - 150 }); //, bg:'red' });
 	items.map(x => mAppend(grid, iDiv(x)));
 	sortCheckboxes(grid);
 	let chks = Array.from(dg.querySelectorAll('input[type="checkbox"]'));
@@ -9728,22 +6761,6 @@ function uploadImg(img, unique, coll, name) {
 		});
 	});
 }
-function userToPlayer(name, gamename, playmode = 'human') {
-	let user = Serverdata.users[name];
-	let pl = jsCopyExceptKeys(user, ['games']);
-	let options = valf(getUserOptionsForGame(name, gamename), {});
-	addKeys(options, pl);
-	pl.playmode = playmode;
-	let poss = getGamePlayerOptions(gamename);
-	for (const p in poss) {
-		if (isdef(pl[p])) continue;
-		let val = poss[p];
-		let defval = arrLast(val.split(','));
-		if (isNumber(defval)) defval = Number(defval);
-		pl[p] = defval;
-	}
-	return pl;
-}
 function valf() {
 	for (const arg of arguments) if (isdef(arg)) return arg;
 	return null;
@@ -9769,593 +6786,6 @@ function wordAfter(arr, w) {
 	if (isString(arr)) arr = toWords(arr);
 	let i = arr.indexOf(w);
 	return i >= 0 && arr.length > i ? arr[i + 1] : null;
-}
-function wsCard(d, w, h) {
-	let card = cBlank(d, { h, w, border: 'silver' }); //return;
-	let dCard = iDiv(card);
-	return [card, dCard];
-}
-function wsFenFromItem(item) {
-	return `${item.key}@${item.valueFactor}@${normalizeString(item.power, '_', [':', '.'])}@${item.colorPower}@${item.abstract}@${item.colorSym}@${item.op}`;
-}
-function wsFood(tokens, op, dtop, sz) {
-	let d = mDom(dtop); mCenterCenterFlex(d);
-	let ch = op;
-	for (let i = 0; i < tokens.length; i++) {
-		let t = tokens[i];
-		let d1 = wsPrintSymbol(d, sz, t);
-		if (i < tokens.length - 1) mDom(d, { fz: sz * .7, weight: 'bold' }, { html: ch });
-	}
-}
-function wsFromNormalized(s, sep = '_') {
-	let x = replaceAll(s, sep, ' '); return x;
-}
-function wsGenerateCardInfo(key) {
-	let bg = rChoose(['white', 'sienna', 'pink', 'lightblue']);
-	let palette = wsGetColorRainbow();
-	let fg = rChoose(palette);
-	sym = getAbstractSymbol([2, 8, 10, 23, 26]);
-	power = wsGetPower(bg);
-	valueFactor = rChoose(range(1, 3));
-	op = rChoose(['+', '/']); //console.log('op',op)
-	return wsFenFromItem({ key, valueFactor, power, colorPower: bg, abstract: sym, colorSym: fg, op });
-}
-function wsGetChildInline(item, color) {
-	let type = item.class;
-	let key = type == 'mammal' ? 'paw' : 'big_egg';
-	let o = M.superdi[key];
-	let [fam, sym] = isdef(o.fa6) ? ['fa6', 'fa6'] : isdef(o.fa) ? ['pictoFa', 'fa'] : ['pictoGame', 'ga'];
-	let fg = valf(color, colorIdealText(item.colorPower, true));
-	return `<span style="color:${fg};vertical-align:middle;line-height:80%;font-size:${item.fz * 1.5}px;font-family:${fam}">${String.fromCharCode('0x' + M.superdi[key][sym])}</span>`;
-}
-function wsGetColorRainbow() { return ['gold', 'limegreen', 'orangered', 'dodgerblue', 'indigo', 'hotpink']; }
-
-function wsGetColorRainbowText(color) { return { gold: 'gold', limegreen: 'green', orangered: 'red', hotpink: 'pink', indigo: 'violet', dodgerblue: 'blue' }[color]; }
-
-function wsGetFoodlist() { return ['cherries', 'fish', 'grain', 'mouse', 'seedling', 'worm'] }
-
-function wsGetIcon(sym, sz = 30) {
-	let html;
-	if (nundef(sym)) sym = 'leaf';//rChoose(['omni', 'fish', 'mouse', 'wheat', 'worm', 'cherry']);
-	if (sym == 'omni') {
-		let colors = toWords('british_racing_green yellow sangria azure gray', true).map(x => colorFrom(x));
-		html = generatePizzaSvg(sz, ...colors);
-	} else if (sym == 'fish') {
-		html = `
-      <svg width="${sz}" height="${sz}" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
-          <g transform="matrix(1,0,0,1,-700,-300)">
-              <g transform="matrix(-10.1636,-1.24469e-15,1.24469e-15,-10.1636,756.948,402.109)">
-                  <g id="ws-4">
-                      <path id="fish" d="M0,0.092C0,-0.238 0.267,-0.506 0.598,-0.506C0.927,-0.506 1.195,-0.238 1.195,0.092C1.195,0.422 0.927,0.69 0.598,0.69C0.267,0.69 0,0.422 0,0.092M-11.442,-1.15L-11.442,-1.088C-11.442,-1.037 -11.42,-0.992 -11.408,-0.945C-11.275,-0.465 -10.779,-0.016 -10.771,0.305C-10.756,0.912 -11.504,1.256 -11.586,1.625C-11.586,1.625 -11.667,1.904 -11.559,2.025C-11.499,2.092 -11.42,2.102 -11.337,2.094C-9.921,1.954 -8.259,1.047 -7.839,1.24C-7.419,1.433 -5.796,3.438 -2.936,3.63C-1.327,3.738 1.139,3.412 2.135,2.096C2.368,1.819 2.579,1.517 2.783,1.224C2.876,1.09 2.97,0.957 3.065,0.825C3.225,0.596 3.097,0.387 3.056,0.337C2.902,0.146 2.75,-0.056 2.602,-0.253C2.27,-0.693 1.927,-1.148 1.529,-1.524C-0.167,-3.129 -2.469,-3.646 -4.806,-2.897C-5.842,-2.565 -7.774,-0.907 -7.775,-0.907C-8.289,-0.579 -10.235,-1.284 -11.139,-1.405C-11.214,-1.415 -11.286,-1.421 -11.346,-1.37C-11.406,-1.32 -11.442,-1.237 -11.442,-1.15" style="fill:rgb(0,121,159);fill-rule:nonzero;"/>
-                  </g>
-              </g>
-          </g>
-      </svg>
-    `;
-	} else if (sym == 'mouse') {
-		html = `
-        <svg width="${sz}" height="${sz}" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
-            <g transform="matrix(1,0,0,1,-500,-300)">
-                <g transform="matrix(9.09451,0,0,9.09451,670.98,392.954)">
-                    <g id="ws-5">
-                        <path id="mouse" d="M0,0.136C-0.705,-0.412 -2.127,-0.236 -2.867,-0.095C-2.803,-2.905 -7.442,-5.024 -10.299,-2.45L-11.797,-2.233C-11.131,-3.613 -12.9,-3.994 -13.312,-2.346L-15.426,-0.406C-16.451,0.4 -16.105,1.031 -15.189,1.031C-14.876,1.031 -11.897,1.617 -11.472,2.094C-11.535,2.206 -11.852,2.384 -11.773,2.995L-5.978,3.179C-4.286,2.679 -3.368,1.772 -3.023,0.768C-2.195,0.57 -0.921,0.449 -0.497,0.777C-0.434,0.826 -0.369,0.899 -0.369,1.063C-0.369,1.549 -0.767,1.699 -1.744,1.949C-2.445,2.129 -3.24,2.332 -3.749,2.912C-4.156,3.376 -4.309,3.827 -4.202,4.25C-4.05,4.859 -3.429,5.107 -3.359,5.134C-3.312,5.152 -3.264,5.16 -3.216,5.16C-3.052,5.16 -2.897,5.059 -2.837,4.896C-2.758,4.687 -2.864,4.452 -3.074,4.374C-3.131,4.352 -3.371,4.228 -3.415,4.053C-3.452,3.907 -3.354,3.692 -3.139,3.447C-2.796,3.057 -2.159,2.893 -1.542,2.735C-0.658,2.509 0.442,2.227 0.442,1.063C0.442,0.681 0.289,0.36 0,0.136" style="fill:rgb(116,100,91);fill-rule:nonzero;"/>
-                    </g>
-                </g>
-            </g>
-        </svg>
-      `;
-	} else if (sym == 'worm') {
-		html = `
-        <svg width="${sz}" height="${sz}" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
-            <g transform="matrix(1,0,0,1,-300,-100)">
-                <g transform="matrix(7.14802,0,0,7.14802,-2977.16,-1174.38)">
-                    <g id="ws-1">
-                        <g id="worm">
-                            <g transform="matrix(1,0,0,1,467.653,195.772)">
-                                <path d="M0,-8.535C-0.018,-8.351 -0.038,-8.047 -0.036,-7.798C-0.033,-7.536 -0.021,-7.275 0.007,-7.021C0.06,-6.511 0.179,-6.031 0.35,-5.619C0.432,-5.41 0.538,-5.226 0.648,-5.059C0.75,-4.905 0.789,-4.895 0.869,-4.838C1.013,-4.757 1.318,-4.665 1.782,-4.653C2.239,-4.635 2.789,-4.679 3.406,-4.729C3.718,-4.754 4.049,-4.779 4.42,-4.788C4.792,-4.794 5.204,-4.792 5.732,-4.686C6.694,-4.473 7.445,-4.057 8.093,-3.608C8.416,-3.38 8.716,-3.139 8.999,-2.886C9.14,-2.758 9.278,-2.629 9.413,-2.493C9.556,-2.348 9.664,-2.238 9.84,-2.031L9.993,-1.85C10.704,-1.01 10.599,0.248 9.758,0.959C8.918,1.67 7.66,1.564 6.95,0.724C6.866,0.626 6.79,0.513 6.729,0.404C6.711,0.373 6.616,0.251 6.548,0.17C6.473,0.08 6.394,-0.009 6.313,-0.096C6.152,-0.269 5.983,-0.43 5.815,-0.575C5.479,-0.863 5.134,-1.063 4.895,-1.148C4.821,-1.18 4.615,-1.217 4.37,-1.231C4.125,-1.248 3.839,-1.252 3.535,-1.254C2.922,-1.259 2.237,-1.25 1.464,-1.348C0.709,-1.447 -0.233,-1.666 -1.075,-2.345C-1.479,-2.669 -1.84,-3.145 -2.029,-3.534C-2.22,-3.903 -2.374,-4.283 -2.48,-4.66C-2.701,-5.417 -2.79,-6.164 -2.792,-6.886C-2.795,-7.247 -2.774,-7.603 -2.74,-7.957C-2.701,-8.323 -2.657,-8.633 -2.563,-9.056C-2.408,-9.76 -1.711,-10.205 -1.007,-10.049C-0.355,-9.906 0.075,-9.297 0.011,-8.649L0,-8.535Z" style="fill:rgb(0,95,82);fill-rule:nonzero;"/>
-                            </g>
-                            <g transform="matrix(-0.516885,-0.856055,-0.856055,0.516885,474.654,198.339)">
-                                <path d="M-0.369,-0.653C-0.561,-0.652 -0.716,-0.461 -0.716,-0.223C-0.716,0.015 -0.561,0.208 -0.369,0.208C-0.177,0.208 -0.021,0.016 -0.021,-0.223C-0.021,-0.46 -0.177,-0.653 -0.369,-0.653" style="fill:rgb(0,95,82);fill-rule:nonzero;"/>
-                            </g>
-                            <g transform="matrix(1,0,0,1,474.892,196.692)">
-                                <path d="M0,1.752C0.014,1.561 0.041,1.419 0.072,1.26C0.114,1.108 0.14,0.954 0.209,0.811C0.272,0.66 0.356,0.52 0.439,0.401C0.515,0.27 0.593,0.149 0.661,0L1.046,0.377C0.917,0.433 0.806,0.524 0.705,0.613C0.614,0.715 0.525,0.806 0.489,0.922C0.451,1.042 0.417,1.168 0.427,1.297C0.431,1.42 0.458,1.564 0.518,1.653L0,1.752Z" style="fill:rgb(0,95,82);fill-rule:nonzero;"/>
-                            </g>
-                            <g transform="matrix(0.516885,0.856055,0.856055,-0.516885,479.321,195.111)">
-                                <path d="M0.369,-0.208C0.561,-0.208 0.716,-0.015 0.716,0.222C0.716,0.461 0.56,0.653 0.369,0.653C0.176,0.653 0.021,0.46 0.021,0.222C0.021,-0.016 0.177,-0.208 0.369,-0.208" style="fill:rgb(0,95,82);fill-rule:nonzero;"/>
-                            </g>
-                            <g transform="matrix(1,0,0,1,479.355,194.874)">
-                                <path d="M0,0.679C-0.051,0.585 -0.166,0.495 -0.273,0.434C-0.382,0.364 -0.51,0.336 -0.633,0.314C-0.753,0.293 -0.874,0.329 -1.008,0.362C-1.134,0.41 -1.266,0.465 -1.375,0.554L-1.53,0.038C-1.367,0.047 -1.223,0.034 -1.072,0.028C-0.927,0.01 -0.764,0 -0.602,0.015C-0.443,0.02 -0.295,0.069 -0.14,0.102C0.015,0.148 0.152,0.191 0.329,0.267L0,0.679Z" style="fill:rgb(0,95,82);fill-rule:nonzero;"/>
-                            </g>
-                        </g>
-                    </g>
-                </g>
-            </g>
-        </svg>
-        `;
-	} else if (sym == 'wheat') {
-		html = `
-        <svg width="${sz}" height="${sz}" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
-            <g transform="matrix(1,0,0,1,-300,-500)">
-                <g transform="matrix(7.70232,0,0,7.70232,-3403,-873.691)">
-                    <g id="ws-6">
-                        <g id="wheat">
-                            <g transform="matrix(1,0,0,1,487.796,189.11)">
-                                <path d="M0,-2.293C0.445,-1.498 1.102,-0.729 1.282,-0.522C1.462,-0.316 3.41,-0.035 4.113,0.01C3.948,-0.403 3.671,-0.749 3.079,-1.281C2.586,-1.724 2.109,-1.963 1.47,-2.084C1.11,-2.152 0.279,-2.303 0,-2.293" style="fill:rgb(195,116,45);fill-rule:nonzero;"/>
-                            </g>
-                            <g transform="matrix(0.807192,0.590289,0.590289,-0.807192,489.51,186.325)">
-                                <path d="M0.599,0.015C0.869,0.113 1.467,0.126 1.68,0.173C1.017,0.749 0.85,1.614 0.599,1.67C0.348,1.727 -0.747,1.767 -1.127,1.674C-1.066,1.536 -0.423,0.405 0.599,0.015" style="fill:rgb(195,116,45);fill-rule:nonzero;"/>
-                            </g>
-                            <g transform="matrix(1,0,0,1,493.462,188.018)">
-                                <path d="M0,-0.85C-0.107,-1.338 -1.235,-2.168 -1.841,-2.459C-1.935,-2.155 -2.079,-1.594 -2.053,-1.056C-2.024,-0.467 -1.76,0.211 -1.407,0.615C-1.055,1.019 -0.183,1.515 0.13,1.609C0.128,1.597 0.126,1.586 0.124,1.574C-0.042,0.499 0.107,-0.361 0,-0.85" style="fill:rgb(195,116,45);fill-rule:nonzero;"/>
-                            </g>
-                            <g transform="matrix(1,0,0,1,493.524,194.883)">
-                                <path d="M0,-2.513C-1.031,-2.522 -1.653,-2.448 -2.565,-2.524C-2.161,-1.814 -1.315,-0.599 -0.557,-0.253C0.201,0.094 1.4,-0.3 2.482,-0.291C2.697,-0.289 3.439,-0.2 3.657,-0.152C3.551,-0.509 3.087,-1.833 2.6,-2.147C1.889,-2.607 1.577,-2.5 0,-2.513" style="fill:rgb(195,116,45);fill-rule:nonzero;"/>
-                            </g>
-                            <g transform="matrix(1,0,0,1,496.22,189.606)">
-                                <path d="M0,-0.012C-0.375,-1.259 -1.609,-2.115 -2.317,-2.551C-2.342,-1.879 -2.343,-1.374 -2.21,-0.514C-2.049,0.535 -1.946,0.574 -1.451,1.053C-1.175,1.319 -0.283,2.43 0.145,2.539C0.145,2.539 0.144,0.467 0,-0.012" style="fill:rgb(195,116,45);fill-rule:nonzero;"/>
-                            </g>
-                            <g transform="matrix(-0.506442,0.862274,0.862274,0.506442,497.305,197.132)">
-                                <path d="M-1.454,-1.812C-0.793,-3.066 -0.232,-3.44 0.202,-4.508C0.816,-2.36 0.396,0.388 -1.454,1.136C-1.693,1.232 -0.925,0.982 -1.454,1.136C-1.409,0.584 -2.027,-0.726 -1.454,-1.812" style="fill:rgb(195,116,45);fill-rule:nonzero;"/>
-                            </g>
-                            <g transform="matrix(1,0,0,1,496.942,193.86)">
-                                <path d="M0,-2.164C-0.197,-0.955 0.514,0.481 0.88,0.901C1.246,1.32 1.926,2.192 2.218,2.336C3.808,0.963 1.265,-2.639 0.213,-3.845C0.017,-4.069 -0.193,-4.287 -0.415,-4.5C-0.415,-4.5 -0.002,-3.337 0,-2.164" style="fill:rgb(195,116,45);fill-rule:nonzero;"/>
-                            </g>
-                            <g transform="matrix(0.658061,-0.752964,-0.752964,-0.658061,489.682,185.285)">
-                                <path d="M-1.083,-0.492C-0.929,-0.19 -0.7,0.149 -0.362,0.372C-0.023,0.597 -1.083,2.385 -1.083,2.385C-1.083,2.385 -1.281,0.976 -1.678,0.238C-1.494,0.048 -1.282,-0.197 -1.083,-0.492" style="fill:rgb(195,116,45);fill-rule:nonzero;"/>
-                            </g>
-                            <g transform="matrix(1,0,0,1,493.645,189.424)">
-                                <path d="M0,2.503C0.135,2.509 1.42,2.539 1.55,2.55C1.235,2.005 0.612,1.245 0.031,0.771C-0.532,0.313 -1.45,0.27 -2.369,0.204C-2.97,0.161 -3.964,-0.039 -4.563,-0.047C-4.309,0.6 -3.575,1.878 -3.04,2.181C-2.504,2.485 -1.165,2.457 0,2.503" style="fill:rgb(195,116,45);fill-rule:nonzero;"/>
-                            </g>
-                            <g transform="matrix(1,0,0,1,498.162,197.672)">
-                                <path d="M0,-0.974C0.138,-0.91 0.295,-0.809 0.427,-0.701C0.564,-0.594 0.684,-0.467 0.803,-0.344C0.906,-0.218 0.995,-0.088 1.06,0.052C1.119,0.181 1.236,0.44 1.251,0.547L2.018,-0.089C1.867,-0.346 1.481,-0.74 1.316,-0.866C0.983,-1.134 0.56,-1.408 0.317,-1.521L0,-0.974Z" style="fill:rgb(195,116,45);fill-rule:nonzero;"/>
-                            </g>
-                        </g>
-                    </g>
-                </g>
-            </g>
-        </svg>
-      `;
-	} else if (sym == 'mouse') {
-		html = `
-              <svg width="${sz}" height="${sz}" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
-                  <g transform="matrix(1,0,0,1,-500,-300)">
-                      <g transform="matrix(9.09451,0,0,9.09451,670.98,392.954)">
-                          <g id="ws-5">
-                              <path id="mouse" d="M0,0.136C-0.705,-0.412 -2.127,-0.236 -2.867,-0.095C-2.803,-2.905 -7.442,-5.024 -10.299,-2.45L-11.797,-2.233C-11.131,-3.613 -12.9,-3.994 -13.312,-2.346L-15.426,-0.406C-16.451,0.4 -16.105,1.031 -15.189,1.031C-14.876,1.031 -11.897,1.617 -11.472,2.094C-11.535,2.206 -11.852,2.384 -11.773,2.995L-5.978,3.179C-4.286,2.679 -3.368,1.772 -3.023,0.768C-2.195,0.57 -0.921,0.449 -0.497,0.777C-0.434,0.826 -0.369,0.899 -0.369,1.063C-0.369,1.549 -0.767,1.699 -1.744,1.949C-2.445,2.129 -3.24,2.332 -3.749,2.912C-4.156,3.376 -4.309,3.827 -4.202,4.25C-4.05,4.859 -3.429,5.107 -3.359,5.134C-3.312,5.152 -3.264,5.16 -3.216,5.16C-3.052,5.16 -2.897,5.059 -2.837,4.896C-2.758,4.687 -2.864,4.452 -3.074,4.374C-3.131,4.352 -3.371,4.228 -3.415,4.053C-3.452,3.907 -3.354,3.692 -3.139,3.447C-2.796,3.057 -2.159,2.893 -1.542,2.735C-0.658,2.509 0.442,2.227 0.442,1.063C0.442,0.681 0.289,0.36 0,0.136" style="fill:rgb(116,100,91);fill-rule:nonzero;"/>
-                          </g>
-                      </g>
-                  </g>
-              </svg>
-            `;
-	} else if (sym == 'leaf') {
-		html = `<img width="${sz}" height="${sz}" src='../assets/img/emo/seedling.png' />`;
-	} else {
-		html = `
-        <svg width="${sz}" height="${sz}" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
-            <g transform="matrix(1,0,0,1,-300,-300)">
-                <g transform="matrix(8.59167,0,0,8.59167,432.85,422.626)">
-                    <g id="ws-3">
-                        <path id="berries" d="M0,-5.356C-0.427,-5.356 -0.825,-5.247 -1.184,-5.07L-1.487,-6.86C-1.18,-7.11 -0.839,-7.331 -0.47,-7.508C0.341,-7.901 1.273,-8.154 2.148,-8.241L2.17,-8.243C2.227,-8.249 2.283,-8.262 2.338,-8.282C2.695,-8.415 2.877,-8.811 2.745,-9.168C2.612,-9.524 2.216,-9.706 1.859,-9.574C0.872,-9.208 -0.018,-8.809 -0.897,-8.288C-1.327,-8.022 -1.751,-7.73 -2.127,-7.365C-2.478,-7.028 -2.813,-6.676 -3.154,-6.309C-3.37,-6.078 -3.566,-5.826 -3.752,-5.566C-3.756,-5.566 -3.759,-5.568 -3.763,-5.568L-5.106,-5.582C-5.308,-6.864 -6.41,-7.847 -7.749,-7.847C-9.233,-7.847 -10.435,-6.645 -10.435,-5.162C-10.435,-3.679 -9.233,-2.476 -7.749,-2.476C-6.304,-2.476 -5.134,-3.62 -5.074,-5.051L-4.184,-4.886C-4.394,-4.515 -4.579,-4.131 -4.719,-3.739C-4.942,-3.129 -5.117,-2.511 -5.27,-1.883C-6.879,-1.753 -8.148,-0.421 -8.148,1.221C-8.148,2.949 -6.748,4.35 -5.019,4.35C-3.291,4.35 -1.89,2.949 -1.89,1.221C-1.89,-0.297 -2.973,-1.562 -4.408,-1.846C-4.278,-2.39 -4.122,-2.933 -3.938,-3.457C-3.647,-4.336 -3.233,-5.136 -2.609,-5.816C-2.452,-5.994 -2.279,-6.162 -2.1,-6.327L-1.724,-4.714C-2.307,-4.221 -2.686,-3.493 -2.686,-2.67C-2.686,-1.187 -1.483,0.016 0,0.016C1.484,0.016 2.686,-1.187 2.686,-2.67C2.686,-4.153 1.484,-5.356 0,-5.356" style="fill:rgb(152,21,49);fill-rule:nonzero;"/>
-                    </g>
-                </g>
-            </g>
-        </svg>
-      `;
-	}
-	return mCreateFrom(html);
-}
-function wsGetMission() {
-	let missions = {
-		class: [],
-		food_only: [],
-		food_specific: [],
-		size_atMost: [],
-		size_arLeast: [],
-		weight_AtMost: [],
-		weight_AtLeast: [],
-		cards_hand: [],
-		cards_board: [],
-		cards_habitat: [],
-		habitat_only: [],
-		tuck: [],
-		powerColor: [],
-	}
-	return rChoose(Object.keys(missions));
-}
-function wsGetPower(colorOrKey, prop) {
-	let powers = {
-		_child_1_sym: [],
-		_child_2_sym: [],
-		_child_1_class: [],
-		_child_2_class: [],
-		_child_1_color: [],
-		_child_2_color: [],
-		_draw_1_card_deck: [],
-		_draw_2_card_return_1: [],
-		_draw_2_card_1: [],
-		_tuck_1_pick_feeder: [],
-		_tuck_1_pick_supply: [],
-		_tuck_1_draw_tray: [],
-		_tuck_1_draw_deck: [],
-		_tuck_1_place: [],
-		_food_1_supply: [],
-		_food_1_feeder: [],
-		_food_2_supply: [],
-		_food_2_tray: [],
-		_discard_1_child_pick_2_food_feeder: [],
-		_discard_1_child_pick_1_food_supply: [],
-		_discard_1_child_draw_2_card: [],
-		_discard_1_food_draw_1_card: [],
-		_discard_1_card_pick_1_food_supply: [],
-		_repeat: [],
-		_hunt_food_mouse: [],
-		_hunt_food_fish: [],
-		_hunt_card_sym: [],
-		pink_draw_mission_pick_1_food_feeder: [],
-		pink_place_child_pick_1_food_feeder: [],
-		pink_hunt_successfully_pick_1_food_feeder: [],
-		pink_draw_mission_draw_1_card_deck: [],
-		pink_place_child_draw_1_card_deck: [],
-		pink_hunt_successfully_draw_1_card_deck: [],
-		white_draw_2_mission_return_1: [],
-		white_collect_fish: [],
-		white_collect_mouse: [],
-		white_collect_worm: [],
-		white_collect_cherries: [],
-		white_child_sym: [],
-		white_child_color: [],
-		white_child_class: [],
-		lightblue_feeder: [],
-		lightblue_tray: [],
-	};
-	let list = Object.keys(powers);
-	if (isColor(colorOrKey)) return rChoose(list.filter(x => colorOrKey == 'sienna' ? x.startsWith('_') : x.startsWith(colorOrKey)));
-	else if (nundef(colorOrKey)) return rChoose(list);
-	else if (nundef(prop)) return powers[colorOrKey];
-	else return lookup(powers, [colorOrKey, prop]);
-}
-function wsGetRandomCards(n = 1, deck = null) {
-	if (!deck) deck = jsCopy(M.byCollection.tierspiel).map(x => wsGenerateCardInfo(x)); console.log(deck.length);
-	let list = rChoose(deck, n);
-	return list.length == 1 ? wsItemFromFen(list[0]) : list.map(x => wsItemFromFen(x));
-}
-function wsGetSymbolFilename(key) {
-	let files = {
-		cherries: '../assets/games/wingspan/fruit.svg',
-		fish: '../assets/games/wingspan/fish.svg',
-		forest: '../assets/games/wingspan/forest1.png',
-		grain: '../assets/games/wingspan/wheat.svg',
-		grassland: '../assets/games/wingspan/grassland2.png',
-		mouse: '../assets/games/wingspan/mouse.svg',
-		omni: '../assets/games/wingspan/pie3.svg',
-		seedling: '../assets/img/emo/seedling.png',
-		wetland: '../assets/games/wingspan/wetland.png',
-		worm: '../assets/games/wingspan/worm.svg',
-	};
-	return files[key];
-}
-function wsGetSymbolInline(key, fz) { return `&nbsp;<span style="vertical-align:middle;line-height:80%;font-size:${fz * 1.5}px;font-family:pictoGame">${String.fromCharCode('0x' + M.superdi[key].ga)}</span>`; }
-
-function wsHabitat(tokens, dtop, sz) {
-	for (let i = 0; i < tokens.length; i++) {
-		let t = tokens[i];
-		if (i == 2) mLinebreak(dtop);
-		let d = wsPrintSymbol(dtop, sz, t);
-		if (i == 2) mStyle(d, { matop: -sz * 3 / 2 });
-	}
-}
-function wsHowMany(deck, prop, val, op) {
-}
-function wsItemFromFen(fen) {
-	let [key, valueFactor, power, colorPower, sym, colorSym, op] = fen.split('@');
-	let o = getDetailedSuperdi(key);
-	let item = jsCopy(o);
-	let bg = item.colorPower = colorPower;
-	let palette = wsGetColorRainbow();
-	let fg = item.colorSym = colorSym;
-	sym = item.abstract = sym;
-	item.power = power;
-	valueFactor = item.valueFactor = valueFactor;
-	item.op = op;
-	item.value = valueFactor * (item.op == '+' ? 1 : item.foodTokens.length);
-	return item;
-}
-function wsOffspringSymbol(dParent, styles = {}) {
-	console.log(styles)
-	let [w, h] = [styles.h, styles.h];
-	console.log(w, h)
-	let d = mDom(dParent, { w, h, box: true });//,bg:'orange'}); //w100:true,h100:true,bg:'lime'});
-	let fz = styles.h; let hline = fz;
-	mIfNotRelative(d);
-	let o = M.superdi.big_egg;
-	let [fam, sym] = isdef(o.fa6) ? ['fa6', 'fa6'] : isdef(o.fa) ? ['pictoFa', 'fa'] : ['pictoGame', 'ga'];
-	let dEgg = mDom(d, { fg: 'grey', family: fam, fz, padding: 0, hline }, { html: String.fromCharCode('0x' + o[sym]) });
-	o = M.superdi.paw;
-	[fam, sym] = isdef(o.fa6) ? ['fa6', 'fa6'] : isdef(o.fa) ? ['pictoFa', 'fa'] : ['pictoGame', 'ga'];
-	let dPaw = mDom(d, { w100: true, fg: 'black', family: fam, fz: 8, hline }, { html: String.fromCharCode('0x' + o[sym]) });
-	mCenterFlex(dPaw)
-	mPlace(dPaw, 'tc')
-}
-async function wsOnclickCard(table, item, items) { }
-
-function wsPowerText(item, d, styles = {}) {
-	mClear(d)
-	let key = item.power; if (key.startsWith('_')) key = 'sienna' + key;
-	let parts = key.split('_'); //console.log(parts)
-	let s = '';
-	let color = parts[0];
-	if (color == 'sienna') s += 'WHEN ACTIVATED: ';
-	else if (color == 'pink') s += 'ONCE BETWEEN TURNS: ';
-	else if (color == 'white') s += 'WHEN PLAYED: ';
-	else if (color == 'lightblue') s += 'ROUND END: ';
-	copyKeys({ bg: color }, styles); mStyle(d, { bg: color, fg: 'contrast' });
-	let what = parts[1];
-	let verb = '';
-	let n = Number(parts[2]);
-	if (color == 'sienna') {
-		if (what == 'child') {
-			verb = 'place';
-			s += `${capitalize(verb)} ${n} ${pluralOf('child', n)} on any`;
-			let prop = parts[3];
-			switch (prop) {
-				case 'color':
-					s += ` ${n == 1 ? 'card' : '2 cards'} with color <span style="border-radius:${item.fz}px;padding-left:${item.fz / 2}px;padding-right:${item.fz / 2}px;background-color:white;color:${colorFrom(item.colorSym)}">${wsGetColorRainbowText(item.colorSym)}</span>.`; break;
-				case 'class':
-					s += ` ${item.class}.`; break;
-				case 'sym':
-				default:
-					s += ` ${n == 1 ? 'card' : '2 cards'} with symbol ${wsGetSymbolInline(item.abstract, item.fz)}.`;
-			}
-			if (n == 2) s += ` Other players may place 1 ${what}.`
-		} else if (what == 'draw') {
-			verb = 'draw';
-			what = parts[3];
-			s += `${capitalize(verb)} ${n} ${pluralOf(what, n)}`;
-			let prop = parts[4];
-			switch (prop) {
-				case 'tray':
-				case 'deck': s += ` from ${prop}.`; break;
-				case 'return': s += `, return 1 at the end of action.`; break;
-				case '1': s += ` Other players may draw 1.`; break;
-				default: s += '.'; break;
-			}
-		} else if (what == 'tuck') {
-			verb = what;
-			what = parts[3];
-			s += `${capitalize(verb)} ${n} ${pluralOf('card', n)}`;
-			let prop = parts[3];
-			switch (prop) {
-				case 'pick': s += ` to ${prop} 1 food from ${parts[4]}.`; break;
-				case 'draw': s += ` to ${prop} 1 card from ${parts[4]}.`; break;
-				case 'place': s += ` to ${prop} 1 child on any card.`; break;
-				default:
-			}
-		} else if (what == 'food') {
-			verb = 'pick';
-			s += `${capitalize(verb)} ${n} ${what} from ${parts[3]}.`;
-			if (n == 2) s += ` Other players ${verb} 1 ${what}.`
-		} else if (what == 'all') {
-			s += `All players ${parts[2]} ${parts[3]} ${what}.`;
-		} else if (what == 'discard') {
-			let n1 = Number(parts[5])
-			s += `You may ${what} ${n} ${parts[3]} to ${parts[4]}`;
-			if (parts.length > 5) {
-				let n1 = Number(parts[5]);
-				s += ` ${n1} ${pluralOf(parts[6], n1)}`;
-				s += parts.length > 7 ? ` from ${parts[7]}.` : '.';
-			} else s += '.';
-		} else if (what == 'repeat') {
-			s += `Repeat another brown power on this habitat.`;
-		} else if (what == 'hunt') {
-			let verb = what; what = parts[2];
-			if (what == 'food') {
-				s += `Roll dice in feeder. If there is a ${parts[3]}, keep it.`;
-			} else if (what == 'card') {
-				s += `Draw a card. `;
-				switch (parts[3]) {
-					case 'sym':
-					default: s += `If it has symbol ${wsGetSymbolInline(item.abstract, item.fz)}, tuck it.`; break;
-				}
-			}
-		}
-	}
-	if (color == 'pink') {
-		let [verb1, what1, verb2, n, what2, from] = parts.slice(1);
-		s += `When another player ${verb1}s ${what1}, ${verb2} ${n} ${what2}`;
-		s += isdef(from) ? ` from ${from}.` : '.';
-	}
-	if (color == 'white') {
-		if (what == 'draw') {
-			verb = 'draw';
-			what = parts[3];
-			s += `${capitalize(verb)} ${n} ${pluralOf(what, n)}`;
-			let prop = parts[4];
-			switch (prop) {
-				case 'tray':
-				case 'deck': s += ` from ${prop}.`; break;
-				case 'return': s += `, return 1`; s += what == 'card' ? ` at the end of action.` : '.'; break;
-				case '1': s += ` Other players may draw 1.`; break;
-				default: s += '.'; break;
-			}
-		} else if (what == 'collect') {
-			s += `Collect all ${parts[2]} from feeder.`
-		} else if (what == 'child') {
-			s += `Place 1 child on each of your cards with `;
-			what = parts[2];
-			switch (what) {
-				case 'sym': s += `symbol ${wsGetSymbolInline(item.abstract, item.fz)}.`; break;
-				case 'class': s += `class ${item.class}.`; break;
-				case 'color': s += `color <span style="color:${colorFrom(item.colorSym)}">${wsGetColorRainbowText(item.colorSym)}</span>.`; break;
-			}
-		}
-	}
-	if (color == 'lightblue') {
-		if (what == 'feeder') s += `Collect all food in feeder.`
-		else if (what == 'tray') s += `Collect a card from tray.`
-	}
-	s = replaceAll(s, 'child', wsGetChildInline(item));
-	d.innerHTML = s;
-	return d;
-}
-async function wsPreAction(table, items) {
-	let [fen, me] = [table.fen, getUname()]
-	let [phase, stage, round, pl, plorder, turn] = [fen.phase, fen.stage, fen.round, table.players[me], table.plorder, table.turn];
-	console.log()
-}
-function wsPresent(table) {
-	presentStandardBGA();
-	return;
-	let fen = table.fen;
-	let me = getUname();
-	let pl = table.players[me];
-	let d = mBy('dTable');
-	d.style = '';
-	d.className = '';
-	mStyle(d, { hmin: 500, w: '90%', margin: 20 });
-	d.innerHTML = ' '; mCenterFlex(d)
-	let dCards = mDom(d, { gap: 8 }); mCenterFlex(dCards);
-	let items = [];
-	for (const fencard of pl.cards) {
-		let ocard = wsItemFromFen(fencard);
-		wsShowCardItem(ocard, dCards, .5);
-		items.push(ocard);
-	}
-	mLinebreak(d, 25)
-	let [w, h] = [1467, 1235].map(x => x * .67);
-	let bg = U.color;
-	let db = mDom(d, { w, h, bg, padding: 10, position: 'relative' });
-	let da = mDom(db, { 'transform-origin': 'center', transform: 'rotate( -.3deg )', position: 'relative', w, h });
-	let ibg = mDom(da, { position: 'absolute', left: 0, top: 0, w, h }, { tag: 'img', src: '../ode/wsboard1.jpg' });
-	let dBoard = mDom(db, { position: 'absolute', left: -2, top: 0, w: w - 18, h: h - 12, wbox: true, border: `20px ${bg} solid` });
-	let gap = 12;
-	let grid = mGrid(3, 5, dBoard, { paleft: gap / 2, patop: gap, w: w - 52 }); //,position:'absolute'});
-	let sym = ['food', 'child', 'card'];
-	let n = [1, 1, 2, 2, 3];
-	let cost = [0, 1, 1, 2, 2];
-	let addon = [0, 1, 0, 1, 0];
-	let list = wsGetRandomCards(15, fen.deck);
-	for (const i of range(3)) {
-		for (const j of range(5)) {
-			let d = mDom(grid, { w: 172, h: 250, bg: rColor(), mabottom: 20 }); //,{html:'card'});
-			let item = wsShowCardItem(list[i + 3 * j], d, .5)
-		}
-	}
-	return items;
-}
-function wsPrintSymbol(dParent, sz, key) {
-	let files = {
-		cherries: '../assets/games/wingspan/fruit.svg',
-		fish: '../assets/games/wingspan/fish.svg',
-		forest: '../assets/games/wingspan/forest1.png',
-		grain: '../assets/games/wingspan/wheat.svg',
-		grassland: '../assets/games/wingspan/grassland2.png',
-		mouse: '../assets/games/wingspan/mouse.svg',
-		omni: '../assets/games/wingspan/pie3.svg',
-		seedling: '../assets/img/emo/seedling.png',
-		wetland: '../assets/games/wingspan/wetland.png',
-		worm: '../assets/games/wingspan/worm.svg',
-	};
-	let keys = Object.keys(files);
-	let styles = { w: sz, h: sz, };
-	if (['wetland', 'grassland', 'forest'].includes(key)) styles['clip-path'] = PolyClips.diamond;
-	if (key == 'wetland') styles.bg = 'lightblue';
-	else if (key == 'grassland') styles.bg = 'goldenrod';
-	else if (key == 'forest') styles.bg = 'emerald';
-	let src = valf(files[key], key == 'food' ? files[rChoose(keys)] : null);
-	if (src) return mDom(dParent, styles, { tag: 'img', width: sz, height: sz, src: files[valf(key, rChoose(keys))] });
-	let o = M.superdi[key];
-	return showim2(key, dParent, styles);
-}
-function wsSetup(table) {
-	let fen = {};
-	fen.deck = jsCopy(M.byCollection.tierspiel).map(x => wsGenerateCardInfo(x));
-	arrShuffle(fen.deck);
-	for (const name in table.players) {
-		let pl = table.players[name];
-		pl.score = 0;
-		pl.cards = deckDeal(fen.deck, 5);
-		pl.missions = [];
-		pl.offsprings = 0;
-		wsGetFoodlist().map(x => pl[x] = 0);
-		pl.forest = [];
-		pl.grassland = [];
-		pl.wetland = [];
-	}
-	fen.round = 0;
-	fen.phase = 'init';
-	fen.stage = 'pick_cards';
-	table.plorder = jsCopy(table.playerNames);
-	table.turn = jsCopy(table.playerNames);
-	return fen;
-}
-function wsShowCardItem(item, d, fa) {
-	let [w, h, sztop, sz, gap, fz] = [340, 500, 100, 30, 8, 16].map(x => x * fa);
-	item.fz = fz;
-	let [card, dCard] = wsCard(d, w, h);
-	let dtop = wsTopLeft(dCard, sztop, card.rounding);
-	addKeys(card, item);
-	let [bg, fg] = [item.colorPower, item.colorSym];
-	wsHabitat(item.habTokens, dtop, sz * 1.1); mLinebreak(dtop, sz / 5);
-	wsFood(item.foodTokens, item.op, dtop, sz * .8);
-	wsTitle(item, dCard, sztop, fz, gap);
-	let [szPic, yPic] = [h / 2, sztop + gap]
-	let d1 = showim2(item.key, dCard, { rounding: 12, w: szPic, h: szPic }, { prefer: 'photo' });
-	mPlace(d1, 'tr', gap, yPic);
-	let leftBorderOfPic = w - (szPic + gap);
-	let dleft = mDom(dCard, { w: leftBorderOfPic, h: szPic }); mPlace(dleft, 'tl', gap / 2, sztop + gap);
-	mCenterCenterFlex(dleft);
-	let dval = mDom(dleft, { fg, w: sz * 1.2, align: 'center', fz: fz * 1.8, weight: 'bold' }, { html: item.value });
-	mLinebreak(dleft, 2 * gap)
-	let szSym = sz * 1.5;
-	let a = showim2(item.abstract, dleft, { w: szSym, h: szSym, fg });
-	mLinebreak(dleft, 3 * gap)
-	let dPlaetze = item.live.dPlaetze = showPlaetze(dleft, item, gap * 2);
-	item.dpower = mDom(dCard, { fz: fz * 1.2, padding: gap, matop: sztop + szPic + gap * 3, w100: true, bg, fg: 'contrast', box: true });
-	wsPowerText(item, item.dpower, { fz: item.fz })
-	let dinfo = mDom(dCard, { fz, hpadding: gap, box: true, w100: true });
-	mPlace(dinfo, 'bl'); mFlexLine(dinfo, 'space-between');
-	mDom(dinfo, {}, { html: item.class });
-	mDom(dinfo, {}, { html: item.olifespan.text });
-	mDom(dinfo, {}, { html: item.osize.text });
-	return item;
-}
-function wsShowTitle(dCard, title, fz, szlt) {
-	let margin = szlt / 12;
-	let dtitle = mDom(dCard, { fz, margin, display: 'inline', weight: 'bold' }, { html: title });
-	mPlace(dtitle, 'tl', szlt + margin / 2, 0); //, 0, yTitle);
-}
-function wsStats(table) {
-	let [me, players] = [getUname(), table.players];
-	let style = { patop: 8, mabottom: 20, bg: 'beige', fg: 'contrast' };
-	let player_stat_items = uiTypePlayerStats(table, me, 'dStats', 'colflex', style)
-	for (const plname in players) {
-		let pl = players[plname];
-		let item = player_stat_items[plname];
-		if (pl.playmode == 'bot') { mStyle(item.img, { rounding: 0 }); }
-		let d = iDiv(item);
-		mStyle(d, { wmin: 200, padding: 12 })
-		mCenterFlex(d); mLinebreak(d); mIfNotRelative(d);
-		let d1 = mDom(d); mCenterFlex(d1);
-		wsGetFoodlist().map(x => playerStatCount(wsGetSymbolFilename(x), pl[x], d1));
-		mLinebreak(d, 10);
-		let d2 = mDom(d); mCenterFlex(d2);
-		playerStatCount('star', pl.score, d2, null, { useSymbol: true }); //, {}, {id:`stat_${plname}_score`});
-		playerStatCount('hand_with_fingers_splayed', pl.cards.length, d2, null, { useSymbol: true });
-		playerStatCount(wsOffspringSymbol, pl.offsprings, d2);
-		if (table.turn.includes(plname)) { mDom(d, { position: 'absolute', left: -3, top: 0 }, { html: getWaitingHtml() }); }
-	}
-}
-function wsTitle(o, dCard, sztop, fz, gap) {
-	let dtitle = mDom(dCard, { paleft: gap, wmax: sztop * 1.5 }); mPlace(dtitle, 'tl', sztop, gap)
-	mDom(dtitle, { fz: fz * 1.1, weight: 'bold' }, { html: fromNormalized(o.friendly) });
-	mDom(dtitle, { fz, 'font-style': 'italic' }, { html: o.species });
-}
-function wsTopLeft(dCard, sztop, rounding) {
-	let dtop = mDom(dCard, { w: sztop, h: sztop, bg: '#ccc' });
-	mPlace(dtop, 'tl');
-	dtop.style.borderTopLeftRadius = dtop.style.borderBottomRightRadius = `${rounding}px`;
-	mCenterCenterFlex(dtop);
-	return dtop;
 }
 function yearsToReadable(n) {
 	let di = { y: 1, m: 12, w: 52, d: 365, h: 365 * 24 };
