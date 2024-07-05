@@ -11,7 +11,7 @@ async function test6(){
 	await switchToMainMenu('overview');
 
 	let recs = M.transactionRecords = dbToList(qTTCols());
-	console.log(recs)
+	//console.log(recs)
 
 
 	//createNewDatabase();

@@ -2,10 +2,10 @@
 
 function qTT() {
 	let recs = dbToList('select * from tags');
-	console.log(recs)
+	//console.log(recs)
 	let names = recs.map(x=>x.tag_name);
 	names = names.filter(x=>!isNumber(x));
-	console.log(names);
+	//console.log(names);
 	let s='';
 	for(const name of names){
 		s+=`MAX(CASE WHEN tg.tag_name = '${name}' THEN 'X' ELSE '' END) AS '${name}'`;
@@ -49,10 +49,10 @@ function qTT() {
 }
 function qTTCols() {
 	let recs = dbToList('select * from tags');
-	console.log(recs)
+	//console.log(recs)
 	let names = recs.map(x=>x.tag_name);
 	names = names.filter(x=>!isNumber(x));
-	console.log(names);
+	//console.log(names);
 	let s='';
 	for(const name of names){
 		s+=`MAX(CASE WHEN tg.tag_name = '${name}' THEN 'X' ELSE '' END) AS '${name}'`;

@@ -103,9 +103,9 @@ function onclickShowSchema() {
 	mDom(d, {}, { tag: 'pre', html: text });
 }
 function onclickTesttrans() { let records = dbToList(qTT()); showTableSortedBy(UI.d, 'TEST', 'transactions', records); }
-function onclickTranslist() { let records = dbToList(qTTList()); showTableSortedBy(UI.d, 'tag list', 'transactions', records); }
-function onclickTranscols() { let records = dbToList(qTTCols()); showTableSortedBy(UI.d, 'tag columns', 'transactions', records); }
-function onclickTransactions() { let records = dbToList(qTransactions()); showTableSortedBy(UI.d, 'transactions', 'transactions', records); }
+function onclickTranslist() { let records = dbToList(qTTList()); showChunkedSortedBy(UI.d, 'tag list', 'transactions', records); }
+function onclickTranscols() { let records = dbToList(qTTCols()); showChunkedSortedBy(UI.d, 'tag columns', 'transactions', records); }
+function onclickTransactions() { let records = dbToList(qTransactions()); showChunkedSortedBy(UI.d, 'transactions', 'transactions', records); }
 function onclickFlex() { let records = dbToList(qTransFlex()); showTableSortedBy(UI.d, 'flex-perks', 'transactions', records); }
 function onclickTagged() { let records = dbToList(qTranstags()); showTableSortedBy(UI.d, 'tagged transactions', 'transactions', records); }
 function onclickMultiTagged() { let records = dbToList(qTransmultitag()); showTableSortedBy(UI.d, 'transactionsw/  multiple tags', 'transactions', records); }
