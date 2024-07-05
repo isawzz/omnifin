@@ -4,18 +4,19 @@ function showChunkedSortedBy(dParent, title, tablename, records, headers, header
   if (isEmpty(records)) { mText('no data', dParent); return null; }
   if (nundef(headers)) headers = Object.keys(records[0]);
   if (nundef(header)) header = headers[0];
-  console.log('___ show', Counter++, DA.tinfo);
-  console.log(DA.sortedBy, header);
+  //console.log('___ show', Counter++, DA.tinfo);
+  //console.log(DA.sortedBy, header);
 
   if (isList(header)) DA.sortedBy = null; //ist multi-sorted!
   else if (DA.sortedBy == header) { records = sortBy(records, header); DA.sortedBy = null; }
   else { records = sortByDescending(records, header); DA.sortedBy = header; }
   mClear(dParent);
   mText(`<h2>${title} (${tablename})</h2>`, dParent, { maleft: 12 });
-  mButton('next', () => showChunk(1), dParent, {}, 'button');
-  mButton('prev', () => showChunk(-1), dParent, {}, 'button');
-  mButton('multi-sort', onclickMultiSort, dParent, {}, 'button');
-  mButton('filter', onclickFilter, dParent, {}, 'button');
+	let db = mDom(dParent, { gap: 10 }); mFlex(db);
+  mButton('next', () => showChunk(1), db, {}, 'button');
+  mButton('prev', () => showChunk(-1), db, {}, 'button');
+  mButton('multi-sort', onclickMultiSort, db, {}, 'button');
+  mButton('filter', onclickFilter, db, {}, 'button');
   let dTable = mDom(dParent)
   DA.tinfo = {};
   // if (nundef(masterRecords)) masterRecords = records;

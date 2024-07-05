@@ -2,7 +2,7 @@
 async function onclickMultiSort(ev){
 	console.log('multisort',DA.tinfo);
 
-	let [records, headers,header]=[DA.tinfo.records, DA.tinfo.headers,DA.tinfo.header]
+	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers,DA.tinfo.header]
 
 	let content = headers.map(x => ({ name: x, value: false }));
 	let result = await mGather(ev.target, {}, { content, type: 'checkList' });
@@ -17,18 +17,19 @@ async function onclickMultiSort(ev){
 
 }
 
-async function onclickFilter(){
+async function onclickFilter(ev){
 
 	//header 
 	//contains,==,!=,<=,>=,<,>
 	//val or header
-	console.log('multisort',DA.tinfo);
+	console.log('filter',DA.tinfo);
 
-	let [records, headers,header]=[DA.tinfo.records, DA.tinfo.headers,DA.tinfo.header]
+	let [records, headers, header]=[DA.tinfo.records, DA.tinfo.headers,DA.tinfo.header]
 
-	let content = headers.map(x => ({ name: x, value: false }));
-	let result = await mGather(ev.target, {}, { content, type: 'filter' });
-	if (!result || isEmpty(result)) { console.log('nothing selected'); return; }
+	let content = {headers}; //.map(x => ({ name: x, value: false }));
+	let result = await mGather(mBy('bFilter'), {}, { content, type: 'filter' });
+
+	//if (!result || isEmpty(result)) { console.log('nothing selected'); return; }
 
 	console.log(result);
 }
