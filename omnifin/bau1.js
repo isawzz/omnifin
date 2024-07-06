@@ -8,7 +8,7 @@ function showChunkedSortedBy(dParent, title, tablename, records, headers, header
   //console.log(DA.sortedBy, header);
 
   if (isList(header)) DA.sortedBy = null; //ist multi-sorted!
-  else if (DA.sortedBy == header) { records = sortBy(records, header); DA.sortedBy = null; }
+  else if (DA.sortedBy == header) { records = sortByEmptyLast(records, header); DA.sortedBy = null; }
   else { records = sortByDescending(records, header); DA.sortedBy = header; }
   mClear(dParent);
   mText(`<h2>${title} (${tablename})</h2>`, dParent, { maleft: 12 });
@@ -17,6 +17,7 @@ function showChunkedSortedBy(dParent, title, tablename, records, headers, header
   mButton('prev', () => showChunk(-1), db, {}, 'button');
   mButton('multi-sort', onclickMultiSort, db, {}, 'button');
   mButton('filter', onclickFilter, db, {}, 'button');
+  mButton('tag', onclickTagForAll, db, {}, 'button');
   let dTable = mDom(dParent)
   DA.tinfo = {};
   // if (nundef(masterRecords)) masterRecords = records;

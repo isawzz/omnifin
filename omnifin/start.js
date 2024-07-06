@@ -10,6 +10,7 @@ async function test6(){
 
 	await switchToMainMenu('overview');
 
+	//onclickFilter()
 	//let recs = M.transactionRecords = dbToList(qTTCols()); db calls sind eh urschnell!!!
 	//console.log(recs)
 
@@ -129,10 +130,10 @@ async function prelims() {
 	setColors('skyblue', 'white');
 	DB = await dbInit(DB_PATH);
 
-	let tablenames = dbGetTableNames();
-	tablenames = tablenames.map(x=>x.name);
-	tablenames.map(x=>M[x]=dbToDict(`select * from ${x}`));
-	M.tagsByName=dbToDict(`select * from tags`,'tag_name');
+	// let tablenames = dbGetTableNames();
+	// tablenames = tablenames.map(x=>x.name);
+	// tablenames.map(x=>M[x]=dbToDict(`select * from ${x}`));
+	// M.tagsByName=dbToDict(`select * from tags`,'tag_name');
 	//console.log(M)
 }
 

@@ -29,7 +29,7 @@ function handleSticky() { let d = mBy('dNav'); if (window.scrollY >= 88) mClass(
 
 function mDataTable(reclist, dParent, rowstylefunc, headers, id, showheaders = true) {
 	//console.log(reclist[0])
-	if (isEmpty(reclist)) {mText('no data',dParent); return null; }
+	if (isEmpty(reclist)) { mText('no data', dParent); return null; }
 	if (nundef(headers)) headers = Object.keys(reclist[0]);
 	let t = mTable(dParent, headers, showheaders);
 	if (isdef(id)) t.id = `t${id}`;
@@ -69,7 +69,7 @@ function mGather(dAnchor, styles = {}, opts = {}) {
 		});
 		dDialog.showModal();
 		if (isdef(dAnchor)) mAnchorTo(dx, toElem(dAnchor), opts.align);
-		else {mStyle(d,{h:'100vh'});mCenterCenterFlex(d); }
+		else { mStyle(d, { h: '100vh' }); mCenterCenterFlex(d); }
 	});
 }
 function mTable(dParent, headers, showheaders, styles = { mabottom: 0 }, className = 'table') {
@@ -79,8 +79,8 @@ function mTable(dParent, headers, showheaders, styles = { mabottom: 0 }, classNa
 	if (isdef(className)) mClass(t, className);
 	if (isdef(styles)) mStyle(t, styles);
 	if (showheaders) {
-		let r=mDom(t,{},{tag:'tr'});
-		headers.map(x=>mDom(r,{},{tag:'th',html:x}));
+		let r = mDom(t, {}, { tag: 'tr' });
+		headers.map(x => mDom(r, {}, { tag: 'th', html: x }));
 	}
 	return t;
 }
@@ -91,8 +91,8 @@ async function onclickCommand(ev) {
 	assertion(isdef(cmd), `command ${key} not in UI!!!`);
 
 	let links = Array.from(mBy('dLeft').getElementsByTagName('a'));
-	links.map(x=>mStyle(x,{fStyle:'normal'}));
-	mStyle(ev.target,{fStyle:'italic'})
+	links.map(x => mStyle(x, { fStyle: 'normal' }));
+	mStyle(ev.target, { fStyle: 'italic' })
 
 
 	await cmd.open();
@@ -107,30 +107,101 @@ function showNavbar() {
 	nav.commands = commands;
 	return nav;
 }
-function sortBy(arr, key) { 
-	function fsort(a,b){
-		let [av,bv]=[a[key],b[key]];
-		if(isNumber(av) && isNumber(bv)) return Number(av)<Number(bv)?-1:1;
+function sortBy(arr, key) {
+	function fsort(a, b) {
+		let [av, bv] = [a[key], b[key]];
+		if (isNumber(av) && isNumber(bv)) return Number(av) < Number(bv) ? -1 : 1;
 		if (isEmpty(av)) return -1;
 		if (isEmpty(bv)) return 1;
-		return av<bv?-1:1;
+		return av < bv ? -1 : 1;
 	}
 	arr.sort(fsort); //(a, b) => {let [av,bv]=[a[key],b[key]];return (av && !bv && av > bv) ? -1 : 1;}); 
 	// arr.sort((a, b) => {let [av,bv]=[a[key],b[key]];return (!av || av < bv) ? -1 : 1;}); 
-	return arr; 
+	return arr;
 }
 
-function sortByDescending(arr, key) { 
-	function fsort(a,b){
-		let [av,bv]=[a[key],b[key]];
-		if(isNumber(av) && isNumber(bv)) return Number(av)>Number(bv)?-1:1;
+function sortByDescending(arr, key) {
+	function fsort(a, b) {
+		let [av, bv] = [a[key], b[key]];
+		if (isNumber(av) && isNumber(bv)) return Number(av) > Number(bv) ? -1 : 1;
 		if (isEmpty(av)) return 1;
 		if (isEmpty(bv)) return -1;
-		return av>bv?-1:1;
+		return av > bv ? -1 : 1;
 	}
 	arr.sort(fsort); //(a, b) => {let [av,bv]=[a[key],b[key]];return (av && !bv && av > bv) ? -1 : 1;}); 
-	return arr; 
+	return arr;
 }
+function sortByEmptyLast(arr, key) {
+	function fsort(a, b) {
+		let [av, bv] = [a[key], b[key]];
+		if (isNumber(av) && isNumber(bv)) return Number(av) < Number(bv) ? -1 : 1;
+		if (isEmpty(av)) return 1;
+		if (isEmpty(bv)) return -1;
+		return av < bv ? -1 : 1;
+	}
+	arr.sort(fsort); //(a, b) => {let [av,bv]=[a[key],b[key]];return (av && !bv && av > bv) ? -1 : 1;}); 
+	// arr.sort((a, b) => {let [av,bv]=[a[key],b[key]];return (!av || av < bv) ? -1 : 1;}); 
+	return arr;
+}
+function sortByMultipleProperties(list) {
+	let props = Array.from(arguments).slice(1);
+	return list.sort((a, b) => {
+		for (const p of props) {
+			if (a[p] < b[p]) return -1;
+			if (a[p] > b[p]) return 1;
+		}
+		return 0;
+	});
+}
+function multiSort(properties) {
+	// Example usage:
+	// const data = [
+	// 	{ name: "Alice", age: 30, city: "New York" },
+	// 	{ name: "bob", age: null, city: "los angeles" },
+	// 	{ name: null, age: 25, city: "Chicago" },
+	// 	{ name: "alice", age: 25, city: "Los Angeles" },
+	// 	{ name: "Bob", age: 30, city: null },
+	// ];
+
+	// data.sort(multiSort(['name', 'age', 'city']));
+
+	// console.log(data);
+	return function (a, b) {
+		for (let prop of properties) {
+			let propA = a[prop];
+			let propB = b[prop];
+
+			// Handle null or undefined values
+			if (propA == null && propB == null) continue;
+			if (propA == null) return -1;
+			if (propB == null) return 1;
+
+			// Compare numbers
+			if (typeof propA === 'number' && typeof propB === 'number') {
+				if (propA < propB) return -1;
+				if (propA > propB) return 1;
+				continue;
+			}
+
+			// Compare strings case-insensitively
+			if (typeof propA === 'string' && typeof propB === 'string') {
+				propA = propA.toLowerCase();
+				propB = propB.toLowerCase();
+				if (propA < propB) return -1;
+				if (propA > propB) return 1;
+				continue;
+			}
+
+			// For other types (including mixed types), compare as strings
+			propA = String(propA);
+			propB = String(propB);
+			if (propA < propB) return -1;
+			if (propA > propB) return 1;
+		}
+		return 0;
+	};
+}
+
 
 async function updateExtra() { }
 
