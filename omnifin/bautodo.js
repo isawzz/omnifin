@@ -1,18 +1,6 @@
 async function menuOpenTest(){}
 async function menuCloseTest(){closeLeftSidebar();mClear('dMain')}
 
-function saveDatabase() {
-	const data = db.export();
-	const blob = new Blob([data], { type: 'application/octet-stream' });
-	const url = URL.createObjectURL(blob);
-	const a = document.createElement('a');
-	a.href = url;
-	a.download = 'test.db';
-	document.body.appendChild(a);
-	a.click();
-	document.body.removeChild(a);
-	URL.revokeObjectURL(url);
-}
 
 
 function createNewDatabase() {
@@ -150,7 +138,7 @@ async function onclickAddTag(idtrans, index) {
 		break;
 	}
 }
-function addTagAndReport(transactionId, tagName, reportCategory = 'default') {
+function _addTagAndReport(transactionId, tagName, reportCategory = 'default') {
 	// Insert a new report with default values
 	let db = DB;
 	db.run(`
@@ -181,50 +169,6 @@ function addTagAndReport(transactionId, tagName, reportCategory = 'default') {
 	dbSaveToLocalStorage();	
 
 	alert("Tag and report added successfully.");
-}
-function addTagAndReport(transactionId, tagName, reportCategory='default') {
-  // Insert a new report with default values
-	let db=DB;
-  db.run(`
-    INSERT INTO reports (category, associated_account, description)
-    VALUES (?, NULL, '')
-  `, [reportCategory]);
-
-  // Get the last inserted report ID
-  const reportId = db.exec("SELECT last_insert_rowid() AS id;")[0].values[0][0];
-
-  // Check if the tag already exists
-  const tagResult = db.exec(`
-    SELECT id FROM tags WHERE tag_name = ?
-  `, [tagName]);
-
-  let tagId;
-
-  if (tagResult.length > 0) {
-    // Tag already exists, get the tag ID
-    tagId = tagResult[0].values[0][0];
-  } else {
-    // Insert the tag
-    db.run(`
-      INSERT INTO tags (tag_name, category, description, report)
-      VALUES (?, '', '', ?)
-    `, [tagName, reportId]);
-
-    // Get the last inserted tag ID
-    tagId = db.exec("SELECT last_insert_rowid() AS id;")[0].values[0][0];
-  }
-
-  // Associate the tag with the transaction
-  db.run(`
-    INSERT INTO transaction_tags (id, tag_id, report)
-    VALUES (?, ?, ?)
-  `, [transactionId, tagId, reportId]);
-
-  // Save the database
-  const data = db.export();
-  localStorage.setItem('database', JSON.stringify(Array.from(data)));
-
-  alert("Tag and report added successfully.");
 }
 //#endregion
 

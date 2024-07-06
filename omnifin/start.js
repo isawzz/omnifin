@@ -4,8 +4,14 @@ const DB_PATH = '../omnifin/db/test2.db'; // relative to omnifin dir
 onload = start;
 onscroll = handleSticky;
 
-async function start() { await prelims(); test6(); }
+async function start() { await prelims(); test7_filterAddTag(); }
 
+async function test7_filterAddTag(){
+	await switchToMainMenu('overview');
+	await onclickCommand(null,'translist');
+	//await onclickFilter(null,{val:'amount',op:'==',val2:1080});
+	//await onclickTagForAll(null,['alpensee']);
+}
 async function test6(){
 
 	await switchToMainMenu('overview');

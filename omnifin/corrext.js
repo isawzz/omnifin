@@ -84,15 +84,16 @@ function mTable(dParent, headers, showheaders, styles = { mabottom: 0 }, classNa
 	}
 	return t;
 }
-async function onclickCommand(ev) {
+async function onclickCommand(ev,key) {
 	//hier muss command irgendwie markiert werden und altes unmarked werden!!!
-	let key = evToAttr(ev, 'key'); //console.log(key);
+	if (nundef(key)) key = evToAttr(ev, 'key'); //console.log(key);
 	let cmd = key == 'user' ? UI.nav.commands.user : UI.commands[key];
 	assertion(isdef(cmd), `command ${key} not in UI!!!`);
 
 	let links = Array.from(mBy('dLeft').getElementsByTagName('a'));
 	links.map(x => mStyle(x, { fStyle: 'normal' }));
-	mStyle(ev.target, { fStyle: 'italic' })
+	mStyle(iDiv(cmd), { fStyle: 'italic' });
+	UI.lastCommandKey = key;
 
 
 	await cmd.open();
