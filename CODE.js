@@ -1,3 +1,26 @@
+function _mist() {
+	let ops = ['contains', '==', '!=', '<=', '>=', '<', '>'];
+	let dSelectOp = uiTypeSelect(ops, dParent, styles, opts);
+
+	let inputs = [];
+	let formStyles = opts.showLabels ? { wmin: 400, padding: 10, bg: 'white', fg: 'black' } : {};
+	let form = mDom(dParent, formStyles, { tag: 'form', method: null, action: "javascript:void(0)" })
+	for (const k in dict) {
+		let [content, val] = [k, dict[k]];
+		if (opts.showLabels) mDom(form, {}, { html: content });
+		let inp = mDom(form, styles, { autocomplete: 'off', className: 'input', name: content, tag: 'input', type: 'text', value: val, placeholder: `<enter ${content}>` });
+		inputs.push({ name: content, inp: inp });
+		mNewline(form)
+	}
+	mDom(form, { display: 'none' }, { tag: 'input', type: 'submit' });
+	form.onsubmit = ev => {
+		ev.preventDefault();
+		let di = {};
+		inputs.map(x => di[x.name] = x.inp.value);
+		resolve(di);
+	}
+	return form;
+}
 function _generateTagColumns() {
   // Get unique tag names
   //const tagNamesResult = DB.exec(`SELECT DISTINCT tag_name FROM tags WHERE tag_name NOT GLOB '*[0-9]*'`);

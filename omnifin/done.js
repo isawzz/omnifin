@@ -1,4 +1,61 @@
 //#region db
+function dbAddTagAndReport(transactionId, tagName, reportCategory='default') {
+  // Insert a new report with default values
+	let db=DB;
+  db.run(`
+    INSERT INTO reports (category, associated_account, description)
+    VALUES (?, NULL, '')
+  `, [reportCategory]);
+
+  // Get the last inserted report ID
+  const reportId = db.exec("SELECT last_insert_rowid() AS id;")[0].values[0][0];
+
+  // Check if the tag already exists
+  const tagResult = db.exec(`
+    SELECT id FROM tags WHERE tag_name = ?
+  `, [tagName]);
+
+  let tagId;
+
+  if (tagResult.length > 0) {
+    // Tag already exists, get the tag ID
+    tagId = tagResult[0].values[0][0];
+  } else {
+    // Insert the tag
+    db.run(`
+      INSERT INTO tags (tag_name, category, description, report)
+      VALUES (?, '', '', ?)
+    `, [tagName, reportId]);
+
+    // Get the last inserted tag ID
+    tagId = db.exec("SELECT last_insert_rowid() AS id;")[0].values[0][0];
+  }
+
+  // Associate the tag with the transaction
+  db.run(`
+    INSERT INTO transaction_tags (id, tag_id, report)
+    VALUES (?, ?, ?)
+  `, [transactionId, tagId, reportId]);
+
+  // Save the database
+  const data = db.export();
+  localStorage.setItem('database', JSON.stringify(Array.from(data)));
+
+  //alert("Tag and report added successfully.");
+}
+function dbDownload() {
+	let db = DB;
+	const data = db.export();
+	const blob = new Blob([data], { type: 'application/octet-stream' });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = '_download_test.db';
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
+}
 function dbGetTableName(q) { return wordAfter(q.toLowerCase(), 'from'); }
 
 function dbGetTableNames() { return dbToList(qTablenames()); }
@@ -9,7 +66,7 @@ async function dbInit(path) {
 		const buffer = await response.arrayBuffer();
 		// const SQL = await initSqlJs({ locateFile: filename => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.2/${filename}` });
 		const SQL = DA.SQL = await initSqlJs({ locateFile: filename => `../omnifin/libs/${filename}` });
-		let db=null;
+		let db = null;
 		if (nundef(path)) db = dbLoadFromLocalStorage();
 		if (!db) db = new SQL.Database(new Uint8Array(buffer));
 		return db;
@@ -34,7 +91,7 @@ function dbLoadFromLocalStorage() {
 }
 function dbRaw(q) { return DB.exec(q); }
 
-function dbSaveToLocalStorage(){
+function dbSaveToLocalStorage() {
 	// Save the database
 	const data = DB.export();
 	localStorage.setItem('database', JSON.stringify(Array.from(data)));
@@ -87,7 +144,7 @@ async function menuOpenOverview() {
 	UI.commands.tRevisions = mCommand(side.d, 'tRevisions', 'transaction revisions'); mNewline(side.d, gap);
 
 	UI.d = mDom('dMain', { className: 'section' });
-	onclickTranslist();
+	await onclickCommand(null, 'translist');
 }
 async function menuCloseOverview() { closeLeftSidebar(); mClear('dMain') }
 
@@ -150,76 +207,39 @@ async function onclickExecute() {
 //#region show functions
 function showChunkedSortedBy(dParent, title, tablename, records, headers, header) {
 
-  if (isEmpty(records)) { mText('no data', dParent); return null; }
-  if (nundef(headers)) headers = Object.keys(records[0]);
-  if (nundef(header)) header = headers[0];
-  //console.log('___ show', Counter++, DA.tinfo);
-  //console.log(DA.sortedBy, header);
-
-  if (isList(header)) DA.sortedBy = null; //ist multi-sorted!
-  else if (DA.sortedBy == header) { records = sortByEmptyLast(records, header); DA.sortedBy = null; }
-  else { records = sortByDescending(records, header); DA.sortedBy = header; }
-  mClear(dParent);
-  mText(`<h2>${title} (${tablename})</h2>`, dParent, { maleft: 12 });
-	let db = mDom(dParent, { gap: 10 }); mFlex(db);
-  mButton('next', () => showChunk(1), db, {}, 'button');
-  mButton('prev', () => showChunk(-1), db, {}, 'button');
-  mButton('multi-sort', onclickMultiSort, db, {}, 'button');
-  mButton('filter', onclickFilter, db, {}, 'button');
-  mButton('add tag', onclickTagForAll, db, {}, 'button');
-  mButton('download db', onclickDownloadDb, db, {}, 'button');
-  let dTable = mDom(dParent)
-  DA.tinfo = {};
-  // if (nundef(masterRecords)) masterRecords = records;
-  addKeys({ dParent, title, tablename, dTable, records, headers, header, ifrom: 0, size: 100 }, DA.tinfo);
-  showChunk(0);
-}
-function showChunk(inc) {
-  let o = DA.tinfo;
-  let [dParent, title, tablename, dTable, records, headers, header, ifrom] = [o.dParent, o.title, o.tablename, o.dTable, o.records, o.headers, o.header, o.ifrom];
-
-  let ito;
-  if (inc == 0) ito = Math.min(ifrom + o.size, records.length);
-  if (inc == 1) {
-    ifrom = Math.min(ifrom + o.size, records.length);
-    if (ifrom >= records.length) ifrom = 0;
-    ito = Math.min(ifrom + o.size, records.length);
-  }
-  if (inc == -1) {
-    ifrom = ifrom - o.size;
-    if (ifrom < 0) ifrom = Math.max(0, records.length - o.size);
-    ito = Math.min(ifrom + o.size, records.length);
-  }
-
-  let chunkRecords = records.slice(ifrom, ito);
-
-  if (isdef(UI.dataTable)) mRemove(UI.dataTable.div); mClear(dTable);
-  let t = UI.dataTable = mDataTable(chunkRecords, dTable, null, headers, 'records');
-  if (nundef(t)) { console.log('UI.dataTable is NULL'); return; }
-  let d = t.div;
-  mStyle(d, { 'caret-color': 'transparent' });
-  let headeruis = Array.from(d.firstChild.getElementsByTagName('th'));
-  for (const ui of headeruis) {
-    mStyle(ui, { cursor: 'pointer' });
-    ui.onclick = (ev) => { evNoBubble(ev); showChunkedSortedBy(dParent, title, tablename, records, headers, ui.innerHTML); }
-  }
-  if (tablename != 'transactions') return;
-  for (const ri of t.rowitems) {
-    let r = iDiv(ri);
-    let id = ri.o.id;
-    let h = hFunc('tag', 'onclickAddTag', id, ri.index); let c = mAppend(r, mCreate('td')); c.innerHTML = h;
-  }
-  DA.tinfo.ifrom = ifrom;
-}
-function showTableSortedBy(dParent, title, tablename, records, headers, header) {
-	if (isEmpty(records)) {mText('no data',dParent); return null; }
+	if (isEmpty(records)) { mText('no data', dParent); return null; }
 	if (nundef(headers)) headers = Object.keys(records[0]);
-  if (nundef(header)) header = headers[0];
-  console.log('___ show Full Table',Counter++,DA.tinfo);
-  console.log(DA.sortedBy,header);
+	if (nundef(header)) header = headers[0];
+	//console.log('___ show', Counter++, DA.tinfo);
+	//console.log(DA.sortedBy, header);
 
 	if (isList(header)) DA.sortedBy = null; //ist multi-sorted!
-  else if (DA.sortedBy == header) { sortBy(records, header); DA.sortedBy = null; }
+	else if (DA.sortedBy == header) { records = sortByEmptyLast(records, header); DA.sortedBy = null; }
+	else { records = sortByDescending(records, header); DA.sortedBy = header; }
+	mClear(dParent);
+	mText(`<h2>${title} (${tablename})</h2>`, dParent, { maleft: 12 });
+	let db = mDom(dParent, { gap: 10 }); mFlex(db);
+	mButton('next', () => showChunk(1), db, {}, 'button');
+	mButton('prev', () => showChunk(-1), db, {}, 'button');
+	mButton('multi-sort', onclickMultiSort, db, {}, 'button');
+	mButton('filter', onclickFilter, db, {}, 'button');
+	mButton('add tag', onclickTagForAll, db, {}, 'button');
+	mButton('download db', onclickDownloadDb, db, {}, 'button');
+	let dTable = mDom(dParent)
+	DA.tinfo = {};
+	// if (nundef(masterRecords)) masterRecords = records;
+	addKeys({ dParent, title, tablename, dTable, records, headers, header, ifrom: 0, size: 100 }, DA.tinfo);
+	showChunk(0);
+}
+function showTableSortedBy(dParent, title, tablename, records, headers, header) {
+	if (isEmpty(records)) { mText('no data', dParent); return null; }
+	if (nundef(headers)) headers = Object.keys(records[0]);
+	if (nundef(header)) header = headers[0];
+	console.log('___ show Full Table', Counter++, DA.tinfo);
+	console.log(DA.sortedBy, header);
+
+	if (isList(header)) DA.sortedBy = null; //ist multi-sorted!
+	else if (DA.sortedBy == header) { sortBy(records, header); DA.sortedBy = null; }
 	else { sortByDescending(records, header); DA.sortedBy = header; }
 	if (isdef(UI.dataTable)) mRemove(UI.dataTable.div); mClear(dParent);
 	mText(`<h2>${title} (${tablename})</h2>`, dParent, { maleft: 12 })
@@ -240,32 +260,60 @@ function showTableSortedBy(dParent, title, tablename, records, headers, header) 
 	}
 }
 
-//#region onclick
-async function onclickFilter(ev,ofilter){
+//#region transactions top button onclick
+async function onclickTagForAll(ev,list){
+	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers,DA.tinfo.header];
 
-	let [records, headers, header]=[DA.tinfo.records, DA.tinfo.headers,DA.tinfo.header]
+	let allTags = dbToList(`select * from tags`,'tag_name').filter(x=>!isNumber(x.tag_name));
+	let allTagNames = allTags.map(x=>x.tag_name)
+	let content = allTagNames.map(x => ({ key: x, value:false }));
+	if (nundef(list)) list = await mGather(null, {h:800,hmax:800}, { content, type: 'checkListInput', charsAllowedInWord:['-_'] });
+	//console.log('result',list)
+	if (!list || isEmpty(list)) {console.log('add tag CANCELLED!!!'); return; }
 
-	let content = {headers}; //.map(x => ({ name: x, value: false }));
-	
-	let result = {val:'sender_name',op:'==',val2:'dkb-4394'}; //
-	//let result = ofilter;
+
+	for(const tname of list){
+		let otag = allTags.find(x=>x.tag_name == tname);
+		for(const rec of records){
+			let recs1 = dbToList(`select * from transaction_tags where id='${rec.id}' and tag_id='${otag.id}';`); // where tag_id = '${otag.id}' and id = '${rec.id}'`);
+			//console.log(recs1);
+			if (isEmpty(recs1)){
+				//console.log('adding tag',tname)
+				dbAddTagAndReport(rec.id, tname, reportCategory='default');
+			}
+			// addTagAndReport(rec.id, tagName, reportCategory='default') 
+		}
+	}
+
+	onclickCommand(null,UI.lastCommandKey);
+	//rerunCurrentCommand();
+
+}
+async function onclickFilter(ev, ofilter) {
+
+	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header]
+
+	let content = { headers }; //.map(x => ({ name: x, value: false }));
+
+	//let result = {val:'sender_name',op:'==',val2:'dkb-4394'}; //
+	let result = ofilter;
 	if (nundef(result)) result = await mGather(mBy('bFilter'), {}, { content, type: 'filter' });
 
 	// result = {val:'unit',op:'!=',val2:'USD'}
 	// result = {val:'amount',op:'<',val2:'1000'}
 	// result = {val:'receiver_name',op:'==',val2:'merchant'}
-	console.log(result)
+	//console.log(result)
 
 	if (!result || isEmpty(result)) { console.log('operation cancelled!'); return; }
-	let recs = records.filter(x=>{
+	let recs = records.filter(x => {
 		let op = result.op;
-		let val1=x[result.val];
-		let val2 = headers.includes(result.val2)?x[result.val2]:result.val2;
-		if (isNumber(val1)) val1=Number(val1);
-		if (isNumber(val2)) val2=Number(val2);
-		let [e1,e2]=[!val1 || isEmpty(val1),!val2 || isEmpty(val2)];
+		let val1 = x[result.val];
+		let val2 = headers.includes(result.val2) ? x[result.val2] : result.val2;
+		if (isNumber(val1)) val1 = Number(val1);
+		if (isNumber(val2)) val2 = Number(val2);
+		let [e1, e2] = [!val1 || isEmpty(val1), !val2 || isEmpty(val2)];
 		//console.log(val1,op,val2);
-		switch(op){
+		switch (op) {
 			case '==': return val1 == val2; break;
 			case '!=': return val1 != val2; break;
 			case '<': return val1 < val2; break;
@@ -275,20 +323,20 @@ async function onclickFilter(ev,ofilter){
 			case '&&': return val1 && val2; break;
 			case '||': return val1 || val2; break;
 			case 'nor': return e1 && e2; break;
-			case 'xor': return e1&!e2 || e2&&!e1; break;
+			case 'xor': return e1 & !e2 || e2 && !e1; break;
 			case 'contains': return isString(val1) && val1.includes(val2); break;
 			default: return false;
 		}
 	});
 
 	DA.tinfo.records = recs;
-	console.log('recs',recs);
+	//console.log('recs',recs);
 	showChunkedSortedBy(DA.tinfo.dParent, DA.tinfo.title, DA.tinfo.tablename, DA.tinfo.records, DA.tinfo.headers, [])
 }
-async function onclickMultiSort(ev){
-	console.log('multisort',DA.tinfo);
+async function onclickMultiSort(ev) {
+	//console.log('multisort',DA.tinfo);
 
-	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers,DA.tinfo.header]
+	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header]
 
 	let content = headers.map(x => ({ name: x, value: false }));
 	let result = await mGather(ev.target, {}, { content, type: 'checkList' });
@@ -302,4 +350,21 @@ async function onclickMultiSort(ev){
 	showChunkedSortedBy(DA.tinfo.dParent, DA.tinfo.title, DA.tinfo.tablename, DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header)
 
 }
+async function onclickDownloadDb() { dbDownload(); }
 
+//#region helpers
+function calcIndexFromTo(inc,o){
+	let ito, ifrom=o.ifrom,records = o.records;
+	if (inc == 0) ito = Math.min(ifrom + o.size, records.length);
+	if (inc == 1) {
+		ifrom = Math.min(ifrom + o.size, records.length);
+		if (ifrom >= records.length) ifrom = 0;
+		ito = Math.min(ifrom + o.size, records.length);
+	}
+	if (inc == -1) {
+		ifrom = ifrom - o.size;
+		if (ifrom < 0) ifrom = Math.max(0, records.length - o.size);
+		ito = Math.min(ifrom + o.size, records.length);
+	}
+  return [ifrom,ito];
+}

@@ -8,7 +8,7 @@ async function start() { await prelims(); test7_filterAddTag(); }
 
 async function test7_filterAddTag(){
 	await switchToMainMenu('overview');
-	await onclickCommand(null,'translist');
+	//await onclickCommand(null,'translist');
 	//await onclickFilter(null,{val:'amount',op:'==',val2:1080});
 	//await onclickTagForAll(null,['alpensee']);
 }

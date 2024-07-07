@@ -54,6 +54,7 @@ function qTTList() {
 			t.dateof, 
 			sender.account_name AS sender_name, 
 			receiver.account_name AS receiver_name, 
+			t.description,
 			t.amount, 
 			a.asset_name AS unit, 
 			GROUP_CONCAT(

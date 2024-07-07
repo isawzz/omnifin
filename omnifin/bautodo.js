@@ -134,7 +134,7 @@ async function onclickAddTag(idtrans, index) {
 	for(const t of newTagNames){
 		//need to create a report and add it to reports,
 		//need to add a record in transaction_tags with corresponding trans_id,tag_id,report_id
-		addTagAndReport(idtrans,t);
+		dbAddTagAndReport(idtrans,t);
 		break;
 	}
 }

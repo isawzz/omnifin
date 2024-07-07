@@ -1,73 +1,53 @@
-function addTagAndReport(transactionId, tagName, reportCategory='default') {
-  // Insert a new report with default values
-	let db=DB;
-  db.run(`
-    INSERT INTO reports (category, associated_account, description)
-    VALUES (?, NULL, '')
-  `, [reportCategory]);
 
-  // Get the last inserted report ID
-  const reportId = db.exec("SELECT last_insert_rowid() AS id;")[0].values[0][0];
+function uiGadgetTypeTablecell(dParent, dict, resolve, styles = {}, opts = {}) {
 
-  // Check if the tag already exists
-  const tagResult = db.exec(`
-    SELECT id FROM tags WHERE tag_name = ?
-  `, [tagName]);
+	addKeys({ hmax: 500, wmax: 400, bg: 'white', fg: 'black', padding: 16, rounding: 10, box: true }, styles)
+	let dOuter = mDom(dParent, styles);
+	let hmax = styles.hmax - 193, wmax = styles.wmax;
+	let selectStyles = { hmax, w:220, box: true };
 
-  let tagId;
-
-  if (tagResult.length > 0) {
-    // Tag already exists, get the tag ID
-    tagId = tagResult[0].values[0][0];
-  } else {
-    // Insert the tag
-    db.run(`
-      INSERT INTO tags (tag_name, category, description, report)
-      VALUES (?, '', '', ?)
-    `, [tagName, reportId]);
-
-    // Get the last inserted tag ID
-    tagId = db.exec("SELECT last_insert_rowid() AS id;")[0].values[0][0];
-  }
-
-  // Associate the tag with the transaction
-  db.run(`
-    INSERT INTO transaction_tags (id, tag_id, report)
-    VALUES (?, ?, ?)
-  `, [transactionId, tagId, reportId]);
-
-  // Save the database
-  const data = db.export();
-  localStorage.setItem('database', JSON.stringify(Array.from(data)));
-
-  //alert("Tag and report added successfully.");
+  console.log('dict',dict);
+  return dOuter;
 }
+function mist(){
 
-function mist() {
-	let ops = ['contains', '==', '!=', '<=', '>=', '<', '>'];
-	let dSelectOp = uiTypeSelect(ops, dParent, styles, opts);
+	let d=mDom(dOuter);mFlexWrap(d)
+	//checklist fuer headers
+	let headers = dict.headers;
+	let d1=mDom(d);mCenterCenterFlex(d1);
+	mDom(d1,{align:'right','align-self':'center',w:80},{html:'LHS: '})
+	let dSelectHeader = uiTypeSelect(headers, d1, selectStyles, opts);
 
-	let inputs = [];
-	let formStyles = opts.showLabels ? { wmin: 400, padding: 10, bg: 'white', fg: 'black' } : {};
-	let form = mDom(dParent, formStyles, { tag: 'form', method: null, action: "javascript:void(0)" })
-	for (const k in dict) {
-		let [content, val] = [k, dict[k]];
-		if (opts.showLabels) mDom(form, {}, { html: content });
-		let inp = mDom(form, styles, { autocomplete: 'off', className: 'input', name: content, tag: 'input', type: 'text', value: val, placeholder: `<enter ${content}>` });
-		inputs.push({ name: content, inp: inp });
-		mNewline(form)
+	let linegap=10;
+	mLinebreak(d,linegap);
+	d1=mDom(d);mCenterCenterFlex(d1);
+	mDom(d1,{align:'right','align-self':'center',w:80},{html:'op: '})
+	let ops = ['contains', '==', '!=', '<=', '>=', '<', '>', '&&', '||', 'nor', 'xor'];
+	let dSelectOp = uiTypeSelect(ops, d1, selectStyles, opts);
+
+	mLinebreak(d,linegap);
+	d1=mDom(d);mCenterCenterFlex(d1);
+	mDom(d1,{align:'right','align-self':'center',w:80},{html:'RHS: '})
+	let inp = mDom(d, selectStyles, { autocomplete: 'off', className: 'input', name: 'val', tag: 'input', type: 'text', placeholder: `<enter value>` });
+	mLinebreak(d,linegap);
+	d1=mDom(d);mCenterCenterFlex(d1);
+	mDom(d,{align:'right','align-self':'center',w:80},{html:'or: '});
+	let dSelectHeader2 = uiTypeSelect(headers, d, selectStyles, opts);
+
+	function collectAndResolve(){
+		let val=dSelectHeader.value;
+		let op = dSelectOp.value;
+		let val2 = !isEmpty(inp.value)?inp.value:dSelectHeader2.value;
+
+		resolve({val,op,val2});
 	}
-	mDom(form, { display: 'none' }, { tag: 'input', type: 'submit' });
-	form.onsubmit = ev => {
-		ev.preventDefault();
-		let di = {};
-		inputs.map(x => di[x.name] = x.inp.value);
-		resolve(di);
-	}
-	return form;
+
+	mLinebreak(d,linegap);
+	d1=mDom(d,{w100:true});mCenterCenterFlex(d1);
+	mButton('done', collectAndResolve, d1, {w:90}, 'input', 'bFilter');
+	return dOuter;
+
 }
-
-
 
 
 
