@@ -98,9 +98,10 @@ function dbSaveToLocalStorage() {
 }
 function dbToDict(q, keyprop = 'id') { return list2dict(dbToList(q), keyprop); }
 
-function dbToList(q) {
+function dbToList(q,addToHistory=true) {
 	//runs query, returns dict of records by id
 	//assumes that query selects keyprop
+	//console.log('____dbToList',q,addToHistory)
 	let res = dbToObject(q); //console.log(res)
 	let headers = res.columns;
 	let records = [];
@@ -111,6 +112,13 @@ function dbToList(q) {
 		}
 		records.push(o);
 	}
+	if (addToHistory){
+		let q1=q.toLowerCase().trim(); 
+		if (q1.startsWith('select')) M.qHistory.push({q:q1,tablename:wordAfter(q1,'from')}); 	
+
+		//consloghist();
+	}
+	
 	return records;
 }
 function dbToObject(q) {
@@ -146,7 +154,7 @@ async function menuOpenOverview() {
 	UI.d = mDom('dMain', { className: 'section' });
 	await onclickCommand(null, 'translist');
 }
-async function menuCloseOverview() { closeLeftSidebar(); mClear('dMain') }
+async function menuCloseOverview() { closeLeftSidebar(); mClear('dMain'); M.qHistory=[]; }
 
 function onclickShowSchema() {
 	let res = dbRaw(`SELECT sql FROM sqlite_master WHERE type='table';`);
@@ -195,7 +203,7 @@ async function menuOpenSql() {
 
 	onclickExecute();
 }
-async function menuCloseSql() { mClear('dMain') }
+async function menuCloseSql() { mClear('dMain'); M.qHistory=[]; }
 async function onclickExecute() {
 	let q = UI.ta.value;
 	let tablename = dbGetTableName(q);
@@ -217,18 +225,21 @@ function showChunkedSortedBy(dParent, title, tablename, records, headers, header
 	else if (DA.sortedBy == header) { records = sortByEmptyLast(records, header); DA.sortedBy = null; }
 	else { records = sortByDescending(records, header); DA.sortedBy = header; }
 	mClear(dParent);
-	mText(`<h2>${title} (${tablename})</h2>`, dParent, { maleft: 12 });
-	let db = mDom(dParent, { gap: 10 }); mFlex(db);
-	mButton('next', () => showChunk(1), db, {}, 'button');
-	mButton('prev', () => showChunk(-1), db, {}, 'button');
-	mButton('multi-sort', onclickMultiSort, db, {}, 'button');
-	mButton('filter', onclickFilter, db, {}, 'button');
-	mButton('add tag', onclickTagForAll, db, {}, 'button');
-	mButton('download db', onclickDownloadDb, db, {}, 'button');
+	let db = mDom(dParent, { gap: 10,mabottom:10,className:'centerflexV' }); //mCenterCenterFlex(db);
+	// mText(`<h2>${title} (${tablename})</h2>`, db, { maleft: 12 });
+	mButton('back', onclickBackHistory, db, {}, 'button','bBack');
+	mText(`${title} (${tablename})`, db, { weight:'bold',fz:20,maleft: 12 });
+	mButton('PgDn', () => showChunk(1), db, {w:25}, 'button','bPgDn');
+	mButton('PgUp', () => showChunk(-1), db, {w:25}, 'button','bPgUp');
+	mButton('multi-sort', onclickMultiSort, db, {}, 'button','bMultiSort');
+	mButton('filter1', onclickFilter1, db, {}, 'button','bFilter1');
+	mButton('filter2', onclickFilter2, db, {}, 'button','bFilter2');
+	mButton('add tag', onclickTagForAll, db, {}, 'button','bAddTag');
+	mButton('download db', onclickDownloadDb, db, {}, 'button','bDownload');
 	let dTable = mDom(dParent)
 	DA.tinfo = {};
 	// if (nundef(masterRecords)) masterRecords = records;
-	addKeys({ dParent, title, tablename, dTable, records, headers, header, ifrom: 0, size: 100 }, DA.tinfo);
+	addKeys({ q:arrLast(M.qHistory).q, dParent, title, tablename, dTable, records, headers, header, ifrom: 0, size: 100 }, DA.tinfo);
 	showChunk(0);
 }
 function showTableSortedBy(dParent, title, tablename, records, headers, header) {
@@ -261,6 +272,14 @@ function showTableSortedBy(dParent, title, tablename, records, headers, header) 
 }
 
 //#region transactions top button onclick
+async function onclickBackHistory(){
+	console.log(M.qHistory)
+	let o=M.qHistory.pop();
+	if (isdef(o)){
+		let records = dbToList(o.q); 
+		showChunkedSortedBy(UI.d, o.tablename, o.tablename, records);	
+	}
+}
 async function onclickTagForAll(ev,list){
 	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers,DA.tinfo.header];
 
@@ -288,49 +307,6 @@ async function onclickTagForAll(ev,list){
 	onclickCommand(null,UI.lastCommandKey);
 	//rerunCurrentCommand();
 
-}
-async function onclickFilter(ev, ofilter) {
-
-	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header]
-
-	let content = { headers }; //.map(x => ({ name: x, value: false }));
-
-	//let result = {val:'sender_name',op:'==',val2:'dkb-4394'}; //
-	let result = ofilter;
-	if (nundef(result)) result = await mGather(mBy('bFilter'), {}, { content, type: 'filter' });
-
-	// result = ['unit','!=','USD'];
-	// result = ['amount','<','1000'];
-	// result = ['receiver_name','==','merchant'];
-
-	if (!result || isEmpty(result)) { console.log('operation cancelled!'); return; }
-	console.log(result)
-	let recs = records.filter(x => {
-		let [val1,op,val2] = [x[result[0]],result[1],result[2]];
-		if (headers.includes(val2)) val2 = x[val2];
-		if (isNumber(val1)) val1 = Number(val1);
-		if (isNumber(val2)) val2 = Number(val2);
-		let [e1, e2] = [!val1 || isEmpty(val1), !val2 || isEmpty(val2)];
-		//console.log(val1,op,val2);
-		switch (op) {
-			case '==': return val1 == val2; break;
-			case '!=': return val1 != val2; break;
-			case '<': return val1 < val2; break;
-			case '>': return val1 > val2; break;
-			case '<=': return val1 <= val2; break;
-			case '>=': return val1 >= val2; break;
-			case '&&': return val1 && val2; break;
-			case '||': return val1 || val2; break;
-			case 'nor': return e1 && e2; break;
-			case 'xor': return e1 & !e2 || e2 && !e1; break;
-			case 'contains': return isString(val1) && val1.includes(val2); break;
-			default: return val1 == 'X'||val1 == true; break; //for tag columns or true false columns
-		}
-	});
-
-	DA.tinfo.records = recs;
-	//console.log('recs',recs);
-	showChunkedSortedBy(DA.tinfo.dParent, DA.tinfo.title, DA.tinfo.tablename, DA.tinfo.records, DA.tinfo.headers, [])
 }
 async function onclickMultiSort(ev) {
 	//console.log('multisort',DA.tinfo);
@@ -366,4 +342,12 @@ function calcIndexFromTo(inc,o){
 		ito = Math.min(ifrom + o.size, records.length);
 	}
   return [ifrom,ito];
+}
+function consloghist(){
+	for(const s of M.qHistory){
+		let q=s.q;
+		let q1=replaceAllSpecialCharsFromList(q,['\t','\n'],' ');
+		console.log(q)
+		console.log(q1)
+	}
 }

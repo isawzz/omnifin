@@ -68,6 +68,7 @@ dialog:-internal-dialog-in-top-layer {
   font-size: inherit;
   font-family: inherit;
 }
+
 /* #endregion */
 
 /* #region classes for cards */
@@ -152,21 +153,6 @@ body {
   background-color: var(--bgBody) !important;
 }
 
-/* #region all */
-.button {
-  padding: 5px 10px;
-  font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  min-width: 80px;
-  outline: none;
-  cursor: pointer;
-}
-
-.button:hover {
-  background-color: '#000000a0';
-}
-
 legend {
   /* border: 1px solid green; */
   color: green;
@@ -192,9 +178,47 @@ fieldset .disabled {
   cursor: default;
 }
 
+/* #region all classes */
 .activeLink {
   color: var(--fgButtonActive) !important;
   background-color: var(--bgButtonActive) !important;
+}
+
+.button {
+  padding: 5px 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  min-width: 80px;
+  outline: none;
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: '#000000a0';
+}
+
+.centerflex{
+  display: flex;
+  justify-content: center;
+  align-content:center;
+  flex-wrap:wrap;
+
+}
+.centerflex>*{
+  justify-self:center;
+  align-self:center;
+}
+.centerflexV{
+  display: flex;
+  /* justify-content: center; */
+  align-content:center;
+  flex-wrap:wrap;
+
+}
+.centerflexV>*{
+  justify-self:center;
+  align-self:center;
 }
 
 .darker {
@@ -336,7 +360,7 @@ fieldset .disabled {
 .instruction {
   border-radius: 10px;
   border: 2px silver solid;
-  background: #ffffff; 
+  background: #ffffff;
   margin: 4px;
   padding: 4px;
   /* flex-wrap: wrap; */
@@ -491,7 +515,8 @@ fieldset .disabled {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.table td{
+
+.table td {
   border-top: 1px solid dimgray;
 }
 
@@ -514,6 +539,7 @@ fieldset .disabled {
 .w80 {
   width: 80px;
 }
+
 /* #endregion */
 
 /* #region datalist */
@@ -1987,24 +2013,33 @@ input:checked+.slider:before {
 /* #region test border image */
 .image-container {
   position: relative;
-  width: fit-content; /* Adjust width as needed */
-  display: inline-block; /* Ensure div sizes to content */
+  width: fit-content;
+  /* Adjust width as needed */
+  display: inline-block;
+  /* Ensure div sizes to content */
 }
 
 .image-container::before {
   content: '';
   position: absolute;
-  top: 10px; /* Adjust top position as needed */
-  left: 10px; /* Adjust left position as needed */
-  right: 10px; /* Adjust right position as needed */
-  bottom: 10px; /* Adjust bottom position as needed */
-  border: 20px inset #000; /* Adjust border width and color */
-  z-index: -1; /* Ensure pseudo-element is behind the image */
+  top: 10px;
+  /* Adjust top position as needed */
+  left: 10px;
+  /* Adjust left position as needed */
+  right: 10px;
+  /* Adjust right position as needed */
+  bottom: 10px;
+  /* Adjust bottom position as needed */
+  border: 20px inset #000;
+  /* Adjust border width and color */
+  z-index: -1;
+  /* Ensure pseudo-element is behind the image */
 }
 
 .image-container img {
   display: block;
-  max-width: 100%; /* Ensure image does not exceed container width */
+  max-width: 100%;
+  /* Ensure image does not exceed container width */
 }
 
 
@@ -2018,7 +2053,7 @@ input:checked+.slider:before {
   width: 100%;
 }
 
-.sticky + .content {
+.sticky+.content {
   padding-top: 60px;
 }
 

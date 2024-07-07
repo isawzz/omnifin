@@ -1,3 +1,23 @@
+function uiGadgetTypeTablecell(dParent, dict, resolve, styles = {}, opts = {}) {
+
+	addKeys({ hmax: 500, wmax: 400, bg: 'white', fg: 'black', padding: 16, rounding: 10, box: true }, styles)
+	let dOuter = mDom(dParent, styles);
+	let hmax = styles.hmax - 193, wmax = styles.wmax;
+	let selectStyles = { hmax, w:220, box: true };
+
+  console.log('dict',dict);
+
+  //ich moecht wissen ob es ein filtering n
+
+  return dOuter;
+}async function onclickTablecell(ui,ri,o){
+
+  let result = await mGather(ui, {}, { content: { ri, o }, type: 'tablecell' });
+
+	console.log('result',result)
+
+} 
+
 function _mist() {
 	let ops = ['contains', '==', '!=', '<=', '>=', '<', '>'];
 	let dSelectOp = uiTypeSelect(ops, dParent, styles, opts);

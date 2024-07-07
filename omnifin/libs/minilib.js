@@ -1653,6 +1653,7 @@ function dict2list(d, keyName = 'id') {
 	return res;
 }
 function disableButton(b) { mClass(toElem(b), 'disabled') }
+function enableButton(b) { mClassRemove(toElem(b), 'disabled') }
 
 function downloadAsText(s, filename, ext = 'txt') {
 	saveFileAtClient(

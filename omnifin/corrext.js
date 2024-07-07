@@ -27,6 +27,8 @@ function extractWords(s, allowed) {
 }
 function handleSticky() { let d = mBy('dNav'); if (window.scrollY >= 88) mClass(d, 'sticky'); else mClassRemove(d, 'sticky'); }
 
+function ifNotList(x){return isList(x)?x:[x];}
+
 function mDataTable(reclist, dParent, rowstylefunc, headers, id, showheaders = true) {
 	//console.log(reclist[0])
 	if (isEmpty(reclist)) { mText('no data', dParent); return null; }
@@ -84,76 +86,6 @@ function mTable(dParent, headers, showheaders, styles = { mabottom: 0 }, classNa
 	}
 	return t;
 }
-async function onclickCommand(ev,key) {
-	//hier muss command irgendwie markiert werden und altes unmarked werden!!!
-	if (nundef(key)) key = evToAttr(ev, 'key'); //console.log(key);
-	let cmd = key == 'user' ? UI.nav.commands.user : UI.commands[key];
-	assertion(isdef(cmd), `command ${key} not in UI!!!`);
-
-	let links = Array.from(mBy('dLeft').getElementsByTagName('a'));
-	links.map(x => mStyle(x, { fStyle: 'normal' }));
-	mStyle(iDiv(cmd), { fStyle: 'italic' });
-	UI.lastCommandKey = key;
-
-
-	await cmd.open();
-}
-function showNavbar() {
-	mDom('dNav', { fz: 34, mabottom: 10, w100: true }, { html: `Omnifin` });
-	let nav = mMenu('dNav');
-	let commands = {};
-	commands.overview = menuCommand(nav.l, 'nav', 'overview', 'Overview', menuOpenOverview, menuCloseOverview);
-	commands.sql = menuCommand(nav.l, 'nav', 'sql', 'Sql', menuOpenSql, menuCloseSql);
-	// commands.test = menuCommand(nav.l, 'nav', 'test', 'Test', menuOpenTest, menuCloseTest);
-	nav.commands = commands;
-	return nav;
-}
-function sortBy(arr, key) {
-	function fsort(a, b) {
-		let [av, bv] = [a[key], b[key]];
-		if (isNumber(av) && isNumber(bv)) return Number(av) < Number(bv) ? -1 : 1;
-		if (isEmpty(av)) return -1;
-		if (isEmpty(bv)) return 1;
-		return av < bv ? -1 : 1;
-	}
-	arr.sort(fsort); //(a, b) => {let [av,bv]=[a[key],b[key]];return (av && !bv && av > bv) ? -1 : 1;}); 
-	// arr.sort((a, b) => {let [av,bv]=[a[key],b[key]];return (!av || av < bv) ? -1 : 1;}); 
-	return arr;
-}
-
-function sortByDescending(arr, key) {
-	function fsort(a, b) {
-		let [av, bv] = [a[key], b[key]];
-		if (isNumber(av) && isNumber(bv)) return Number(av) > Number(bv) ? -1 : 1;
-		if (isEmpty(av)) return 1;
-		if (isEmpty(bv)) return -1;
-		return av > bv ? -1 : 1;
-	}
-	arr.sort(fsort); //(a, b) => {let [av,bv]=[a[key],b[key]];return (av && !bv && av > bv) ? -1 : 1;}); 
-	return arr;
-}
-function sortByEmptyLast(arr, key) {
-	function fsort(a, b) {
-		let [av, bv] = [a[key], b[key]];
-		if (isNumber(av) && isNumber(bv)) return Number(av) < Number(bv) ? -1 : 1;
-		if (isEmpty(av)) return 1;
-		if (isEmpty(bv)) return -1;
-		return av < bv ? -1 : 1;
-	}
-	arr.sort(fsort); //(a, b) => {let [av,bv]=[a[key],b[key]];return (av && !bv && av > bv) ? -1 : 1;}); 
-	// arr.sort((a, b) => {let [av,bv]=[a[key],b[key]];return (!av || av < bv) ? -1 : 1;}); 
-	return arr;
-}
-function sortByMultipleProperties(list) {
-	let props = Array.from(arguments).slice(1);
-	return list.sort((a, b) => {
-		for (const p of props) {
-			if (a[p] < b[p]) return -1;
-			if (a[p] > b[p]) return 1;
-		}
-		return 0;
-	});
-}
 function multiSort(properties) {
 	// Example usage:
 	// const data = [
@@ -201,6 +133,92 @@ function multiSort(properties) {
 		}
 		return 0;
 	};
+}
+async function onclickCommand(ev,key) {
+	//hier muss command irgendwie markiert werden und altes unmarked werden!!!
+	if (nundef(key)) key = evToAttr(ev, 'key'); //console.log(key);
+	let cmd = key == 'user' ? UI.nav.commands.user : UI.commands[key];
+	assertion(isdef(cmd), `command ${key} not in UI!!!`);
+
+	let links = Array.from(mBy('dLeft').getElementsByTagName('a'));
+	links.map(x => mStyle(x, { fStyle: 'normal' }));
+	mStyle(iDiv(cmd), { fStyle: 'italic' });
+	UI.lastCommandKey = key;
+
+
+	await cmd.open();
+}
+function replaceAllSpecialCharsFromList(str, list, sBy, removeConsecutive=true) { 
+	for(const sSub of list){
+		str=replaceAllSpecialChars(str,sSub,sBy);
+	}
+	if (removeConsecutive){
+		let sresult='';
+		while(str.length>0){
+			let sSub=str.substring(0,sBy.length);
+			str = stringAfter(str,sSub);
+			if (sSub == sBy && sresult.endsWith(sBy)) continue;
+			sresult += sSub;
+			if (str.length<sBy.length) {sresult+=str;break;}
+		}
+		str=sresult;
+	}
+	return str;
+}
+function showNavbar() {
+	mDom('dNav', { fz: 34, mabottom: 10, w100: true }, { html: `Omnifin` });
+	let nav = mMenu('dNav');
+	let commands = {};
+	commands.overview = menuCommand(nav.l, 'nav', 'overview', 'Overview', menuOpenOverview, menuCloseOverview);
+	commands.sql = menuCommand(nav.l, 'nav', 'sql', 'Sql', menuOpenSql, menuCloseSql);
+	// commands.test = menuCommand(nav.l, 'nav', 'test', 'Test', menuOpenTest, menuCloseTest);
+	nav.commands = commands;
+	return nav;
+}
+function sortBy(arr, key) {
+	function fsort(a, b) {
+		let [av, bv] = [a[key], b[key]];
+		if (isNumber(av) && isNumber(bv)) return Number(av) < Number(bv) ? -1 : 1;
+		if (isEmpty(av)) return -1;
+		if (isEmpty(bv)) return 1;
+		return av < bv ? -1 : 1;
+	}
+	arr.sort(fsort); //(a, b) => {let [av,bv]=[a[key],b[key]];return (av && !bv && av > bv) ? -1 : 1;}); 
+	// arr.sort((a, b) => {let [av,bv]=[a[key],b[key]];return (!av || av < bv) ? -1 : 1;}); 
+	return arr;
+}
+function sortByDescending(arr, key) {
+	function fsort(a, b) {
+		let [av, bv] = [a[key], b[key]];
+		if (isNumber(av) && isNumber(bv)) return Number(av) > Number(bv) ? -1 : 1;
+		if (isEmpty(av)) return 1;
+		if (isEmpty(bv)) return -1;
+		return av > bv ? -1 : 1;
+	}
+	arr.sort(fsort); //(a, b) => {let [av,bv]=[a[key],b[key]];return (av && !bv && av > bv) ? -1 : 1;}); 
+	return arr;
+}
+function sortByEmptyLast(arr, key) {
+	function fsort(a, b) {
+		let [av, bv] = [a[key], b[key]];
+		if (isNumber(av) && isNumber(bv)) return Number(av) < Number(bv) ? -1 : 1;
+		if (isEmpty(av)) return 1;
+		if (isEmpty(bv)) return -1;
+		return av < bv ? -1 : 1;
+	}
+	arr.sort(fsort); //(a, b) => {let [av,bv]=[a[key],b[key]];return (av && !bv && av > bv) ? -1 : 1;}); 
+	// arr.sort((a, b) => {let [av,bv]=[a[key],b[key]];return (!av || av < bv) ? -1 : 1;}); 
+	return arr;
+}
+function sortByMultipleProperties(list) {
+	let props = Array.from(arguments).slice(1);
+	return list.sort((a, b) => {
+		for (const p of props) {
+			if (a[p] < b[p]) return -1;
+			if (a[p] > b[p]) return 1;
+		}
+		return 0;
+	});
 }
 
 

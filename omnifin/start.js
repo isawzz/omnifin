@@ -4,12 +4,21 @@ const DB_PATH = '../omnifin/db/test2.db'; // relative to omnifin dir
 onload = start;
 onscroll = handleSticky;
 
-async function start() { await prelims(); test7_filterAddTag(); }
+async function start() { await prelims(); test8_filter2SelectedCells(); }
 
+async function test8_filter2SelectedCells(){
+	await switchToMainMenu('overview');
+	let cells = DA.cells.filter(x=>!isEmpty(iDiv(x).innerHTML));
+	let selitems = ifNotList(rChoose(cells.slice(0,20),2));
+	//console.log(selitems);
+	selitems.map(x=>toggleItemSelection(x));
+
+	let exp = extractFilterExpression(); //console.log(exp)
+}
 async function test7_filterAddTag(){
 	await switchToMainMenu('overview');
 	//await onclickCommand(null,'translist');
-	//await onclickFilter();
+	await onclickFilter2();//null,'receiver_name == tax');
 	//await onclickTagForAll(null,['alpensee']);
 }
 async function test6(){
@@ -135,6 +144,7 @@ async function prelims() {
 	UI.nav = showNavbar(); 
 	setColors('skyblue', 'white');
 	DB = await dbInit(DB_PATH);
+	M.qHistory=[];
 
 	// let tablenames = dbGetTableNames();
 	// tablenames = tablenames.map(x=>x.name);
