@@ -23,18 +23,19 @@ function uiGadgetTypeFilter(dParent, dict, resolve, styles = {}, opts = {}) {
 	mLinebreak(d,linegap);
 	d1=mDom(d);mCenterCenterFlex(d1);
 	mDom(d1,{align:'right','align-self':'center',w:80},{html:'RHS: '})
-	let inp = mDom(d, selectStyles, { autocomplete: 'off', className: 'input', name: 'val', tag: 'input', type: 'text', placeholder: `<enter value>` });
+	let inp = mDom(d1, selectStyles, { autocomplete: 'off', className: 'input', name: 'val', tag: 'input', type: 'text', placeholder: `<enter value>` });
+	
 	mLinebreak(d,linegap);
 	d1=mDom(d);mCenterCenterFlex(d1);
-	mDom(d,{align:'right','align-self':'center',w:80},{html:'or: '});
-	let dSelectHeader2 = uiTypeSelect(headers, d, selectStyles, opts);
+	mDom(d1,{align:'right','align-self':'center',w:80},{html:'or: '});
+	let dSelectHeader2 = uiTypeSelect(headers, d1, selectStyles, opts);
 
 	function collectAndResolve(){
 		let val=dSelectHeader.value;
 		let op = dSelectOp.value;
 		let val2 = !isEmpty(inp.value)?inp.value:dSelectHeader2.value;
 
-		resolve({val,op,val2});
+		resolve([val,op,val2]);
 	}
 
 	mLinebreak(d,linegap);

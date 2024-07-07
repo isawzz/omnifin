@@ -1,7 +1,7 @@
 function showChunk(inc) {
 	let o = DA.tinfo;
 	let [dParent, title, tablename, dTable, records, headers, header] = [o.dParent, o.title, o.tablename, o.dTable, o.records, o.headers, o.header];
-  let [ifrom,ito]=calcIndexFromTo(inc,o); console.log(ifrom,ito)
+  let [ifrom,ito]=calcIndexFromTo(inc,o); //console.log(ifrom,ito)
 	let chunkRecords = records.slice(ifrom, ito);
 	if (isdef(UI.dataTable)) mRemove(UI.dataTable.div); mClear(dTable);
 	let t = UI.dataTable = mDataTable(chunkRecords, dTable, null, headers, 'records');

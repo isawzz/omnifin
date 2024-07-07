@@ -299,16 +299,15 @@ async function onclickFilter(ev, ofilter) {
 	let result = ofilter;
 	if (nundef(result)) result = await mGather(mBy('bFilter'), {}, { content, type: 'filter' });
 
-	// result = {val:'unit',op:'!=',val2:'USD'}
-	// result = {val:'amount',op:'<',val2:'1000'}
-	// result = {val:'receiver_name',op:'==',val2:'merchant'}
-	//console.log(result)
+	// result = ['unit','!=','USD'];
+	// result = ['amount','<','1000'];
+	// result = ['receiver_name','==','merchant'];
 
 	if (!result || isEmpty(result)) { console.log('operation cancelled!'); return; }
+	console.log(result)
 	let recs = records.filter(x => {
-		let op = result.op;
-		let val1 = x[result.val];
-		let val2 = headers.includes(result.val2) ? x[result.val2] : result.val2;
+		let [val1,op,val2] = [x[result[0]],result[1],result[2]];
+		if (headers.includes(val2)) val2 = x[val2];
 		if (isNumber(val1)) val1 = Number(val1);
 		if (isNumber(val2)) val2 = Number(val2);
 		let [e1, e2] = [!val1 || isEmpty(val1), !val2 || isEmpty(val2)];
@@ -325,7 +324,7 @@ async function onclickFilter(ev, ofilter) {
 			case 'nor': return e1 && e2; break;
 			case 'xor': return e1 & !e2 || e2 && !e1; break;
 			case 'contains': return isString(val1) && val1.includes(val2); break;
-			default: return false;
+			default: return val1 == 'X'||val1 == true; break; //for tag columns or true false columns
 		}
 	});
 
