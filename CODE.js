@@ -89,7 +89,7 @@ function mist(){
 		let text = iDiv(item).innerHTML;
 		//if (exp != '') exp += ' or ';
 		exp += `${header}='${text}'`;
-		if (isLast(item,selitems)) exp += ';'; else exp +=' or ';
+		if (arrIsLast(selitem,item)) exp += ';'; else exp +=' or ';
 	}
 	return exp;
 

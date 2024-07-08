@@ -403,6 +403,27 @@ async function onclickBackHistory(){
 		showChunkedSortedBy(UI.d, o.tablename, o.tablename, records);	
 	}
 }
+async function onclickFilter2(ev, exp) {
+
+	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header];
+
+	if (nundef(exp)) {
+		exp=extractFilterExpression();
+		let content = { exp, caption: 'Filter' };
+		exp = await mGather(null, {}, { content, type: 'textarea', value:exp });
+	}
+
+
+	if (!exp || isEmpty(exp)) { console.log('operation cancelled!'); return; }
+	
+  //console.log('exp', exp);
+
+
+  let i=DA.tinfo;
+  records = dbToList(exp);
+  showChunkedSortedBy(i.dParent,i.title,i.tablename,records,headers,header);
+
+}
 async function onclickTagForAll(ev,list){
 	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers,DA.tinfo.header];
 
@@ -471,7 +492,7 @@ function showChunkedSortedBy(dParent, title, tablename, records, headers, header
 	mButton('multi-sort', onclickMultiSort, db, {}, 'button','bMultiSort');
 	// mButton('filter1', onclickFilter1, db, {}, 'button','bFilter1');
 	mButton('filter2', onclickFilter2, db, {}, 'button','bFilter2');
-	mButton('add tag', onclickTagForAll, db, {}, 'button','bAddTag');
+	// mButton('add tag', onclickTagForAll, db, {}, 'button','bAddTag');
 	mButton('download db', onclickDownloadDb, db, {}, 'button','bDownload');
 	let dTable = mDom(dParent)
 	DA.tinfo = {};
