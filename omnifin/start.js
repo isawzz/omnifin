@@ -13,7 +13,7 @@ async function test8_filter2SelectedCells(){
 	//console.log(selitems);
 	selitems.map(x=>toggleItemSelection(x));
 
-	let exp = extractFilterExpression(); //console.log(exp)
+	//let exp = extractFilterExpression(); //console.log(exp)
 }
 async function test7_filterAddTag(){
 	await switchToMainMenu('overview');
@@ -137,6 +137,7 @@ async function test0() {
 
 async function prelims() {
 	M={};
+	M.superdi = await mGetYaml('../assets/superdi.yaml')
 	let dNav = mBy('dNav');
 	mStyle(dNav, { overflow: 'hidden', box: true, padding: 10, className: 'nav' });
 	mStyle('dMain',{padding:10})

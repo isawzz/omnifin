@@ -20,6 +20,8 @@ function calculateGoodColors(bg, fg) {
 	let fgContrast = fgIsLight ? '#ffffff80' : '#00000080';
 	return [realBg, bgContrast, bgNav, fg, fgContrast];
 }
+function clearMessage(remove=false) { if (remove) mRemove('dMessage'); else mStyle('dMessage', { h: 0 }); }
+
 function extractWords(s, allowed) {
 	let specialChars = getSeparators(allowed);
 	let parts = splitAtAnyOf(s, specialChars.join('')).map(x => x.trim());
@@ -29,6 +31,15 @@ function handleSticky() { let d = mBy('dNav'); if (window.scrollY >= 88) mClass(
 
 function ifNotList(x){return isList(x)?x:[x];}
 
+function mButtonX(dParent, handler = null, sz = 22, offset = 5, color = 'contrast') {
+	mIfNotRelative(dParent);
+	let bx = mDom(dParent, { position: 'absolute', top: -2 + offset, right: -5 + offset, w: sz, h: sz, cursor: 'pointer' }, { className: 'hop1' });
+	bx.onclick = ev => { evNoBubble(ev); if (!handler) dParent.remove(); else handler(ev); }
+	let o = M.superdi.xmark;
+	let bg = mGetStyle(dParent, 'bg'); if (isEmpty(bg)) bg = 'white';
+	let fg = color == 'contrast' ? colorIdealText(bg, true) : color;
+	el = mDom(bx, { fz: sz, hline: sz, family: 'fa6', fg, display: 'inline' }, { html: String.fromCharCode('0x' + o.fa6) });
+}
 function mDataTable(reclist, dParent, rowstylefunc, headers, id, showheaders = true) {
 	//console.log(reclist[0])
 	if (isEmpty(reclist)) { mText('no data', dParent); return null; }
@@ -73,6 +84,16 @@ function mGather(dAnchor, styles = {}, opts = {}) {
 		if (isdef(dAnchor)) mAnchorTo(dx, toElem(dAnchor), opts.align);
 		else { mStyle(d, { h: '100vh' }); mCenterCenterFlex(d); }
 	});
+}
+function mPopup(dParent, styles = {}, opts = {}) {
+	if (nundef(dParent)) dParent = document.body;
+	if (isdef(mBy(opts.id))) mRemove(opts.id);
+	mIfNotRelative(dParent);
+	let animation = 'diamond-in-center .5s ease-in-out'; let transition = 'opacity .5s ease-in-out';
+	addKeys({ animation, bg: 'white', fg: 'black', padding: 20, rounding: 12, top: 50, left: '50%', transform: 'translateX(-50%)', position: 'absolute' }, styles);
+	let popup = mDom(dParent, styles, opts); //console.log(popup)
+	mButtonX(popup);
+	return popup;
 }
 function mTable(dParent, headers, showheaders, styles = { mabottom: 0 }, className = 'table') {
 	let d = mDiv(dParent);
@@ -164,6 +185,14 @@ function replaceAllSpecialCharsFromList(str, list, sBy, removeConsecutive=true) 
 		str=sresult;
 	}
 	return str;
+}
+function showMessage(msg, ms = 3000) {
+	let d = mBy('dMessage');
+	if (nundef(d)) d = mPopup(); d.id='dMessage';
+	mStyle(d, { h: 21, bg: 'red', fg: 'yellow' });
+	d.innerHTML = msg;
+	clearTimeout(TO.message);
+	TO.message = setTimeout(()=>clearMessage(true), ms)
 }
 function showNavbar() {
 	mDom('dNav', { fz: 34, mabottom: 10, w100: true }, { html: `Omnifin` });

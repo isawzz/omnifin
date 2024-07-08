@@ -2,7 +2,7 @@ function uiGadgetTypeTextarea(dParent, dict, resolve, styles = {}, opts = {}) {
 	//let wIdeal = 500;
 	let formStyles = { maleft: 10, box: true, padding: 10, bg: 'white', fg: 'black', rounding: 10 };
 	let form = mDom(dParent, formStyles, {})
-	addKeys({ className: 'input', tag: 'textarea', id:'taFilter' }, opts);
+	addKeys({ className: 'input', tag: 'textarea', id:'taFilter', rows:25 }, opts);
 	//let df = mDom(form);
 
 	addKeys({ fz: 14, family: 'tahoma', w: 500, padding: 10, resize: 'none' }, styles);
@@ -19,53 +19,6 @@ function uiGadgetTypeTextarea(dParent, dict, resolve, styles = {}, opts = {}) {
 	mButton(dict.caption, ev => { resolve(mBy('taFilter').value); }, db, { classes: 'button' });
 
 	return form;
-}
-function extractFilterExpression(){
-	let info=DA.tinfo;
-	let cells = DA.cells;
-	let selitems = cells.filter(x=>x.isSelected);
-	//console.log(info,selitems);
-
-	let qtrim=DA.tinfo.q.trim().toLowerCase();
-	assertion(qtrim.endsWith(';'),'WTF!!!!!!!!!!!!!!!!!!!');
-	let q=qtrim;
-
-	// let pSelect=stringBefore(q,'from');
-	// q=stringAfter(q,pSelect);
-	// let pfrom;
-	// if (q.contains('join')){
-	// 	pfrom = stringBefore(q,'join');
-	// }else if (q.contains('left join')){
-	// 	pfrom = stringBefore(q,'left join');
-	// }else if (q.contains('where')){
-	// 	pfrom = stringBefore(q,'where');
-	// }else if (q.contains('group by')){
-	// 	pfrom = stringBefore(q,'group by');
-	// }else if (q.contains('group by')){
-	// 	pfrom = stringBefore(q,'group by');
-	// }else if (q.contains('group by')){
-	// 	pfrom = stringBefore(q,'group by');
-	// }else if (q.contains('group by')){
-	// 	pfrom = stringBefore(q,'group by');
-	// }
-	// let pfrom=stringBefore(q,'select');
-	// let pSelect=stringBefore(q,'select');
-	// let pSelect=stringBefore(q,'select');
-	// let pSelect=stringBefore(q,'select');
-
-	exp=stringBeforeLast(exp,';') + ' where ';
-	//console.log(exp)
-
-	
-	for(const item of selitems){
-		let header = info.headers[item.icol];
-		let text = iDiv(item).innerHTML;
-		//if (exp != '') exp += ' or ';
-		exp += `${header}='${text}'`;
-		if (isLast(item,selitems)) exp += ';'; else exp +=' or ';
-	}
-	return exp;
-
 }
 function isLast(el,arr){return arrLast(arr)==el;}
 function checkButtons(){
@@ -104,6 +57,7 @@ function showChunk(inc) {
 		for (const ui of tds) {
       mStyle(ui,{cursor:'pointer'});
       let item = {ri,div:ui,text:ui.innerHTML,record:ri.o,isSelected:false,irow:t.rowitems.indexOf(ri),icol:tds.indexOf(ui)};
+			item.header = headers[item.icol];
       cells.push(item);
 			ui.onclick = ()=>toggleItemSelection(item); //async()=>await onclickTablecell(ui,ri,o);
 		}

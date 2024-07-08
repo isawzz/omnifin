@@ -9,7 +9,11 @@ async function onclickFilter2(ev, exp) {
 		exp = await mGather(null, {}, { content, type: 'textarea', value:exp });
 	}
 
-	console.log('exp', exp);
+
+	if (!exp || isEmpty(exp)) { console.log('operation cancelled!'); return; }
+	
+  console.log('exp', exp);
+
 
   let i=DA.tinfo;
   records = dbToList(exp);

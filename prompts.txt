@@ -1,0 +1,30 @@
+js function that splits an sql statement into its different clauses. the function returns an object where the keys are starting word (from, select, join...) and values the clause. multiple similar clauses should be put in a list 
+allow lowercase sql as well
+the last ';' should be removed from the last clause. Also, remove all tab or newline characters
+multiple consecutive spaces should be converted into just one space
+
+js function that takes a list of cells from a table, each cell has {icol,irow,text,header} properties. it should return an SQL where clause of the form: where [header] == [text] and/or ... For cells in the same column use 'or', for cells in the same row use 'and'
+your function generates the clause for each cell twice. please correct it
+now there is an 'AND undefined' at the end. remove it
+
+js function that takes an sql statement and a WHERE clause and combines them inserting the WHERE clause at the correct position
+if the sql already has a WHERE clause, the new where clause should be ANDed to it.
+
+js function that takes an sql statement and formats it so that the sql keywords are uppercase and on a new line
+
+
+select t.id, t.dateof, sender.account_name as sender_name, receiver.account_name as receiver_name, t.description, t.amount, a.asset_name as unit, group_concat( case when tg.category = 'mcc' then tg.tag_name else null end ) as mcc, group_concat( case when tg.category <> 'mcc' and tg.tag_name not glob '*[0-9]*' then tg.tag_name else null end ) as tag_names from transactions t 
+join accounts sender on t.sender = sender.id 
+join accounts receiver on t.receiver = receiver.id join assets a on t.unit = a.id left join transaction_tags tt on t.id = tt.id 
+left join tags tg on tt.tag_id = tg.id 
+WHERE t.description = 'MORGAN STANLEY ACH CREDIT' OR receiver_name = 'heritage-2657' 
+group by t.id, t.dateof, sender_name, receiver_name, t.amount, unit
+
+
+
+
+
+
+
+
+
