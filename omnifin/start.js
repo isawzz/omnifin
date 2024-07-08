@@ -21,7 +21,7 @@ async function test8_filter2SelectedCells(){
 async function test7_filterAddTag(){
 	await switchToMainMenu('overview');
 	//await onclickCommand(null,'translist');
-	await onclickFilter2();//null,'receiver_name == tax');
+	await onclickFilter();//null,'receiver_name == tax');
 	//await onclickTagForAll(null,['alpensee']);
 }
 async function test6(){

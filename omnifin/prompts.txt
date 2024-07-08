@@ -22,7 +22,7 @@ group by t.id, t.dateof, sender_name, receiver_name, t.amount, unit
 
 
 
-
+modify this statement returning only records that have no MCC
 
 
 

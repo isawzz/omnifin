@@ -271,6 +271,9 @@ function extractFilterExpression(){
 	let where = generateSQLWhereClause(selitems); //console.log(where)
 	clauses.WHERE = [where];
 
+	let having = generateSQLHavingClause(selitems); //console.log(where)
+	clauses.HAVING = [having];
+
 	let order = `SELECT|FROM|JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|OUTER JOIN|FULL JOIN|CROSS JOIN|UNION|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET`.split('|');
 	let sql='';
 	for(const k of order){
@@ -287,47 +290,6 @@ function extractHeadersFromSelect(sc){
 	//console.log(scs,sc)
 	//scs.map(x=>console.log(x));
 	return scs;
-}
-function generateSQLWhereClause(cells) {
-  // // Example usage:
-  // const cells = [
-  //   { icol: 0, irow: 0, text: 'Alice', header: 'name' },
-  //   { icol: 1, irow: 0, text: 'Engineering', header: 'department' },
-  //   { icol: 0, irow: 1, text: 'Bob', header: 'name' },
-  //   { icol: 1, irow: 1, text: 'HR', header: 'department' }
-  // ];
-
-  // console.log(generateSQLWhereClause(cells));
-  if (cells.length === 0) {
-      return '';
-  }
-
-  // Group cells by their rows and columns
-  const rows = {};
-  const cols = {};
-
-  cells.forEach(cell => {
-      if (!rows[cell.irow]) {
-          rows[cell.irow] = [];
-      }
-      rows[cell.irow].push(cell);
-
-      if (!cols[cell.icol]) {
-          cols[cell.icol] = [];
-      }
-      cols[cell.icol].push(cell);
-  });
-
-  //console.log(rows,cols)
-
-  let ands = [];
-  for(const irow in rows){
-    let rcells = rows[irow];
-    let cl = rcells.map(cell=>`${cell.header} = '${cell.text}'`).join(' AND ');
-    ands.push(cl);
-  }
-  let res = ' WHERE ' + ands.join(' OR ');
-  return res;
 }
 function insertWhereClause(sql, whereClause) {
 
@@ -389,8 +351,6 @@ function insertWhereClause(sql, whereClause) {
   // Remove consecutive spaces
   sql = sql.replace(/\s+/g, ' ').trim();
 
-
-
   return sql;
 }
 function arrIsLast(arr,el){return arrLast(arr)==el;}
@@ -403,7 +363,7 @@ async function onclickBackHistory(){
 		showChunkedSortedBy(UI.d, o.tablename, o.tablename, records);	
 	}
 }
-async function onclickFilter2(ev, exp) {
+async function onclickFilter(ev, exp) {
 
 	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header];
 
@@ -491,7 +451,7 @@ function showChunkedSortedBy(dParent, title, tablename, records, headers, header
 	mButton('PgUp', () => showChunk(-1), db, {w:25}, 'button','bPgUp');
 	mButton('multi-sort', onclickMultiSort, db, {}, 'button','bMultiSort');
 	// mButton('filter1', onclickFilter1, db, {}, 'button','bFilter1');
-	mButton('filter2', onclickFilter2, db, {}, 'button','bFilter2');
+	mButton('filter', onclickFilter, db, {}, 'button','bFilter');
 	// mButton('add tag', onclickTagForAll, db, {}, 'button','bAddTag');
 	mButton('download db', onclickDownloadDb, db, {}, 'button','bDownload');
 	let dTable = mDom(dParent)
