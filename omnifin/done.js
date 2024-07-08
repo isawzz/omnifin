@@ -114,7 +114,10 @@ function dbToList(q,addToHistory=true) {
 	}
 	if (addToHistory){
 		let q1=q.toLowerCase().trim(); 
-		if (q1.startsWith('select')) M.qHistory.push({q:q1,tablename:wordAfter(q1,'from')}); 	
+		if (q1.startsWith('select')) {
+			if (isdef(DA.qCurrent))	M.qHistory.push({q:DA.qCurrent,tablename:wordAfter(q1,'from')}); 	
+			DA.qCurrent = q1;
+		}
 
 		//consloghist();
 	}
@@ -239,7 +242,7 @@ function showChunkedSortedBy(dParent, title, tablename, records, headers, header
 	let dTable = mDom(dParent)
 	DA.tinfo = {};
 	// if (nundef(masterRecords)) masterRecords = records;
-	addKeys({ q:arrLast(M.qHistory).q, dParent, title, tablename, dTable, records, headers, header, ifrom: 0, size: 100 }, DA.tinfo);
+	addKeys({ q:DA.qCurrent, dParent, title, tablename, dTable, records, headers, header, ifrom: 0, size: 100 }, DA.tinfo);
 	showChunk(0);
 }
 function showTableSortedBy(dParent, title, tablename, records, headers, header) {
@@ -275,6 +278,7 @@ function showTableSortedBy(dParent, title, tablename, records, headers, header) 
 async function onclickBackHistory(){
 	console.log(M.qHistory)
 	let o=M.qHistory.pop();
+	// o=M.qHistory.pop();
 	if (isdef(o)){
 		let records = dbToList(o.q); 
 		showChunkedSortedBy(UI.d, o.tablename, o.tablename, records);	

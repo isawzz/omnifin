@@ -17,11 +17,23 @@ function splitSQLClauses(sql) {
 
   // Split the SQL statement into parts based on the pattern
   const parts = sql.split(pattern).filter(Boolean);
-
+  assertion(parts.length%2 == 0,'WTF')
+  // console.log(parts.length,parts)
+  const clauses = {};
+  for(let i=0;i<parts.length;i+=2){
+    //console.log(parts[i].toUpperCase())
+    let key = parts[i].toUpperCase().trim();
+    if (nundef(clauses[key])) clauses[key]=[];
+    lookupAddToList(clauses,[key],`${key}\n${parts[i+1]}`);
+  }
+  return clauses;
+}
+function mist(){
   const clauses = {};
   let currentClause = null;
 
   parts.forEach(part => {
+      //console.log('___',part)
       const upperPart = part.trim().toUpperCase();
       if (pattern.test(upperPart)) {
           // If the part matches the pattern, it's a new clause
@@ -127,7 +139,7 @@ function insertWhereClause(sql, whereClause) {
       sql = sql.replace(wherePattern, match => `${match} (${whereClause}) AND `);
   } else {
       // Find the position to insert the WHERE clause
-      let position = sql.search(joinPattern);
+      let position = sql.search(groupByPattern);
       const insertPositionPatterns = [fromPattern,groupByPattern, orderByPattern, havingPattern, limitPattern, offsetPattern, joinPattern];
       insertPositionPatterns.forEach(pattern => {
           const pos = sql.search(pattern);
@@ -148,7 +160,7 @@ function insertWhereClause(sql, whereClause) {
   // Remove consecutive spaces
   sql = sql.replace(/\s+/g, ' ').trim();
 
-  
+
 
   return sql;
 }

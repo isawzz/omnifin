@@ -4,8 +4,11 @@ const DB_PATH = '../omnifin/db/test2.db'; // relative to omnifin dir
 onload = start;
 onscroll = handleSticky;
 
-async function start() { await prelims(); test8_filter2SelectedCells(); }
+async function start() { await prelims(); test9_filter2SelectedCells(); }
 
+async function test9_filter2SelectedCells(){
+	await switchToMainMenu('overview');
+}
 async function test8_filter2SelectedCells(){
 	await switchToMainMenu('overview');
 	let cells = DA.cells.filter(x=>!isEmpty(iDiv(x).innerHTML));
@@ -13,7 +16,7 @@ async function test8_filter2SelectedCells(){
 	//console.log(selitems);
 	selitems.map(x=>toggleItemSelection(x));
 
-	//let exp = extractFilterExpression(); //console.log(exp)
+	let exp = extractFilterExpression(); //console.log(exp)
 }
 async function test7_filterAddTag(){
 	await switchToMainMenu('overview');
