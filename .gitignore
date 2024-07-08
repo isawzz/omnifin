@@ -26,6 +26,7 @@ assets_old/
 _weg
 *.db
 *db/
+*csv/
 
 
 
