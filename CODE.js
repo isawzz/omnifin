@@ -1,3 +1,100 @@
+
+function mist(){
+  const clauses = {};
+  let currentClause = null;
+
+  parts.forEach(part => {
+      //console.log('___',part)
+      const upperPart = part.trim().toUpperCase();
+      if (pattern.test(upperPart)) {
+          // If the part matches the pattern, it's a new clause
+          currentClause = upperPart;
+          if (!clauses[currentClause]) {
+              clauses[currentClause] = [];
+          }
+      } else if (currentClause) {
+          // If it's not a new clause, append it to the current clause
+          clauses[currentClause].push(part.trim());
+      }
+  });
+
+  // Join multiple similar clauses into a single string
+  Object.keys(clauses).forEach(key => {
+      if (clauses[key].length === 1) {
+          clauses[key] = clauses[key][0];
+      } else {
+          clauses[key] = clauses[key].join(' ');
+      }
+  });
+
+  return clauses;
+}
+
+
+function mist(){
+
+	return '';
+	let selectClause = clauses.SELECT; 
+	let correctHeaders = selectClause.split(',').map(x=>x.trim());
+	correctHeaders=correctHeaders.map(x=>x.includes(' ')?stringAfterLast(x,' '):x)
+	console.log('correct',correctHeaders)
+
+	for(const item of selitems){
+		let h=item.header.includes(' ')?stringAfterLast(item.header,' '):item.header;
+		console.log('h',h)
+		if (correctHeaders.includes(h)) item.correctHeader = h;
+		else {
+			let h1=correctHeaders.find(x=>stringAfter(x,'.')==h);
+			if (isdef(h1)) item.correctHeader = h1;
+			else showMessage(`need to correct header ${h} in where clause!`,5000)
+		}
+	}
+	
+	let q=DA.info.q;
+	let where = generateSQLWhereClause(selitems); console.log(where)
+	//let qres = insertWhereClause(DA.tinfo.q, where); //console.log(qres)
+
+	let di=splitSQLClauses(q);
+	return '';
+	let order = `SELECT|FROM|JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|OUTER JOIN|FULL JOIN|CROSS JOIN|UNION|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET`.split('|');
+	let final = '';
+	for(const k of order){
+		if (isdef(di[k])) {
+			console.log(typeof(di[k]),di[k]);
+			//final += k + ' ' + di[k] + '\n';
+		}
+	}
+	return final;
+	// const pattern = /\b(SELECT|FROM|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET|JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|OUTER JOIN|FULL JOIN|CROSS JOIN|UNION)\b/gi;
+  // const parts = qres.split(pattern).filter(Boolean);
+	// qres = parts.join('\n');
+	//console.log(qres)
+	//console.log(clauses,where);
+	return qres;
+}
+function mist(){	
+	let qtrim=DA.tinfo.q.trim().toLowerCase();
+	assertion(qtrim.endsWith(';'),'WTF!!!!!!!!!!!!!!!!!!!');
+	let q=qtrim;
+
+	q=replaceAllSpecialCharsFromList(q,['\t','\n'],' ');
+
+	//generateSQLWhereClause
+
+	exp=stringBeforeLast(exp,';') + ' where ';
+	//console.log(exp)
+
+	for(const item of selitems){
+		let header = info.headers[item.icol];
+		let text = iDiv(item).innerHTML;
+		//if (exp != '') exp += ' or ';
+		exp += `${header}='${text}'`;
+		if (isLast(item,selitems)) exp += ';'; else exp +=' or ';
+	}
+	return exp;
+
+}
+
 function uiGadgetTypeTablecell(dParent, dict, resolve, styles = {}, opts = {}) {
 
 	addKeys({ hmax: 500, wmax: 400, bg: 'white', fg: 'black', padding: 16, rounding: 10, box: true }, styles)
