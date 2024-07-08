@@ -99,6 +99,11 @@ function dbSaveToLocalStorage() {
 function dbToDict(q, keyprop = 'id') { return list2dict(dbToList(q), keyprop); }
 
 function dbToList(q,addToHistory=true) {
+
+	if (q.toLowerCase().includes('insert')||q.toLowerCase().includes('update')){
+		showMessage('Entering Edit Mode...');
+		DA.editMode = true;
+	}
 	//runs query, returns dict of records by id
 	//assumes that query selects keyprop
 	//console.log('____dbToList',q,addToHistory)
@@ -247,42 +252,6 @@ function consloghist(){
 		console.log(q)
 		console.log(q1)
 	}
-}
-function extractFilterExpression(){
-	let cells = DA.cells;
-	let selitems = cells.filter(x=>x.isSelected); //console.log(selitems);
-
-	let q=DA.tinfo.q;
-	let clauses = splitSQLClauses(q); //console.log(clauses); 
-	let sc = clauses.SELECT[0]; 
-	assertion(isdef(sc),`NO SELECT CLAUSE!!! ${q}`);
-	assertion(clauses.SELECT.length == 1,`WRONG NUMBER OF SELECT CLAUSES!!! ${q}`);
-
-	let headers = extractHeadersFromSelect(sc).map(x=>x.toLowerCase()); //console.log(headers)
-
-	for(const item of selitems){
-		let h = item.header.toLowerCase(); //console.log(h)
-		let match=headers.find(x=>x == h);
-		if (isdef(match)) {item.h=item.header;item.header=match;}//console.log('found',match);continue;}
-		match = headers.find(x=>x.endsWith(h));
-		if (isdef(match)) {item.h=item.header;item.header=match;}//console.log('found',match);}
-	}
-
-	let where = generateSQLWhereClause(selitems); //console.log(where)
-	clauses.WHERE = [where];
-
-	let having = generateSQLHavingClause(selitems); //console.log(where)
-	clauses.HAVING = [having];
-
-	let order = `SELECT|FROM|JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|OUTER JOIN|FULL JOIN|CROSS JOIN|UNION|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET`.split('|');
-	let sql='';
-	for(const k of order){
-		let list = lookup(clauses,[k]);
-		if (!list) continue;
-		sql+='\n'+list.join('\n');
-	}
-	return sql+';';
-
 }
 function extractHeadersFromSelect(sc){
 	sc=stringAfter(sc,'SELECT');
@@ -445,13 +414,13 @@ function showChunkedSortedBy(dParent, title, tablename, records, headers, header
 	mClear(dParent);
 	let db = mDom(dParent, { gap: 10,mabottom:10,className:'centerflexV' }); //mCenterCenterFlex(db);
 	// mText(`<h2>${title} (${tablename})</h2>`, db, { maleft: 12 });
+	mButton('filter', onclickFilter, db, {}, 'button','bFilter');
 	mButton('back', onclickBackHistory, db, {}, 'button','bBack');
-	mText(`${title} (${tablename})`, db, { weight:'bold',fz:20,maleft: 12 });
+	mText(`${tablename} (${records.length})`, db, { weight:'bold',fz:20,maleft: 12 });
 	mButton('PgDn', () => showChunk(1), db, {w:25}, 'button','bPgDn');
 	mButton('PgUp', () => showChunk(-1), db, {w:25}, 'button','bPgUp');
 	mButton('multi-sort', onclickMultiSort, db, {}, 'button','bMultiSort');
 	// mButton('filter1', onclickFilter1, db, {}, 'button','bFilter1');
-	mButton('filter', onclickFilter, db, {}, 'button','bFilter');
 	// mButton('add tag', onclickTagForAll, db, {}, 'button','bAddTag');
 	mButton('download db', onclickDownloadDb, db, {}, 'button','bDownload');
 	let dTable = mDom(dParent)

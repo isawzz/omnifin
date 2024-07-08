@@ -1,21 +1,25 @@
 
-function generateSQLEqualsHAVING(a, text) {
-	if (a!='mcc' && a!='tag_names') return null;
-	//return isNumber(text) ? Number(text) == 0 ? `(${a} IS NULL OR ${a}=0)` : `${a}=${text}`
-	if (a == 'mcc' && isEmpty(text)){
-		return `group_concat(CASE WHEN tg.category = 'mcc' THEN tg.tag_name ELSE NULL END) IS NULL`;
-	}else if (a == 'tag_names' && isEmpty(text)){
-		return `group_concat(CASE WHEN tg.category <> 'mcc' AND tg.tag_name NOT GLOB '*[0-9]*' THEN tg.tag_name ELSE NULL END) IS NULL OR
-    group_concat(CASE WHEN tg.category <> 'mcc' AND tg.tag_name NOT GLOB '*[0-9]*' THEN tg.tag_name ELSE NULL END) = ''`;
+async function onclickFilter(ev, exp) {
 
-	}else if (a == 'mcc'){
-		return `group_concat(CASE WHEN tg.category = 'mcc' THEN tg.tag_name ELSE NULL END) = '${text}`;
-	}else if (a == 'tag_names'){
-		return `group_concat(CASE WHEN tg.category <> 'mcc' AND tg.tag_name NOT GLOB '*[0-9]*' THEN tg.tag_name ELSE NULL END) = '${text}'`;
+	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header];
+
+	if (nundef(exp)) {
+		exp=extractFilterExpression();
+		let content = { exp, caption: 'Filter' };
+		exp = await mGather(null, {}, { content, type: 'textarea', value:exp });
 	}
+
+
+	if (!exp || isEmpty(exp)) { console.log('operation cancelled!'); return; }
+	
+  //console.log('exp', exp);
+
+
+  let i=DA.tinfo;
+  records = dbToList(exp);
+  showChunkedSortedBy(i.dParent,i.title,i.tablename,records,headers,header);
+
 }
 
-function generateSQLEqualsWHERE(a, text) {
-	if (a=='mcc' || a=='tag_names') return null;
-	return isEmpty(text) ? `(${a} IS NULL OR ${a}='')` : `${a}='${text}'`;
-}
+
+

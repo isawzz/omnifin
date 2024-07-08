@@ -4,8 +4,24 @@ const DB_PATH = '../omnifin/db/test2.db'; // relative to omnifin dir
 onload = start;
 onscroll = handleSticky;
 
-async function start() { await prelims(); test9_filter2SelectedCells(); }
+async function start() { await prelims(); test10_edittest(); }
 
+async function test10_edittest(){
+	await switchToMainMenu('overview'); return;
+	let q=`		INSERT INTO transactions
+			SELECT t.*
+			FROM transactions t
+			JOIN (
+					SELECT id
+					FROM transaction_tags
+					GROUP BY id
+					HAVING COUNT(tag_id) > 1
+			) tt ON t.id = tt.id
+			WHERE ;
+		`;
+		let records = dbToList(q); 
+		showTableSortedBy(UI.d, 'TEST', 'transactions', records); 
+}
 async function test9_filter2SelectedCells(){
 	await switchToMainMenu('overview');
 }
