@@ -6,6 +6,11 @@ onscroll = handleSticky;
 
 async function start() { await prelims(); test10_edittest(); }
 
+async function test11(){
+	await switchToMainMenu('overview');
+	let recs = dbToList('select * from accounts');
+	console.log(recs)
+}
 async function test10_edittest(){
 	await switchToMainMenu('overview'); return;
 	let q=`		INSERT INTO transactions
@@ -156,7 +161,9 @@ async function test0() {
 
 async function prelims() {
 	M={};
-	M.superdi = await mGetYaml('../assets/superdi.yaml')
+	M.superdi = await mGetYaml('../assets/superdi.yaml');
+	M.dicolor = await mGetYaml(`../assets/dicolor.yaml`);
+	[M.colorList, M.colorByHex, M.colorByName] = getListAndDictsForDicolors();
 	let dNav = mBy('dNav');
 	mStyle(dNav, { overflow: 'hidden', box: true, padding: 10, className: 'nav' });
 	mStyle('dMain',{padding:10})
