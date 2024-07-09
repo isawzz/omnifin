@@ -454,10 +454,11 @@ function showChunk(inc) {
 		//let id = ri.o.id; let h = hFunc('tag', 'onclickAddTag', id, ri.index); let c = mAppend(r, mCreate('td')); c.innerHTML = h;
     let tds = arrChildren(r);
 		for (const ui of tds) {
-      mStyle(ui,{cursor:'pointer'});
       let item = {ri,div:ui,text:ui.innerHTML,record:ri.o,isSelected:false,irow:t.rowitems.indexOf(ri),icol:tds.indexOf(ui)};
 			item.header = headers[item.icol];
       cells.push(item);
+			let bg=dbFindColor(item.tablename,item.header,ui.innerHTML);
+      mStyle(ui,{cursor:'pointer'});
 			ui.onclick = ()=>toggleItemSelection(item); //async()=>await onclickTablecell(ui,ri,o);
 		}
 	}

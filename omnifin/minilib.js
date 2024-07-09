@@ -2979,6 +2979,24 @@ function getListAndDicts(list) {
 	}
 	return [list].concat(lists);
 }
+function getListAndDictsForDicolors() {
+	let bucketlist = Object.keys(M.dicolor);
+	bucketlist = arrCycle(bucketlist, 8);
+	let dicolorlist = [];
+	for (const bucket of bucketlist) {
+		let list = dict2list(M.dicolor[bucket]);
+		for (const c of list) {
+			let o = w3color(c.value);
+			o.name = c.id;
+			o.hex = c.value;
+			o.bucket = bucket;
+			dicolorlist.push(o);
+		}
+	}
+	let byhex = list2dict(dicolorlist, 'hex');
+	let byname = list2dict(dicolorlist, 'name');
+	return [dicolorlist, byhex, byname];
+}
 function getMenu() { return isdef(Menu) ? Menu.key : null; }
 
 function getMotto() {
