@@ -1,5 +1,5 @@
 
-const DB_PATH = '../omnifin/db/test2.db'; // relative to omnifin dir
+const DB_PATH = '../db/test2.db'; // relative to omnifin dir
 
 onload = start;
 onscroll = handleSticky;
@@ -393,7 +393,7 @@ async function prelims() {
 	M.dicolor = await mGetYaml(`../assets/dicolor.yaml`);
 	[M.colorList, M.colorByHex, M.colorByName] = getListAndDictsForDicolors();
 
-	M.dbColors = await mGetYaml('../omnifin/db/info.yaml');
+	M.dbColors = await mGetYaml('../db/info.yaml');
 
 
 	// M.dicolor = getDistinguishibleColors();
