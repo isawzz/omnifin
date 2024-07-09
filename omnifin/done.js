@@ -457,8 +457,8 @@ function showChunk(inc) {
       let item = {ri,div:ui,text:ui.innerHTML,record:ri.o,isSelected:false,irow:t.rowitems.indexOf(ri),icol:tds.indexOf(ui)};
 			item.header = headers[item.icol];
       cells.push(item);
-			let bg=dbFindColor(item.tablename,item.header,ui.innerHTML);
-      mStyle(ui,{cursor:'pointer'});
+			let bg=valf(dbFindColor(item.tablename,item.header,ui.innerHTML),'transparent');
+      mStyle(ui,{cursor:'pointer',bg,fg:'contrast'});
 			ui.onclick = ()=>toggleItemSelection(item); //async()=>await onclickTablecell(ui,ri,o);
 		}
 	}

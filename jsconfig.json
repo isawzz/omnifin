@@ -26,6 +26,8 @@
     "codesafe",
     "codesammler.js",
     "copi2",
-    "z_history"
+    "z_history",
+    "functions.js",
+    "../omnifin/libs/*"
   ]
 }
