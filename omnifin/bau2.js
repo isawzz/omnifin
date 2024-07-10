@@ -6,6 +6,7 @@ function checkButtons() {
 	let info = DA.tinfo; //are there records shown?
 	if (nundef(info)) return;
 	let [ifrom, ito, records] = [info.ifrom, info.ito, info.records];
+	console.log('checkButtons',ifrom,ito,records.length)
 	if (ifrom > 0) enableButton('bPgUp');
 	if (ito < records.length) enableButton('bPgDn');
 	if (!isEmpty(M.qHistory)) enableButton('bBack');

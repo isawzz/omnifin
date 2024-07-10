@@ -9,10 +9,6 @@ function uiGadgetTypeFreeform(dParent, callback, resolve, styles = {}, opts = {}
 	return dOuter;
 }
 
-
-
-
-
 function showTableSortedBy(dParent, title, tablename, records, headers, header) {
 	if (isEmpty(records)) { mText('no data', dParent); return null; }
 	if (nundef(headers)) headers = Object.keys(records[0]);
