@@ -56,9 +56,12 @@ function dbDownload() {
 	document.body.removeChild(a);
 	URL.revokeObjectURL(url);
 }
+function dbFindColor(tablename,header,innerHTML){
+	return header.includes('_name')? lookup(M.dbColors,[innerHTML,'color']):null;
+}
 function dbGetTableName(q) { return wordAfter(q.toLowerCase(), 'from'); }
 
-function dbGetTableNames() { return dbToList(qTablenames()); }
+function dbGetTableNames() { return dbToList(qTablenames(),false); }
 
 async function dbInit(path) {
 	try {
@@ -96,18 +99,16 @@ function dbSaveToLocalStorage() {
 	const data = DB.export();
 	localStorage.setItem('database', JSON.stringify(Array.from(data)));
 }
-function dbToDict(q, keyprop = 'id') { return list2dict(dbToList(q), keyprop); }
+function dbToDict(q, keyprop = 'id', addToHistory) { return list2dict(dbToList(q,addToHistory), keyprop); }
 
 function dbToList(q, addToHistory = true) {
-
 	if (q.toLowerCase().includes('insert') || q.toLowerCase().includes('update')) {
-		showMessage('Entering Edit Mode...');
-		DA.editMode = true;
+		if (!DA.editMode){
+			showMessage('Entering Edit Mode...');
+			DA.editMode = true;
+		}
 	}
-	//runs query, returns dict of records by id
-	//assumes that query selects keyprop
-	//console.log('____dbToList',q,addToHistory)
-	let res = dbToObject(q); //console.log(res)
+	let res = dbToObject(q); 
 	let headers = res.columns;
 	let records = [];
 	for (const row of res.values) {
@@ -117,16 +118,7 @@ function dbToList(q, addToHistory = true) {
 		}
 		records.push(o);
 	}
-	if (addToHistory) {
-		let q1 = q.toLowerCase().trim();
-		if (q1.startsWith('select')) {
-			if (isdef(DA.qCurrent)) M.qHistory.push({ q: DA.qCurrent, tablename: wordAfter(q1, 'from') });
-			DA.qCurrent = q1;
-		}
-
-		//consloghist();
-	}
-
+	dbHistory(q,addToHistory);
 	return records;
 }
 function dbToObject(q) {
@@ -236,15 +228,6 @@ function calcIndexFromTo(inc, o) {
 	}
 	return [ifrom, ito];
 }
-function checkButtons() {
-	let info = DA.tinfo;
-	let [ifrom, ito, records] = [info.ifrom, info.ito, info.records];
-	if (ifrom == 0) disableButton('bPgUp'); else enableButton('bPgUp');
-	if (ito == records.length) disableButton('bPgDn'); else enableButton('bPgDn');
-	if (isEmpty(M.qHistory)) disableButton('bBack'); else enableButton('bBack');
-
-
-}
 function consloghist() {
 	for (const s of M.qHistory) {
 		let q = s.q;
@@ -323,36 +306,7 @@ function insertWhereClause(sql, whereClause) {
 	return sql;
 }
 function arrIsLast(arr, el) { return arrLast(arr) == el; }
-async function onclickBackHistory() {
-	console.log(M.qHistory)
-	let o = M.qHistory.pop();
-	// o=M.qHistory.pop();
-	if (isdef(o)) {
-		let records = dbToList(o.q);
-		showChunkedSortedBy(UI.d, o.tablename, o.tablename, records);
-	}
-}
-async function onclickFilter(ev, exp) {
 
-	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header];
-
-	if (nundef(exp)) {
-		exp = extractFilterExpression();
-		let content = { exp, caption: 'Filter' };
-		exp = await mGather(null, {}, { content, type: 'textarea', value: exp });
-	}
-
-
-	if (!exp || isEmpty(exp)) { console.log('operation cancelled!'); return; }
-
-	//console.log('exp', exp);
-
-
-	let i = DA.tinfo;
-	records = dbToList(exp);
-	showChunkedSortedBy(i.dParent, i.title, i.tablename, records, headers, header);
-
-}
 async function onclickTagForAll(ev, list) {
 	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header];
 
@@ -367,7 +321,7 @@ async function onclickTagForAll(ev, list) {
 	for (const tname of list) {
 		let otag = allTags.find(x => x.tag_name == tname);
 		for (const rec of records) {
-			let recs1 = dbToList(`select * from transaction_tags where id='${rec.id}' and tag_id='${otag.id}';`); // where tag_id = '${otag.id}' and id = '${rec.id}'`);
+			let recs1 = dbToList(`select * from transaction_tags where id='${rec.id}' and tag_id='${otag.id}';`,false); // where tag_id = '${otag.id}' and id = '${rec.id}'`);
 			//console.log(recs1);
 			if (isEmpty(recs1)) {
 				//console.log('adding tag',tname)
@@ -381,119 +335,8 @@ async function onclickTagForAll(ev, list) {
 	//rerunCurrentCommand();
 
 }
-async function onclickMultiSort(ev) {
-	//console.log('multisort',DA.tinfo);
-
-	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header]
-
-	let content = headers.map(x => ({ name: x, value: false }));
-	let result = await mGather(ev.target, {}, { content, type: 'checkList' });
-	if (!result || isEmpty(result)) { console.log('nothing selected'); return; }
-
-	console.log(result);
-
-	records.sort(multiSort(result));// = sortByMultipleProperties(records,...result);
-	DA.tinfo.records = records;
-	DA.tinfo.header = result;
-	showChunkedSortedBy(DA.tinfo.dParent, DA.tinfo.title, DA.tinfo.tablename, DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header)
-
-}
 async function onclickDownloadDb() { dbDownload(); }
 
-function showChunkedSortedBy(dParent, title, tablename, records, headers, header) {
-
-	if (isEmpty(records)) { mText('no data', dParent); return null; }
-	if (nundef(headers)) headers = Object.keys(records[0]);
-	if (nundef(header)) header = headers[0];
-	//console.log('___ show', Counter++, DA.tinfo);
-	//console.log(DA.sortedBy, header);
-
-	if (isList(header)) DA.sortedBy = null; //ist multi-sorted!
-	else if (DA.sortedBy == header) { records = sortByEmptyLast(records, header); DA.sortedBy = null; }
-	else { records = sortByDescending(records, header); DA.sortedBy = header; }
-	mClear(dParent);
-	let db = mDom(dParent, { gap: 10, mabottom: 10, className: 'centerflexV' }); //mCenterCenterFlex(db);
-	// mText(`<h2>${title} (${tablename})</h2>`, db, { maleft: 12 });
-	mButton('filter', onclickFilter, db, {}, 'button', 'bFilter');
-	mButton('back', onclickBackHistory, db, {}, 'button', 'bBack');
-	mText(`${tablename} (${records.length})`, db, { weight: 'bold', fz: 20, maleft: 12 });
-	mButton('PgDn', () => showChunk(1), db, { w: 25 }, 'button', 'bPgDn');
-	mButton('PgUp', () => showChunk(-1), db, { w: 25 }, 'button', 'bPgUp');
-	mButton('multi-sort', onclickMultiSort, db, {}, 'button', 'bMultiSort');
-	// mButton('filter1', onclickFilter1, db, {}, 'button','bFilter1');
-	// mButton('add tag', onclickTagForAll, db, {}, 'button','bAddTag');
-	mButton('download db', onclickDownloadDb, db, {}, 'button', 'bDownload');
-	let dTable = mDom(dParent)
-	DA.tinfo = {};
-	// if (nundef(masterRecords)) masterRecords = records;
-	addKeys({ q: DA.qCurrent, dParent, title, tablename, dTable, records, headers, header, ifrom: 0, size: 100 }, DA.tinfo);
-	showChunk(0);
-}
-function showChunk(inc) {
-	let o = DA.tinfo;
-	let [dParent, title, tablename, dTable, records, headers, header] = [o.dParent, o.title, o.tablename, o.dTable, o.records, o.headers, o.header];
-	let [ifrom, ito] = calcIndexFromTo(inc, o); //console.log(ifrom,ito)
-	let chunkRecords = records.slice(ifrom, ito);
-	if (isdef(UI.dataTable)) mRemove(UI.dataTable.div); mClear(dTable);
-	let t = UI.dataTable = mDataTable(chunkRecords, dTable, null, headers, 'records');
-	if (nundef(t)) { console.log('UI.dataTable is NULL'); return; }
-	let d = t.div;
-	mStyle(d, { 'caret-color': 'transparent' });
-	let headeruis = Array.from(d.firstChild.getElementsByTagName('th'));
-	for (const ui of headeruis) {
-		mStyle(ui, { cursor: 'pointer' });
-		ui.onclick = (ev) => { evNoBubble(ev); showChunkedSortedBy(dParent, title, tablename, records, headers, ui.innerHTML); }
-	}
-	if (tablename != 'transactions') return;
-	DA.tinfo.ifrom = ifrom;
-	// return;
-	let cells = DA.cells = [];
-	for (const ri of t.rowitems) {
-		let r = iDiv(ri);
-		//console.log(r,arrChildren(r)); break;
-		//let id = ri.o.id; let h = hFunc('tag', 'onclickAddTag', id, ri.index); let c = mAppend(r, mCreate('td')); c.innerHTML = h;
-		let tds = arrChildren(r);
-		for (const ui of tds) {
-			let item = { ri, div: ui, text: ui.innerHTML, record: ri.o, isSelected: false, irow: t.rowitems.indexOf(ri), icol: tds.indexOf(ui) };
-			item.header = headers[item.icol];
-			cells.push(item);
-			let bg = dbFindColor(item.tablename, item.header, ui.innerHTML);
-			mStyle(ui, { cursor: 'pointer' });
-			if (isdef(bg)) mStyle(ui, { bg, fg: 'contrast' });
-			ui.onclick = () => toggleItemSelection(item); //async()=>await onclickTablecell(ui,ri,o);
-		}
-	}
-	DA.tinfo.ifrom = ifrom;
-	checkButtons();
-}
-function showTableSortedBy(dParent, title, tablename, records, headers, header) {
-	if (isEmpty(records)) { mText('no data', dParent); return null; }
-	if (nundef(headers)) headers = Object.keys(records[0]);
-	if (nundef(header)) header = headers[0];
-	console.log('___ show Full Table', Counter++, DA.tinfo);
-	console.log(DA.sortedBy, header);
-
-	if (isList(header)) DA.sortedBy = null; //ist multi-sorted!
-	else if (DA.sortedBy == header) { sortBy(records, header); DA.sortedBy = null; }
-	else { sortByDescending(records, header); DA.sortedBy = header; }
-	if (isdef(UI.dataTable)) mRemove(UI.dataTable.div); mClear(dParent);
-	mText(`<h2>${title} (${tablename})</h2>`, dParent, { maleft: 12 })
-	let t = UI.dataTable = mDataTable(records, dParent, null, headers, 'records');
-	if (nundef(t)) return;
-	let d = t.div;
-	mStyle(d, { 'caret-color': 'transparent' });
-	let headeruis = Array.from(d.firstChild.getElementsByTagName('th'));
-	for (const ui of headeruis) {
-		mStyle(ui, { cursor: 'pointer' });
-		ui.onclick = () => showTableSortedBy(dParent, title, tablename, records, headers, ui.innerHTML);
-	}
-	if (tablename != 'transactions') return records;
-	for (const ri of t.rowitems) {
-		let r = iDiv(ri);
-		let id = ri.o.id;
-		let h = hFunc('tag', 'onclickAddTag', id, ri.index); let c = mAppend(r, mCreate('td')); c.innerHTML = h;
-	}
-}
 function splitSQLClauses(sql) {
 	// Remove all tab or newline characters and trim spaces
 	sql = sql.replace(/[\t\n]/g, ' ').trim();

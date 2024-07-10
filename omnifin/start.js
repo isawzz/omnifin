@@ -390,22 +390,15 @@ function getDistColors(n=200){
 async function prelims() {
 	M = {};
 	M.superdi = await mGetYaml('../assets/superdi.yaml');
-	M.dicolor = await mGetYaml(`../assets/dicolor.yaml`);
-	[M.colorList, M.colorByHex, M.colorByName] = getListAndDictsForDicolors();
 
+	M.dicolor = await mGetYaml(`../assets/dicolor.yaml`);	[M.colorList, M.colorByHex, M.colorByName] = getListAndDictsForDicolors();
 	M.dbColors = await mGetYaml('../db/info.yaml');
 
-
-	// M.dicolor = getDistinguishibleColors();
-	//M.dicolor = await mGetYaml(`../assets/dicolor.yaml`);
-	//[M.colorList, M.colorByHex, M.colorByName] = getListAndDictsForDicolors();
-
-	let dNav = mBy('dNav');
-	mStyle(dNav, { overflow: 'hidden', box: true, padding: 10, className: 'nav' });
-	mStyle('dMain', { padding: 10 })
+	mStyle('dMain', { padding: 10 });
 	UI.commands = {};
-	UI.nav = showNavbar();
-	setColors('skyblue', 'white');
+	UI.nav = mNavMenu();
+	setColors('skyblue', 'white'); setCssVar('--bgNav', '#659AB0')
+
 	DB = await dbInit(DB_PATH);
 	M.qHistory = [];
 

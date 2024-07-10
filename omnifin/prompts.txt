@@ -20,11 +20,12 @@ left join tags tg on tt.tag_id = tg.id
 WHERE t.description = 'MORGAN STANLEY ACH CREDIT' OR receiver_name = 'heritage-2657' 
 group by t.id, t.dateof, sender_name, receiver_name, t.amount, unit
 
-
-
 modify this statement returning only records that have no MCC
 
-
-
+//drag drop sortable select list
+js function that takes a div and a list of object {name,value} and creates a select element in which each element of the list is checked iff value==true. the option list should be sortable manually via drag drop within the list
+I want the ui to show a simple list of checkboxes
+instead of drag drop, let the elements be selectable and add a button 'move up' and 'move down' to change the order of the elements. also instead of checkboxes list the element name
+I want: a list of elements when press element, highlight it. below the elements, 1 button Move up and 1 button move down that will move the highlighted element up or down the list
 
 

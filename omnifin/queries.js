@@ -1,7 +1,7 @@
 
 
 function qTT() {
-	let recs = dbToList('select * from tags');
+	let recs = dbToList('select * from tags',false);
 	//console.log(recs)
 	let names = recs.map(x=>x.tag_name);
 	names = names.filter(x=>!isNumber(x));

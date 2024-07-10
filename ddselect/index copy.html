@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Sortable Select Element</title>
+	<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+	<style>
+		.sortable-select {
+			list-style-type: none;
+			margin: 0;
+			padding: 0;
+			width: 200px;
+		}
+
+		.sortable-select li {
+			margin: 2px;
+			padding: 8px;
+			border: 1px solid #ccc;
+			cursor: move;
+			background-color: #fff;
+		}
+	</style>
+</head>
+
+<body>
+
+	<div id="container"></div>
+
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+	<script>
+		function createSortableSelect(container, optionsList) {
+			// Create a select element
+			const select = $('<select>', { multiple: 'multiple' });
+
+			// Create a list for sortable functionality
+			const sortableList = $('<ul>', { class: 'sortable-select' });
+
+			// Populate the select element and sortable list with options
+			optionsList.forEach(option => {
+				const listItem = $('<li>', { text: option.name, 'data-value': option.value });
+				const optionElement = $('<option>', { value: option.name, text: option.name });
+
+				if (option.value) {
+					optionElement.attr('selected', 'selected');
+				}
+
+				sortableList.append(listItem);
+				select.append(optionElement);
+			});
+
+			// Append the select element and sortable list to the container
+			$(container).append(select).append(sortableList);
+
+			// Enable sortable functionality
+			sortableList.sortable({
+				stop: function (event, ui) {
+					// Update the select element based on the new order
+					const sortedItems = sortableList.children('li').map(function () {
+						return $(this).data('value');
+					}).get();
+
+					select.empty();
+					sortedItems.each((_, value) => {
+						const option = optionsList.find(opt => opt.value == value);
+						const optionElement = $('<option>', { value: option.name, text: option.name });
+						if (option.value) {
+							optionElement.attr('selected', 'selected');
+						}
+						select.append(optionElement);
+					});
+				}
+			});
+
+			sortableList.disableSelection();
+		}
+
+		// Example usage
+		const options = [
+			{ name: 'Option 1', value: true },
+			{ name: 'Option 2', value: false },
+			{ name: 'Option 3', value: true },
+			{ name: 'Option 4', value: false }
+		];
+
+		createSortableSelect('#container', options);
+	</script>
+
+</body>
+
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sortable Checkbox List</title>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <style>
+        .sortable-list { list-style-type: none; margin: 0; padding: 0; width: 200px; }
+        .sortable-list li { margin: 2px; padding: 8px; border: 1px solid #ccc; cursor: move; background-color: #fff; }
+    </style>
+</head>
+<body>
+
+<div id="container"></div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script>
+    function createSortableCheckboxList(container, optionsList) {
+        // Create a list for sortable functionality
+        const sortableList = $('<ul>', { class: 'sortable-list' });
+
+        // Populate the list with checkboxes
+        optionsList.forEach(option => {
+            const listItem = $('<li>');
+            const checkbox = $('<input>', { type: 'checkbox', id: option.name, checked: option.value });
+            const label = $('<label>', { for: option.name, text: option.name });
+
+            listItem.append(checkbox).append(label);
+            sortableList.append(listItem);
+        });
+
+        // Append the sortable list to the container
+        $(container).append(sortableList);
+
+        // Enable sortable functionality
+        sortableList.sortable();
+        sortableList.disableSelection();
+    }
+
+    // Example usage
+    const options = [
+        { name: 'Option 1', value: true },
+        { name: 'Option 2', value: false },
+        { name: 'Option 3', value: true },
+        { name: 'Option 4', value: false }
+    ];
+
+    createSortableCheckboxList('#container', options);
+</script>
+
+</body>
+</html>

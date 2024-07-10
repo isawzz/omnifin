@@ -27,8 +27,6 @@ function extractWords(s, allowed) {
 	let parts = splitAtAnyOf(s, specialChars.join('')).map(x => x.trim());
 	return parts.filter(x => !isEmpty(x));
 }
-function handleSticky() { let d = mBy('dNav'); if (window.scrollY >= 88) mClass(d, 'sticky'); else mClassRemove(d, 'sticky'); }
-
 function ifNotList(x){return isList(x)?x:[x];}
 
 function mButtonX(dParent, handler = null, sz = 22, offset = 5, color = 'contrast') {
@@ -193,16 +191,6 @@ function showMessage(msg, ms = 3000) {
 	d.innerHTML = msg;
 	clearTimeout(TO.message);
 	TO.message = setTimeout(()=>clearMessage(true), ms)
-}
-function showNavbar() {
-	mDom('dNav', { fz: 34, mabottom: 10, w100: true }, { html: `Omnifin` });
-	let nav = mMenu('dNav');
-	let commands = {};
-	commands.overview = menuCommand(nav.l, 'nav', 'overview', 'Overview', menuOpenOverview, menuCloseOverview);
-	commands.sql = menuCommand(nav.l, 'nav', 'sql', 'Sql', menuOpenSql, menuCloseSql);
-	// commands.test = menuCommand(nav.l, 'nav', 'test', 'Test', menuOpenTest, menuCloseTest);
-	nav.commands = commands;
-	return nav;
 }
 function sortBy(arr, key) {
 	function fsort(a, b) {
