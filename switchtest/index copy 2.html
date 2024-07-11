@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Switch Example</title>
+	<style>
+		.container {
+			display: flex;
+			align-items: center;
+		}
+
+		.off-text {
+			margin-right: 10px;
+		}
+
+		.on-text {
+			margin-left: 10px;
+		}
+
+		.switch {
+			position: relative;
+			display: inline-block;
+			width: 40px;
+			height: 23px;
+		}
+
+		.switch input {
+			opacity: 0;
+			width: 0;
+			height: 0;
+		}
+
+		.slider {
+			position: absolute;
+			cursor: pointer;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background-color: #ccc;
+			-webkit-transition: .4s;
+			transition: .4s;
+			border-radius: 23px;
+			/* Rounded slider */
+		}
+
+		input:checked+.slider {
+			background-color: #21f372;
+		}
+
+		input:focus+.slider {
+			box-shadow: 0 0 1px #21f372;
+		}
+
+		input:checked+.slider::after {
+			content: 'ON';
+			color: #fff;
+			position: absolute;
+			top: 50%;
+			transform: translateY(-50%);
+			right: 8px;
+		}
+
+		.off-text,
+		.on-text {
+			z-index: 1;
+			/* Ensure text is above slider */
+		}
+	</style>
+</head>
+
+<body>
+	<div class="container">
+		<span class="off-text">Off</span>
+		<label class="switch">
+			<input type="checkbox" id="exampleSwitch">
+			<span class="slider"></span>
+		</label>
+		<span class="on-text">On</span>
+	</div>
+</body>
+
+</html>

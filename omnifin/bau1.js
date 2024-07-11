@@ -1,35 +1,27 @@
 
-async function onclickFilter(ev) { await filterRecords(); }
-async function onclickFilterFast(ev) { await filterRecords(null, false); }
-async function filterRecords(exp, allowEdit = true) {
+async function onclickSort(ev) { await sortRecords(); }
+async function onclickSortFast(ev) { await sortRecords(null, false); }
+async function sortRecords(headerlist, allowEdit = true) {
 	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header];
-	if (nundef(exp)) { exp = extractFilterExpression(); }
-	if (allowEdit) { let content = { exp, caption: 'Filter' }; exp = await mGather(null, {}, { content, type: 'textarea', value: exp }); }
-	if (!exp || isEmpty(exp)) { console.log('operation cancelled!'); return; }
-	let i = DA.tinfo;
-	records = dbToList(exp);
-	showChunkedSortedBy(i.dParent, i.title, i.tablename, records, headers, header);
-}
-async function onclickBackHistory() {
-	console.log(M.qHistory)
-	let o = M.qHistory.pop();
-	if (isdef(o)) {
-		let records = dbToList(o.q,false);
-		showChunkedSortedBy(UI.d, o.tablename, o.tablename, records);
+
+	if (nundef(headerlist)) {
+		let cells = DA.cells;
+		let selitems = cells.filter(x=>x.isSelected); console.log(selitems);
+		headerlist = selitems.map(x=>x.header);
 	}
+	assertion(!isEmpty(headerlist),'sortRecords with empty headerlist!!!');
+
+	console.log(headerlist);
+
+	let result = await mGather(null, {}, { content:{func:uiTypeSortForm,data:headerlist}, type: 'freeForm' });
+	if (!result || isEmpty(result)) { console.log('nothing selected'); return; }
+
+	console.log(result);
+	return;
+	records.sort(multiSort(result));// = sortByMultipleProperties(records,...result);
+	DA.tinfo.records = records;
+	DA.tinfo.header = result;
+	showChunkedSortedBy(DA.tinfo.dParent, DA.tinfo.title, DA.tinfo.tablename, DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header)
+
 }
-function dbHistory(q,addToHistory){
-	if (addToHistory) {
-		let q1 = q.toLowerCase().trim();
-		if (q1.startsWith('select')) {
-			if (isdef(DA.qCurrent)) M.qHistory.push({ q: DA.qCurrent, tablename: wordAfter(q1, 'from') });
-			DA.qCurrent = q1;
-		}
-
-		//consloghist();
-	}
-
-
-}
-
 

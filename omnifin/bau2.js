@@ -1,50 +1,65 @@
 
-function handleSticky() { let d = mBy('dNav'); if (window.scrollY >= 88) mClass(d, 'sticky'); else mClassRemove(d, 'sticky'); }
-function checkButtons() {
-	let bs=arrChildren('dButtons'); bs.map(x=>disableButton(x));
-	if (DB) enableButton('bDownload');
-	let info = DA.tinfo; //are there records shown?
-	if (nundef(info)) return;
-	let [ifrom, ito, records] = [info.ifrom, info.ito, info.records];
-	console.log('checkButtons',ifrom,ito,records.length)
-	if (ifrom > 0) enableButton('bPgUp');
-	if (ito < records.length) enableButton('bPgDn');
-	if (!isEmpty(M.qHistory)) enableButton('bBack');
-	if (DA.cells.find(x=>x.isSelected)) ['bFilter','bFilterFast','bSort','bSortFast'].map(x=>enableButton(x));
+function uiGadgetTypeFreeForm(dParent, content, resolve, styles = {}, opts = {}) {
+	addKeys({ hmax: 500, wmax: 200, bg: 'white', fg: 'black', padding: 10, rounding: 10, box: true }, styles)
+	let dOuter = mDom(dParent, styles);
+	let hmax = styles.hmax - 193, wmax = styles.wmax;
+	let innerStyles = { hmax, wmax, box: true };
+	let d = mDom(dOuter, innerStyles, opts);
+	content.func(d, content.data, resolve);
+	return dOuter;
 }
-function mNavMenu() {
-	let dNav = mBy('dNav');
-	mStyle(dNav, { overflow: 'hidden', box: true, padding: 10, className: 'nav' });
-	
-	let dTop=mDom(dNav,{class:'centerFlexV'});
-	mDom(dTop, { fz: 34, mabottom: 10, w100: true }, { html: `Omnifin` });
-	let dm = mDom(dTop, { gap: 10, className: 'centerflexV' }); 
-	let nav = mMenu(dm);
-	let commands = {};
-	commands.overview = menuCommand(nav.l, 'nav', 'overview', 'Overview', menuOpenOverview, menuCloseOverview);
-	commands.sql = menuCommand(nav.l, 'nav', 'sql', 'Sql', menuOpenSql, menuCloseSql);
-	// commands.test = menuCommand(nav.l, 'nav', 'test', 'Test', menuOpenTest, menuCloseTest);
-	nav.commands = commands;
+function _mToggleButton(offstate, onstate, handler, dParent, styles = {}, opts = {}) {
 
-	mLinebreak(dTop);
-	let db = mDom(dTop, { gap: 10, className: 'centerflexV' },{id:'dButtons'}); 
-	mButton('<<', onclickBackHistory, db, {}, 'button', 'bBack');
-	mButton('filter', onclickFilterFast, db, {}, 'button', 'bFilterFast');
-	mButton('custom filter', onclickFilter, db, {}, 'button', 'bFilter'); 
-	mButton('sort', onclickSortFast, db, {}, 'button', 'bSortFast');
-	mButton('custom sort', onclickSort, db, {}, 'button', 'bSort');
-	// mButton('add tag', onclickTagForAll, db, {}, 'button','bAddTag');
-
-	mDom(db,{w:20})
-	mButton('PgUp', () => showChunk(-1), db, { w: 25 }, 'button', 'bPgUp');
-	mButton('PgDn', () => showChunk(1), db, { w: 25 }, 'button', 'bPgDn');
-	mButton('download db', onclickDownloadDb, db, {}, 'button', 'bDownload');
+	let d = mDom(dParent, { fz: 20 });
+	mAppend(d, mSwitch(offstate, onstate));
 
 
-	return nav;
+	// addKeys({state:'off'},opts); //which is initial state
+	// //let dbotswitch = mDom(dParent, { align: 'right', patop: 10, gap: 6 }, { html: offstate }); mFlexLine(dbotswitch, 'end')
+
+
+	// let d=mDom(dParent,{className:'centerFlexV'});
+	// mDom(d,{},{html:offstate})
+
+	// let oSwitch = mSwitch(d, {}, { id: 'bot', val:''});// amIHuman(table) ? '' : 'checked' });
+	// let inp = oSwitch.inp;
+	// oSwitch.inp.onchange = handler;
+	// for(const x of arrChildren(dParent)) console.log(x);
+
+	// let div=d.firstChild; console.log(div)
+	// mStyle(div,{display:'inline'});
+	// //let sw=div.firstChild;
+	// //mAppend(dParent,sw);
+	// //mRemove(div);
+	// //return sw;
+
 }
 
+function onToggleState(ev, states, colors) {
+	let elem = ev.target;
+	toggleState(elem,states,colors);
+}
+function toggleState(elem,states,colors){
+	let i=Number(elem.getAttribute('istate'));
+	i++; if (i >= states.length) { i = 0; }
+	elem.setAttribute('istate',i)
+	elem.textContent = states[i]; 
+	elem.style.backgroundColor = colors[i]; 
+	console.log(elem,i,states,colors,states[i],colors[i])
+	return i;
+}
+function mToggleButton(handler, dParent, styles = {}, opts = {}) {
+	let states = opts.states;
+	let colors = opts.colors;
+	if (nundef(states) && nundef(colors)) { states = ['ON', 'OFF']; }
+	const basicColors = ['tomato', 'steel_blue', 'light_green', 'gold', 'orange', 'sienna', 'olive', 'emerald', 'skyblue', 'navy', 'indigo'];
+	if (nundef(colors)) { colors = states.map((x, i) => basicColors[i]); }
+	if (nundef(states)) { states = colors.map((x, i) => `state ${i + 1}`); }
 
+	let b = mButton('None', ev => handler(toggleState(ev.target,states, colors)), dParent, { className: 'button' },{istate:0});
+	toggleState(b,states,colors);
+
+}
 
 
 

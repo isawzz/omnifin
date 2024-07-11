@@ -1,8 +1,6 @@
 async function menuOpenTest(){}
 async function menuCloseTest(){closeLeftSidebar();mClear('dMain')}
 
-
-
 function createNewDatabase() {
 	// Get the schema of the existing database
 	const schemaQuery = `

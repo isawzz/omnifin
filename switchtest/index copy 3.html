@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Switch Example</title>
+	<style>
+		.container {
+			display: flex;
+			align-items: center;
+		}
+
+		.switch {
+			position: relative;
+			display: inline-block;
+			width: 80px;
+			/* Adjust width as needed */
+			height: 40px;
+			/* Adjust height as needed */
+			background-color: #ccc;
+			border-radius: 20px;
+			/* Half of height for rounded appearance */
+			cursor: pointer;
+			-webkit-transition: background-color 0.4s;
+			transition: background-color 0.4s;
+		}
+
+		.switch input {
+			display: none;
+		}
+
+		.switch-label {
+			position: absolute;
+			top: 50%;
+			transform: translateY(-50%);
+			left: 8px;
+			/* Offset from the left */
+			color: #555;
+		}
+
+		.switch-label.on {
+			left: auto;
+			right: 8px;
+			/* Offset from the right */
+			color: #fff;
+		}
+
+		.slider {
+			position: absolute;
+			top: 2px;
+			/* Adjust top position for centering */
+			left: 2px;
+			/* Adjust left position for centering */
+			width: calc(50% - 4px);
+			/* 50% of switch width minus border */
+			height: calc(100% - 4px);
+			/* 100% of switch height minus border */
+			background-color: white;
+			border-radius: 50%;
+			-webkit-transition: left 0.4s;
+			transition: left 0.4s;
+		}
+
+		input:checked+.slider {
+			left: 50%;
+			/* Move slider to the right */
+		}
+
+		/* Optional styles for focus state */
+		input:focus+.slider {
+			box-shadow: 0 0 0 3px rgba(33, 243, 114, 0.5);
+			/* Example focus outline */
+		}
+	</style>
+</head>
+
+<body>
+	<div class="container">
+		<label class="switch">
+			<input type="checkbox" id="exampleSwitch">
+			<div class="switch-label off">Off</div>
+			<div class="switch-label on">On</div>
+			<div class="slider"></div>
+		</label>
+	</div>
+</body>
+
+</html>

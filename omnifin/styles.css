@@ -198,27 +198,30 @@ fieldset .disabled {
   background-color: '#000000a0';
 }
 
-.centerflex{
+.centerflex {
   display: flex;
   justify-content: center;
-  align-content:center;
-  flex-wrap:wrap;
+  align-content: center;
+  flex-wrap: wrap;
 
 }
-.centerflex>*{
-  justify-self:center;
-  align-self:center;
+
+.centerflex>* {
+  justify-self: center;
+  align-self: center;
 }
-.centerflexV{
+
+.centerflexV {
   display: flex;
   /* justify-content: center; */
-  align-content:center;
-  flex-wrap:wrap;
+  align-content: center;
+  flex-wrap: wrap;
 
 }
-.centerflexV>*{
-  justify-self:center;
-  align-self:center;
+
+.centerflexV>* {
+  justify-self: center;
+  align-self: center;
 }
 
 .darker {
@@ -2005,6 +2008,81 @@ input:checked+.slider:before {
 }
 
 .slider.round:before {
+  border-radius: 50%;
+}
+
+/* #endregion */
+
+/* #region better switch!!!! */
+.swcontainer {
+  display: flex;
+  align-items: center;
+}
+
+.swoff-text {
+  margin-right: 0px;
+}
+
+.swon-text {
+  margin-left: 0px;
+}
+
+.swswitch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 23px;
+}
+
+.swswitch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.swslider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.swslider:before {
+  position: absolute;
+  content: "";
+  height: 17px;
+  width: 17px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked+.swslider {
+  background-color: #21f372;
+}
+
+input:focus+.swslider {
+  box-shadow: 0 0 1px #21f372;
+}
+
+input:checked+.swslider:before {
+  -webkit-transform: translateX(17px);
+  -ms-transform: translateX(17px);
+  transform: translateX(17px);
+}
+
+.swslider.round {
+  border-radius: 23px;
+}
+
+.swslider.round:before {
   border-radius: 50%;
 }
 

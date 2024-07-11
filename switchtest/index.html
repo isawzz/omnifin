@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Toggle Button Example</title>
+  <style>
+    .toggle-button {
+      display: inline-block;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      outline: none;
+      border-radius: 5px;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <button id="toggleButton" class="toggle-button">Toggle State</button>
+
+  <script>
+    // Define the list of states with text and corresponding colors
+    const states = [
+      { text: 'State 1', color: '#FF6347' }, // Tomato
+      { text: 'State 2', color: '#4682B4' }, // Steel Blue
+      { text: 'State 3', color: '#90EE90' }, // Light Green
+      { text: 'State 4', color: '#FFD700' }, // Gold
+    ];
+
+    // Initialize state index
+    let currentStateIndex = 0;
+
+    // Get the button element
+    const toggleButton = document.getElementById('toggleButton');
+
+    // Function to toggle to the next state
+    function toggleState() {
+      // Increment current state index
+      currentStateIndex++;
+
+      // If index exceeds the length of states, reset to 0 (looping)
+      if (currentStateIndex >= states.length) {
+        currentStateIndex = 0;
+      }
+
+      // Update button text and background color based on current state
+      const currentState = states[currentStateIndex];
+      toggleButton.textContent = currentState.text;
+      toggleButton.style.backgroundColor = currentState.color;
+    }
+
+    // Initial setup: set button text and color for the first state
+    toggleState();
+
+    // Add click event listener to toggle button
+    toggleButton.addEventListener('click', toggleState);
+  </script>
+</body>
+</html>
