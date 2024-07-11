@@ -4,7 +4,7 @@ const DB_PATH = '../db/test2.db'; // relative to omnifin dir
 onload = start;
 onscroll = handleSticky;
 
-async function start() { await prelims(); test13(); }
+async function start() { await prelims(); test12(); }
 
 async function test13(){
 	let d=clearFlex();
