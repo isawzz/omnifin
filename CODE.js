@@ -1,5 +1,89 @@
+//#region menu overview 13.7.24
+async function menuOpenOverview() {
+	let side = UI.sidebar = mSidebar();
+	let gap = 5;
+	UI.commands.showSchema = mCommand(side.d, 'showSchema', 'DB Structure'); mNewline(side.d, gap);
+	mLinebreak(side.d, 10);
+	// UI.commands.testtrans = mCommand(side.d, 'testtrans', 'test'); mNewline(side.d, gap);
+	UI.commands.translist = mCommand(side.d, 'translist', 'translist'); mNewline(side.d, gap);
+	UI.commands.transcols = mCommand(side.d, 'transcols', 'transcols'); mNewline(side.d, gap);
+	// UI.commands.transactions = mCommand(side.d, 'transactions', 'transactions'); mNewline(side.d, gap);
+	// UI.commands.flex = mCommand(side.d, 'flex', 'flex-perks'); mNewline(side.d, gap);
+	// UI.commands.tagged = mCommand(side.d, 'tagged', 'tagged'); mNewline(side.d, gap);
+	// UI.commands.multiTagged = mCommand(side.d, 'multiTagged', 'multi-tagged'); mNewline(side.d, gap);
+	// UI.commands.limit20 = mCommand(side.d, 'limit20', 'just 20'); mNewline(side.d, gap);
+	mLinebreak(side.d, 10);
+	UI.commands.reports = mCommand(side.d, 'reports', 'reports'); mNewline(side.d, gap);
+	UI.commands.assets = mCommand(side.d, 'assets', 'assets'); mNewline(side.d, gap);
+	UI.commands.tags = mCommand(side.d, 'tags', 'tags'); mNewline(side.d, gap);
+	UI.commands.accounts = mCommand(side.d, 'accounts', 'accounts'); mNewline(side.d, gap);
+	UI.commands.statements = mCommand(side.d, 'statements', 'statements'); mNewline(side.d, gap);
+	UI.commands.verifications = mCommand(side.d, 'verifications', 'verifications'); mNewline(side.d, gap);
+	UI.commands.tRevisions = mCommand(side.d, 'tRevisions', 'transaction revisions'); mNewline(side.d, gap);
+
+	UI.d = mDom('dMain', { className: 'section' });
+	await onclickCommand(null, 'translist');
+}
+async function menuCloseOverview() { closeLeftSidebar(); mClear('dMain'); M.qHistory = []; }
+
+function onclickShowSchema() {
+	let res = dbRaw(`SELECT sql FROM sqlite_master WHERE type='table';`);
+	let text = res.map(({ columns, values }) => {
+		// return columns.join('\t') + '\n' + values.map(row => row.join('\t')).join('\n');
+		return values.map(row => row.join('\t')).join('\n');
+	}).join('\n\n');
+	let d = UI.d;
+	mClear(d)
+	mText(`<h2>Schema</h2>`, d, { maleft: 12 })
+	mDom(d, {}, { tag: 'pre', html: text });
+}
+function onclickTesttrans() { let records = dbToList(qTT()); showTableSortedBy(UI.d, 'TEST', 'transactions', records); }
+function onclickTranslist() { let records = dbToList(qTTList()); showChunkedSortedBy(UI.d, 'tag list', 'transactions', records); }
+function onclickTranscols() { let records = dbToList(qTTCols()); showChunkedSortedBy(UI.d, 'tag columns', 'transactions', records); }
+function onclickTransactions() { let records = dbToList(qTransactions()); showChunkedSortedBy(UI.d, 'transactions', 'transactions', records); }
+function onclickFlex() { let records = dbToList(qTransFlex()); showTableSortedBy(UI.d, 'flex-perks', 'transactions', records); }
+function onclickTagged() { let records = dbToList(qTranstags()); showTableSortedBy(UI.d, 'tagged transactions', 'transactions', records); }
+function onclickMultiTagged() { let records = dbToList(qTransmultitag()); showTableSortedBy(UI.d, 'transactionsw/  multiple tags', 'transactions', records); }
+function onclickLimit20() { let records = dbToList(qLimit20()); showTableSortedBy(UI.d, '20 transactions', 'transactions', records); }
+
+function onclickReports() { let records = dbToList('select * from reports;'); showTableSortedBy(UI.d, 'reports', 'reports', records); }
+function onclickAssets() { let records = dbToList('select * from assets;'); showTableSortedBy(UI.d, 'assets', 'assets', records); }
+function onclickTags() { let records = dbToList('select * from tags;'); showTableSortedBy(UI.d, 'tags', 'tags', records); }
+function onclickAccounts() { let records = dbToList('select * from accounts;'); showTableSortedBy(UI.d, 'accounts', 'accounts', records); }
+function onclickStatements() { let records = dbToList('select * from statements;'); showTableSortedBy(UI.d, 'statements', 'statements', records); }
+function onclickVerifications() { let records = dbToList('select * from verifications;'); showTableSortedBy(UI.d, 'verifications', 'verifications', records); }
+function onclickTRevisions() { let records = dbToList('select * from transaction_revisions;'); showTableSortedBy(UI.d, 'transaction revisions', 'transaction_revisions', records); }
+//#endregion
+
 
 //#region 10.7.24
+function _mToggleButton(offstate, onstate, handler, dParent, styles = {}, opts = {}) {
+
+	let d = mDom(dParent, { fz: 20 });
+	mAppend(d, mSwitch(offstate, onstate));
+
+
+	// addKeys({state:'off'},opts); //which is initial state
+	// //let dbotswitch = mDom(dParent, { align: 'right', patop: 10, gap: 6 }, { html: offstate }); mFlexLine(dbotswitch, 'end')
+
+
+	// let d=mDom(dParent,{className:'centerFlexV'});
+	// mDom(d,{},{html:offstate})
+
+	// let oSwitch = mSwitch(d, {}, { id: 'bot', val:''});// amIHuman(table) ? '' : 'checked' });
+	// let inp = oSwitch.inp;
+	// oSwitch.inp.onchange = handler;
+	// for(const x of arrChildren(dParent)) console.log(x);
+
+	// let div=d.firstChild; console.log(div)
+	// mStyle(div,{display:'inline'});
+	// //let sw=div.firstChild;
+	// //mAppend(dParent,sw);
+	// //mRemove(div);
+	// //return sw;
+
+}
+
 async function sortRecords(exp, allowEdit = true) {
 	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header]
 

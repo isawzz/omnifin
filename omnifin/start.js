@@ -2,14 +2,33 @@
 const DB_PATH = '../db/test2.db'; // relative to omnifin dir
 
 onload = start;
-onscroll = handleSticky;
+//onscroll = handleSticky;
 
-async function start() { await prelims(); test12(); }
+async function start() { await prelims(); test14(); }
 
+async function test14(){ 
+	//await switchToMainMenu('overview');
+
+	mStyle('dMain',{h:500})
+	showRecords(qTTList(),'dMain');
+
+	// let h=window.innerHeight-135;
+	// mStyle('dPage',{hmax:h,h,overflow:'hidden',scroll:'hidden'});
+	// mStyle('dMain',{hmax:h,h,overflow:'hidden',scroll:'hidden'});
+
+	// //mStyle(UI.d,{bg:'green',overy:'scroll',h:500,hmax:500})
+	// // mStyle('trecords',{bg:'green',overy:'scroll',h:500,hmax:500})
+	// mStyle(UI.d,{h:500,hmax:500});
+	// console.log(UI.d)
+	// let d=mBy('trecords').parentNode;
+	// mStyle(d,{h:500,hmax:500});
+	// mStyle('trecords',{bg:'green',overflow:'scroll'})
+}
 async function test13(){
 	let d=clearFlex();
-	let handler=ev=>console.log(ev.target);
-	let b=mToggleButton(handler,d); //'off','on',handler,d);
+	let handler = i=>console.log(i)
+	let b=mToggleButton(handler,d); 
+	b=mToggleButton(handler,d,{w:50},{states:['hallo','du','bist','da'],colors:[GREEN,YELLOW,BLUE,RED]}); 
 }
 async function test12(){
 	await switchToMainMenu('overview');
