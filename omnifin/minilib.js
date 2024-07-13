@@ -238,7 +238,7 @@ function cRound(dParent, styles = {}, opts = {}) {
 }
 function calcHeightLeftUnder(div) {
 	let hwin = window.innerHeight;
-	let r = getRect(div);
+	let r = getRect(div,document.body); console.log(r)
 	let top = r.b;
 	let h = hwin - top;
 	return h;

@@ -8,9 +8,10 @@ async function start() { await prelims(); test14(); }
 
 async function test14(){ 
 	//await switchToMainMenu('overview');
-
-	mStyle('dMain',{h:500})
 	showRecords(qTTList(),'dMain');
+	return;
+	let h=calcHeightLeftUnder('dNav')-25;console.log(h)
+	mStyle('dMain',{h})
 
 	// let h=window.innerHeight-135;
 	// mStyle('dPage',{hmax:h,h,overflow:'hidden',scroll:'hidden'});

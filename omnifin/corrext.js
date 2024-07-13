@@ -94,7 +94,7 @@ function mPopup(dParent, styles = {}, opts = {}) {
 	return popup;
 }
 function mTable(dParent, headers, showheaders, styles = { mabottom: 0 }, className = 'table') {
-	let d = mDiv(dParent);
+	let d = mDiv(dParent); mClass(dParent,'table_container')
 	let t = mCreate('table');
 	mAppend(d, t);
 	if (isdef(className)) mClass(t, className);

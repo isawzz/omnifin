@@ -1,5 +1,6 @@
 
 function showRecords(q,dParent,headers,header,sortDir='asc'){
+	onresize = null;
 	if (nundef(dParent)) dParent = UI.d; if (nundef(dParent)) return;	
 	dParent = toElem(dParent); mClear(dParent); //mStyle(dParent,{scroll:'auto'});
 	let records = dbToList(q); //console.log(q)
@@ -8,10 +9,12 @@ function showRecords(q,dParent,headers,header,sortDir='asc'){
 	if (nundef(headers)) headers = Object.keys(records[0]);
 	if (nundef(header)) header=headers[0];
 	records = sortDir == 'asc'?sortByEmptyLast(records, header):sortByDescending(records,header);
-	mText(`${tablename} (${records.length})`, dParent, { weight: 'bold', fz: 20, maleft: 12 });
+
+	let dTitle=mText(`${tablename} (${records.length})`, dParent, { weight: 'bold', fz: 20, maleft: 12, vpadding:6 });
 
 	let dTable = mDom(dParent);
 	let t = UI.dataTable = mTableInfinite(records, dTable, null, headers, 'records');
+	
 	if (nundef(t)) { console.log('UI.dataTable is NULL'); return; }
 	mTableAddRows(t,100);	
 	let d = t.div;
@@ -24,10 +27,11 @@ function showRecords(q,dParent,headers,header,sortDir='asc'){
 		ui.onclick = (ev) => { 
 			evNoBubble(ev); 
 			let currentDir=DA.tinfo.sortDir;
+			console.log(ui)
 			let text = ui.innerHTML;
 			let currentHeader = DA.tinfo.header;
 			let sortDir = currentHeader == text? currentDir == 'asc'?'desc':'asc':'asc';
-			showRecords(q, dParent, headers, ui.innerHTML,sortDir); 
+			showRecords(q, dParent, headers, ui.innerHTML, sortDir); 
 		}
 	}
 	addSumAmount(headeruis.find(x=>x.innerHTML == 'amount'),records);
@@ -50,6 +54,20 @@ function showRecords(q,dParent,headers,header,sortDir='asc'){
 	}
 	DA.tinfo={sortDir,records,headers,header,div:dParent,q,tablename};
 	checkButtons();
+	resizeMain('dNav',dParent,dTitle,dTable);
+	onresize = ()=>resizeMain('dNav',dParent,dTitle,dTable);
+	// let h=calcHeightLeftUnder(dTitle)-14;console.log(h)
+	// mStyle(dTable,{h})
+}
+function resizeMain(dNav,dParent,dTitle,dTable){
+	dNav = toElem(dNav);
+	let [hNav,hParent,hTitle,hTable,hWin]=[mGetStyle(dNav,'h'),mGetStyle(dParent,'h'),mGetStyle(dTitle,'h'),mGetStyle(dTable,'h'),window.innerHeight];
+	console.log(hNav,hParent,hTitle,hTable,hWin);
+	let [maxParent,maxTable]=[hWin-hNav,hWin-hNav-hTitle-20];
+
+	mStyle('dPage',{padding:0,h:maxParent,hmax:maxParent,overy:'hidden',bg:'#eee'});
+	mStyle(dParent,{padding:0,h:maxParent,hmax:maxParent,overy:'hidden',bg:'#eee'});
+	mStyle(dTable,{h:maxTable,bg:'#eee'});
 }
 function showChunk(inc) {
 	let o = DA.tinfo;
