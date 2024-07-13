@@ -4976,10 +4976,10 @@ function mixColors(c1, c2, c2Weight01) {
 function name2id(name) { return 'd_' + name.split(' ').join('_'); }
 
 function normalizeString(s, sep = '_', keep = []) {
-	s = s.toLowerCase().trim();
-	let res = '';
-	for (let i = 0; i < s.length; i++) { if (isAlphaNum(s[i]) || keep.includes(s[i])) res += s[i]; else res += sep; }
-	return res;
+  s = s.toLowerCase().trim();
+  let res = '';
+  for (let i = 0; i < s.length; i++) { if (isAlphaNum(s[i]) || keep.includes(s[i])) res += s[i]; else if (last(res)!=sep) res += sep; }
+  return res;
 }
 function nundef(x) { return x === null || x === undefined || x === 'undefined'; }
 
