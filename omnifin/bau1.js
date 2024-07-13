@@ -27,11 +27,11 @@ function showRecords(q,dParent,headers,header,sortDir='asc'){
 		ui.onclick = (ev) => { 
 			evNoBubble(ev); 
 			let currentDir=DA.tinfo.sortDir;
-			console.log(ui)
-			let text = ui.innerHTML;
+			
+			let text = firstWord(ui.innerHTML);console.log(text)
 			let currentHeader = DA.tinfo.header;
 			let sortDir = currentHeader == text? currentDir == 'asc'?'desc':'asc':'asc';
-			showRecords(q, dParent, headers, ui.innerHTML, sortDir); 
+			showRecords(q, dParent, headers, text, sortDir); 
 		}
 	}
 	addSumAmount(headeruis.find(x=>x.innerHTML == 'amount'),records);

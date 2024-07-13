@@ -338,7 +338,6 @@ function insertWhereClause(sql, whereClause) {
 			}
 		});
 
-
 		if (position === -1) {
 			position = sql.length;
 		}
