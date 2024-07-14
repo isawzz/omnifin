@@ -1,6 +1,6 @@
 
-function firstWord(text){
-	return isEmptyOrWhiteSpace(text)?'': toWords(text)[0]
+function firstWord(text,allow_=true){
+	return isEmptyOrWhiteSpace(text)?'': toWords(text,allow_)[0]
 }
 
 

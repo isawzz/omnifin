@@ -1,3 +1,74 @@
+//#region 14.7.24
+function showRecords(q,dParent,headers,header,sortDir='asc'){
+	onresize = null;
+	if (nundef(dParent)) dParent = UI.d; if (nundef(dParent)) return;	
+	dParent = toElem(dParent); mClear(dParent); //mStyle(dParent,{scroll:'auto'});
+	let records = dbToList(q); //console.log(q)
+	if (isEmpty(records)) { mText('no data', dParent); return null; }
+	let tablename = dbGetTableName(q); //console.log(tablename);
+	if (nundef(headers)) headers = Object.keys(records[0]);
+	if (nundef(header)) header=headers[0];
+	records = sortDir == 'asc'?sortByEmptyLast(records, header):sortByDescending(records,header);
+
+	let dTitle=mText(`${tablename} (${records.length})`, dParent, { weight: 'bold', fz: 20, maleft: 12, vpadding:6 });
+
+	let dTable = mDom(dParent);
+	let t = UI.dataTable = mTableInfinite(records, dTable, null, headers, 'records');
+	
+	if (nundef(t)) { console.log('UI.dataTable is NULL'); return; }
+	// onscroll = ()=>{
+	// 	console.log('HALLO!!!!!')
+	// 	if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
+	// 		mTableAddRows(t,100);
+	// 	}
+	// } 
+	
+
+	let d = t.div;
+	mTableAddRows(t,100);	
+
+	mStyle(d, { 'caret-color': 'transparent' });
+	let headeruis = Array.from(d.firstChild.getElementsByTagName('th'));
+	for (const ui of headeruis) {
+		mStyle(ui, { cursor: 'pointer' });
+		
+		ui.onclick = (ev) => { 
+			evNoBubble(ev); 
+			let currentDir=DA.tinfo.sortDir;
+			
+			let text = firstWord(ui.innerHTML);console.log(text)
+			let currentHeader = DA.tinfo.header;
+			let sortDir = currentHeader == text? currentDir == 'asc'?'desc':'asc':'asc';
+			showRecords(q, dParent, headers, text, sortDir); 
+		}
+	}
+	addSumAmount(headeruis.find(x=>x.innerHTML == 'amount'),records);
+	if (tablename != 'transactions') return;
+	let cells = DA.cells = [];
+	for (const ri of t.rowItems) {
+		let r = iDiv(ri);
+		//console.log(r,arrChildren(r)); break;
+		//let id = ri.o.id; let h = hFunc('tag', 'onclickAddTag', id, ri.index); let c = mAppend(r, mCreate('td')); c.innerHTML = h;
+		let tds = arrChildren(r);
+		for (const ui of tds) {
+			let item = { ri, div: ui, text: ui.innerHTML, record: ri.o, isSelected: false, irow: t.rowItems.indexOf(ri), icol: tds.indexOf(ui) };
+			item.header = headers[item.icol];
+			cells.push(item);
+			let bg = dbFindColor(item.tablename, item.header, ui.innerHTML);
+			mStyle(ui, { cursor: 'pointer' });
+			if (isdef(bg)) mStyle(ui, { bg, fg: 'contrast' });
+			ui.onclick = () => {toggleItemSelection(item);checkButtons();} //async()=>await onclickTablecell(ui,ri,o);
+		}
+	}
+	DA.tinfo={sortDir,records,headers,header,div:dParent,q,tablename};
+	checkButtons();
+	resizeMain('dNav',dParent,dTitle,dTable);
+	onresize = ()=>resizeMain('dNav',dParent,dTitle,dTable);
+	// let h=calcHeightLeftUnder(dTitle)-14;console.log(h)
+	// mStyle(dTable,{h})
+}
+
+
 //#region menu overview 13.7.24
 async function menuOpenOverview() {
 	let side = UI.sidebar = mSidebar();

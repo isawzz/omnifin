@@ -7,7 +7,7 @@ async function test0(){
   const loading = document.getElementById('loading');
 
   let page = 1;
-  const limit = 10; // Number of items to load per page
+  const limit = 20; // Number of items to load per page
   let isLoading = false;
 
   // Function to fetch new content
