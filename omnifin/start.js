@@ -4,7 +4,49 @@ const DB_PATH = '../db/test2.db'; // relative to omnifin dir
 onload = start;
 //onscroll = handleSticky;
 
-async function start() { await prelims(); test19_grid(); }
+async function start() { await prelims(); test21_grid(); }
+
+async function test21_grid(){
+	let dParent = clearFlex();
+	let records = dbToList(qTTList()); //'select * from tags');
+	if (records.length == 0) return;
+	let headers = Object.keys(records[0]);//['id','description','amount','unit','sender_name','receiver_name']
+	//let dgrid=mGrid(records.length,headers.length,dParent,{h:500,w100:true,overy:'auto'});
+	let [rows, cols] = [records.length, headers.length];
+	let styles = { gap:4, overy:'auto', display: 'inline-grid',gridRows: 'repeat(' + rows + ',auto)' };
+	styles.gridCols = '1fr 3fr 2fr 2fr 4fr 1fr 1fr 1fr 3fr';
+	addKeys({ display: 'inline-grid', gridCols: 'repeat(' + cols + ',1fr)' }, styles);
+	let dgrid = mDiv(dParent, styles);
+
+	for(const rec of arrTake(records,25)){
+		for(const h of headers){
+			mDom(dgrid,{},{html:rec[h]});
+		}
+	}
+	DA.info={dParent,records,headers,dgrid,nrows:25};
+	
+	let tCont = dgrid;
+	if (tCont.scrollTop + tCont.clientHeight >= tCont.scrollHeight - 50) {
+		console.log('...adding records...');
+		tLoadMoreRows(t, records, headers);
+	}
+
+
+}
+async function test20_grid(){
+	let dParent = clearFlex();
+	let records = dbToList(qTTList()); //'select * from tags');
+	if (records.length == 0) return;
+	let headers = Object.keys(records[0]);//['id','description','amount','unit','sender_name','receiver_name']
+
+	let d=mGrid(records.length,headers.length,dParent,{h:500,w100:true,overy:'auto'});
+	for(const rec of arrTake(records,25)){
+		for(const h of headers){
+			mDom(d,{},{html:rec[h]});
+		}
+	}
+
+}
 
 async function test19_grid(){
 	let dParent = clearFlex();
