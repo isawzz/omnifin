@@ -4,7 +4,22 @@ const DB_PATH = '../db/test2.db'; // relative to omnifin dir
 onload = start;
 //onscroll = handleSticky;
 
-async function start() { await prelims(); test18_16(); }
+async function start() { await prelims(); test19_grid(); }
+
+async function test19_grid(){
+	let dParent = clearFlex();
+	let records = dbToList(qTTList());
+	if (records.length == 0) return;
+	let headers = Object.keys(records[0]);//['id','description','amount','unit','sender_name','receiver_name']
+
+	let d=mGrid(records.length,headers.length,dParent);
+	for(const rec of records){
+		for(const h of headers){
+			mDom(d,{},{html:rec[h]});
+		}
+	}
+
+}
 
 async function test18_16() {
 	let dParent = clearFlex();
@@ -42,10 +57,10 @@ async function test15_scrollable() {
 		console.log('Element is scrolling');
 		if (tCont.scrollTop + tCont.clientHeight >= tCont.scrollHeight - 50) {
 			console.log('...adding records...');
-			loadMoreRows(t, recs, headers);
+			tLoadMoreRows(t, recs, headers);
 		}
 	});
-	loadMoreRows(t, recs, headers);
+	tLoadMoreRows(t, recs, headers);
 }
 
 async function test14() {

@@ -1,3 +1,15 @@
+function tOnClickHeaders(t, q, dParent, info) {
+	let headeruis = tGetHeaderUis(t);
+	for (const ui of headeruis) {
+		mStyle(ui, { cursor: 'pointer' }); //console.log(ui,firstWord(ui.innerHTML),ui.offsetWidth); //mGetStyle(ui,'w'),getRect(ui))
+		ui.onclick = (ev) => {
+			evNoBubble(ev);
+			if (DA.isResizing) return;
+			info.header = tGetHeaderFromUi(ui); //firstWord(ui.innerHTML, true);
+			//showRecords(q, dParent, info);
+		}
+	}
+}
 function headersOnClickSort(){console.log('WTF!!!!!!!!!!!!!!!!!!!!!!!!!!!!')}
 
 //#region 14.7.24

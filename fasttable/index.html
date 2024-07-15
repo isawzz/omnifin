@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Infinite Scrolling Grid</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+		}
+
+		#gridContainer {
+			width: 100%;
+			height: 500px;
+			overflow-y: auto;
+			border: 1px solid #ddd;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		th,
+		td {
+			padding: 10px;
+			border: 1px solid #ddd;
+			text-align: left;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="gridContainer">
+		<table>
+			<thead>
+				<tr>
+					<th>Header 1</th>
+					<th>Header 2</th>
+					<th>Header 3</th>
+				</tr>
+			</thead>
+			<tbody id="gridBody">
+				<!-- Rows will be appended here dynamically -->
+			</tbody>
+		</table>
+	</div>
+
+	<script>
+		document.addEventListener('DOMContentLoaded', () => {
+			const gridContainer = document.getElementById('gridContainer');
+			const gridBody = document.getElementById('gridBody');
+			let totalRecords = 1000; // Simulated total number of records
+			let pageSize = 25; // Number of records to load at a time
+			let currentPage = 0;
+
+			function loadRecords(page) {
+				// Simulate fetching data from a server
+				return new Promise(resolve => {
+					setTimeout(() => {
+						const records = [];
+						for (let i = 0; i < pageSize; i++) {
+							const recordIndex = page * pageSize + i;
+							if (recordIndex >= totalRecords) break;
+							records.push({
+								col1: `Data ${recordIndex + 1} - 1`,
+								col2: `Data ${recordIndex + 1} - 2`,
+								col3: `Data ${recordIndex + 1} - 3`
+							});
+						}
+						resolve(records);
+					}, 500); // Simulate network delay
+				});
+			}
+
+			function appendRecords(records) {
+				records.forEach(record => {
+					const row = document.createElement('tr');
+					const cell1 = document.createElement('td');
+					const cell2 = document.createElement('td');
+					const cell3 = document.createElement('td');
+					cell1.textContent = record.col1;
+					cell2.textContent = record.col2;
+					cell3.textContent = record.col3;
+					row.appendChild(cell1);
+					row.appendChild(cell2);
+					row.appendChild(cell3);
+					gridBody.appendChild(row);
+				});
+			}
+
+			function loadMoreRecords() {
+				loadRecords(currentPage).then(records => {
+					appendRecords(records);
+					currentPage++;
+				});
+			}
+
+			gridContainer.addEventListener('scroll', () => {
+				if (gridContainer.scrollTop + gridContainer.clientHeight >= gridContainer.scrollHeight) {
+					loadMoreRecords();
+				}
+			});
+
+			// Load initial records
+			loadMoreRecords();
+		});
+	</script>
+</body>
+
+</html>

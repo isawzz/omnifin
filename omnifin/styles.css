@@ -514,43 +514,53 @@ fieldset .disabled {
 
 .table {
   border-collapse: collapse;
-  /* width: 100%; */
   max-width: 100%;
   margin-bottom: 1rem;
   background-color: transparent;
 }
 
-.table_container {
+.table_container { /*unused*/
   height: 760px;
   overflow-y: auto;
   border: 1px solid #ccc;
 }
 
-.table th,
 .table td {
+  border-top: 1px solid dimgray;
   padding: 0.25rem 0.75rem;
+  box-sizing:border-box;
   vertical-align: center;
   text-align: left;
-  /* border-top: 1px solid #dee2e680; */
-  /* background-color: white; */
-  /* max-height: 50px; */
-  /* max-width: 400px; */
   /* white-space: nowrap; */
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.table td {
-  border-top: 1px solid dimgray;
+  width:100px;
 }
 
 .table th{
+  padding: 0.25rem 0.75rem;
+  box-sizing:border-box;
+  vertical-align: center;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
   background-color: #f2f2f2;
   position: sticky;
   top: 0;
   z-index: 1;
-
+  width:100px;
 }
+
+.table th.sortable {
+  cursor: pointer;
+}
+/* .table th.sortable:after {
+  content: " ▼";
+  font-size: 12px;
+}
+.table th.sortable.asc:after {
+  content: " ▲";
+} */
 
 .title {
   color: var(--fgTitle);
