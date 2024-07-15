@@ -1,11 +1,14 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es6"
+    "target": "es6",
+    "paths": {
+      "*": ["../omnifin/*"]
+    }
   },
-  "include": [
-    "." 
-  ],
+  // "include": [
+  //   "." 
+  // ],
   "exclude": [
     "basejs",
     "coding",
@@ -27,6 +30,7 @@
     "codesammler.js",
     "copi2",
     "z_history",
+    "zammel.js",
     "functions.js",
     "../omnifin/libs/*"
   ]

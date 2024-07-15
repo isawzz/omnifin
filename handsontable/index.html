@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Handsontable Example</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@latest/dist/handsontable.full.min.css">
+</head>
+<body>
+  <div id="example" class="handsontable"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/handsontable@latest/dist/handsontable.full.min.js"></script>
+  <script>
+    const data = [
+      ["Toyota", "Celica", 35000],
+      ["Ford", "Mondeo", 32000],
+      ["Porsche", "Boxster", 72000]
+    ];
+
+    const container = document.getElementById('example');
+    const hot = new Handsontable(container, {
+      data: data,
+      colHeaders: ["Make", "Model", "Price"],
+      rowHeaders: true,
+      manualColumnResize: true
+    });
+  </script>
+</body>
+</html>

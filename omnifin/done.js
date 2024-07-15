@@ -89,8 +89,8 @@ function dbDownload() {
 	document.body.removeChild(a);
 	URL.revokeObjectURL(url);
 }
-function dbFindColor(tablename,header,innerHTML){
-	return header.includes('_name')? lookup(M.dbColors,[innerHTML,'color']):null;
+function dbFindColor(s,header){
+	return nundef(header)||header.includes('_name')? lookup(M.dbColors,[s,'color']):null;
 }
 function dbGetTableName(q) { return wordAfter(q.toLowerCase(), 'from'); }
 

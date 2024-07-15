@@ -472,6 +472,20 @@ fieldset .disabled {
   border: none;
 }
 
+.resizer {
+  width: 5px;
+  height: 100%;
+  position: absolute;
+  right: 0;
+  top: 0;
+  cursor: col-resize;
+  user-select: none;
+  background-color:#ffffff;
+  /* background:blue;
+  color:orange; */
+  z-index:1000;
+}
+
 .section {
   border-radius: 10px;
   border: 2px silver solid;

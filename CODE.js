@@ -1,3 +1,5 @@
+function headersOnClickSort(){console.log('WTF!!!!!!!!!!!!!!!!!!!!!!!!!!!!')}
+
 //#region 14.7.24
 function showRecords(q,dParent,headers,header,sortDir='asc'){
 	onresize = null;

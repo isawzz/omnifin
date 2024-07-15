@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tabulator Example</title>
+  <link rel="stylesheet" href="https://unpkg.com/tabulator-tables@latest/dist/css/tabulator.min.css">
+</head>
+<body>
+  <div id="example-table"></div>
+
+  <script src="https://unpkg.com/tabulator-tables@latest/dist/js/tabulator.min.js"></script>
+  <script>
+    var table = new Tabulator("#example-table", {
+      height: "311px",
+      data: [
+        {id: 1, make: "Toyota", model: "Celica", price: 35000},
+        {id: 2, make: "Ford", model: "Mondeo", price: 32000},
+        {id: 3, make: "Porsche", model: "Boxster", price: 72000},
+      ],
+      columns: [
+        {title: "Make", field: "make", width: 150, headerSort: false, resizable: true},
+        {title: "Model", field: "model", width: 150, headerSort: false, resizable: true},
+        {title: "Price", field: "price", width: 150, headerSort: false, resizable: true}
+      ]
+    });
+  </script>
+</body>
+</html>
