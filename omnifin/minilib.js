@@ -3397,8 +3397,9 @@ function isDigit(s) { return /^[0-9]$/i.test(s); }
 function isEmpty(arr) {
 	return arr === undefined || !arr
 		|| (isString(arr) && (arr == 'undefined' || arr == ''))
+		|| isNumber(arr) && arr == 0
 		|| (Array.isArray(arr) && arr.length == 0)
-		|| Object.entries(arr).length === 0;
+		|| isDict(arr) && Object.entries(arr).length === 0;
 }
 function isEmptyOrWhiteSpace(s) { return isEmpty(s.trim()); }
 
@@ -6568,7 +6569,7 @@ function uiTypeCheckListInput(any, dParent, styles = {}, opts = {}) {
 		let div = mCheckbox(dg, o.name, o.value);
 		items.push({ nam: o.name, div, w: mGetStyle(div, 'w'), h: mGetStyle(div, 'h') });
 	}
-	let wmax = arrMax(items, 'w'); //console.log('wmax',wmax); //measure max width of items
+	let wmax = arrMax(items, 'w'); 
 	let cols = 4;
 	let wgrid = wmax * cols + 100;
 	dg.remove();

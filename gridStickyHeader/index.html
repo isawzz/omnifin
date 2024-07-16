@@ -4,7 +4,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Infinite Scrolling Grid</title>
+	<title>Infinite Scrolling Grid with Sticky Header</title>
 	<style>
 		body {
 			font-family: Arial, sans-serif;
@@ -14,43 +14,56 @@
 			width: 100%;
 			height: 500px;
 			overflow-y: auto;
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+			gap: 10px;
+			padding: 10px;
+			box-sizing: border-box;
 			border: 1px solid #ddd;
+			position: relative;
 		}
 
-		table {
-			width: 100%;
-			border-collapse: collapse;
+		.gridHeader {
+			display: contents;
 		}
 
-		th,
-		td {
+		.gridHeader div {
+			background-color: #fff;
+			border-bottom: 2px solid #000;
+			position: sticky;
+			top: 0;
+			z-index: 1;
+			padding: 10px;
+			font-weight: bold;
+		}
+
+		.gridItem {
+			background-color: #f4f4f4;
 			padding: 10px;
 			border: 1px solid #ddd;
-			text-align: left;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.gridItem div {
+			margin: 5px 0;
 		}
 	</style>
 </head>
 
 <body>
 	<div id="gridContainer">
-		<table>
-			<thead>
-				<tr>
-					<th>Header 1</th>
-					<th>Header 2</th>
-					<th>Header 3</th>
-				</tr>
-			</thead>
-			<tbody id="gridBody">
-				<!-- Rows will be appended here dynamically -->
-			</tbody>
-		</table>
+		<div class="gridHeader">
+			<div>Date</div>
+			<div>Description</div>
+			<div>Owner</div>
+		</div>
+		<!-- Grid items will be appended here dynamically -->
 	</div>
 
 	<script>
 		document.addEventListener('DOMContentLoaded', () => {
 			const gridContainer = document.getElementById('gridContainer');
-			const gridBody = document.getElementById('gridBody');
 			let totalRecords = 1000; // Simulated total number of records
 			let pageSize = 25; // Number of records to load at a time
 			let currentPage = 0;
@@ -64,9 +77,9 @@
 							const recordIndex = page * pageSize + i;
 							if (recordIndex >= totalRecords) break;
 							records.push({
-								col1: `Data ${recordIndex + 1} - 1`,
-								col2: `Data ${recordIndex + 1} - 2`,
-								col3: `Data ${recordIndex + 1} - 3`
+								date: `2024-07-${String(recordIndex + 1).padStart(2, '0')}`,
+								description: `Description for record ${recordIndex + 1}`,
+								owner: `Owner ${recordIndex + 1}`
 							});
 						}
 						resolve(records);
@@ -76,17 +89,22 @@
 
 			function appendRecords(records) {
 				records.forEach(record => {
-					const row = document.createElement('tr');
-					const cell1 = document.createElement('td');
-					const cell2 = document.createElement('td');
-					const cell3 = document.createElement('td');
-					cell1.textContent = record.col1;
-					cell2.textContent = record.col2;
-					cell3.textContent = record.col3;
-					row.appendChild(cell1);
-					row.appendChild(cell2);
-					row.appendChild(cell3);
-					gridBody.appendChild(row);
+					const item = document.createElement('div');
+					item.className = 'gridItem';
+
+					const dateDiv = document.createElement('div');
+					dateDiv.textContent = record.date;
+					item.appendChild(dateDiv);
+
+					const descriptionDiv = document.createElement('div');
+					descriptionDiv.textContent = record.description;
+					item.appendChild(descriptionDiv);
+
+					const ownerDiv = document.createElement('div');
+					ownerDiv.textContent = record.owner;
+					item.appendChild(ownerDiv);
+
+					gridContainer.appendChild(item);
 				});
 			}
 

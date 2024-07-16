@@ -1,6 +1,29 @@
 
 //#region stages showRecord SEHR COOL!!!!
 
+//#region stage 6
+function gridAddRows(dgrid, records, headers, ifrom, n) {
+	ifrom = valf(ifrom, 0); console.log(ifrom);
+	n = valf(n, records.length - ifrom);
+	for (const rec of arrTake(records, n, ifrom)) {
+		for (const h of headers) {
+			mDom(dgrid, {}, { html: rec[h] });
+		}
+	}
+	return ifrom + n;
+}
+function gridCreate(dParent, records, headers) {
+	let [rows, cols] = [records.length, headers.length];
+	let styles = { gap: 4, overy: 'auto', display: 'inline-grid' }; //, gridRows: 'repeat(' + rows + ',auto)' };
+	styles.gridCols = measureRecord(records[0]); // '1fr 3fr 2fr 2fr 4fr 1fr 1fr 1fr 3fr';
+	//styles.gridCols = 'repeat(' + cols + ',auto)'
+	//addKeys({ display: 'inline-grid', gridCols: 'repeat(' + cols + ',1fr)' }, styles);
+	let dgrid = mDiv(dParent, styles);
+	return dgrid;
+}
+
+//#endregion
+
 //#region stage 5
 
 function showRecords(q, dParent, info = {}) {

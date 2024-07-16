@@ -1,68 +1,300 @@
 
 const DB_PATH = '../db/test2.db'; // relative to omnifin dir
+onload = start;//onscroll = handleSticky;
 
-onload = start;
-//onscroll = handleSticky;
+async function start() { await prelims(); test25(); }
 
-async function start() { await prelims(); test21_grid(); }
+async function test25(){
+	let d=clearFlex();
+	showRecords(qTTList(),d);
+}
+async function test24_removeLoadDelay() {
+	let d = clearFlex(); //document.getElementById('gridContainer');
 
-async function test21_grid(){
-	let dParent = clearFlex();
-	let records = dbToList(qTTList()); //'select * from tags');
-	if (records.length == 0) return;
-	let headers = Object.keys(records[0]);//['id','description','amount','unit','sender_name','receiver_name']
-	//let dgrid=mGrid(records.length,headers.length,dParent,{h:500,w100:true,overy:'auto'});
-	let [rows, cols] = [records.length, headers.length];
-	let styles = { gap:4, overy:'auto', display: 'inline-grid',gridRows: 'repeat(' + rows + ',auto)' };
-	styles.gridCols = '1fr 3fr 2fr 2fr 4fr 1fr 1fr 1fr 3fr';
-	addKeys({ display: 'inline-grid', gridCols: 'repeat(' + cols + ',1fr)' }, styles);
-	let dgrid = mDiv(dParent, styles);
+	let recs = dbToList(qTTList()); //'select * from tags');
+	if (recs.length == 0) return;
+	let headers = Object.keys(recs[0]);//['id','description','amount','unit','sender_name','receiver_name']
+	let info = DA.info = { d, recs, headers };
 
-	for(const rec of arrTake(records,25)){
-		for(const h of headers){
-			mDom(dgrid,{},{html:rec[h]});
-		}
+	let styles = {w100:true,h:400,overy:'auto',display:'grid',gap:10,padding:10, box:true,border:'1px solid #ddd',};
+	styles.gridCols = measureRecord(recs[0]);
+
+	// let gridContainer = mDom(d, { className: 'gridContainer' }, { id: 'gridContainer' })
+	let gridContainer = mDom(d, styles, { id: 'gridContainer' })
+	let totalRecords = recs.length; // Simulated total number of records
+	let pageSize = 50; // Number of records to load at a time
+	let currentPage = 0;
+
+	function loadRecords(page) {
+		// Simulate fetching data from a server
+		return new Promise(resolve => {
+			setTimeout(() => {
+				const records = [];
+				for (let i = 0; i < pageSize; i++) {
+					const recordIndex = page * pageSize + i;
+					if (recordIndex >= totalRecords) break;
+					records.push(recs[recordIndex]); //records.push(`Record ${recordIndex + 1}`);
+				}
+				resolve(records);
+			}, 0); // Simulate network delay
+		});
 	}
-	DA.info={dParent,records,headers,dgrid,nrows:25};
+
+	function appendRecords(records) {
+		records.forEach(record => {
+			for (const h of headers) {
+				mDom(gridContainer, {}, { html: record[h] });
+			}
 	
-	let tCont = dgrid;
-	if (tCont.scrollTop + tCont.clientHeight >= tCont.scrollHeight - 50) {
-		console.log('...adding records...');
-		tLoadMoreRows(t, records, headers);
+			// const item = document.createElement('div');
+			// item.className = 'gridItem';
+			// item.textContent = record.dateof;
+			// gridContainer.appendChild(item);
+		});
 	}
+
+	function loadMoreRecords() {
+		loadRecords(currentPage).then(records => {
+			appendRecords(records);
+			currentPage++;
+		});
+	}
+
+	gridContainer.addEventListener('scroll', () => {
+		if (gridContainer.scrollTop + gridContainer.clientHeight >= gridContainer.scrollHeight) {
+			loadMoreRecords();
+		}
+	});
+
+	// Load initial records
+	loadMoreRecords();
+}
+async function test24_actuallyDisplayingMyRecords() {
+	let d = clearFlex(); //document.getElementById('gridContainer');
+
+	let recs = dbToList(qTTList()); //'select * from tags');
+	if (recs.length == 0) return;
+	let headers = Object.keys(recs[0]);//['id','description','amount','unit','sender_name','receiver_name']
+	let info = DA.info = { d, recs, headers };
+
+	let styles = {w100:true,h:300,overy:'auto',display:'grid',gap:10,padding:10, box:true,border:'1px solid #ddd',};
+	styles.gridCols = measureRecord(recs[0]);
+
+	// let gridContainer = mDom(d, { className: 'gridContainer' }, { id: 'gridContainer' })
+	let gridContainer = mDom(d, styles, { id: 'gridContainer' })
+	let totalRecords = recs.length; // Simulated total number of records
+	let pageSize = 50; // Number of records to load at a time
+	let currentPage = 0;
+
+	function loadRecords(page) {
+		// Simulate fetching data from a server
+		return new Promise(resolve => {
+			setTimeout(() => {
+				const records = [];
+				for (let i = 0; i < pageSize; i++) {
+					const recordIndex = page * pageSize + i;
+					if (recordIndex >= totalRecords) break;
+					records.push(recs[recordIndex]); //records.push(`Record ${recordIndex + 1}`);
+				}
+				resolve(records);
+			}, 500); // Simulate network delay
+		});
+	}
+
+	function appendRecords(records) {
+		records.forEach(record => {
+			for (const h of headers) {
+				mDom(gridContainer, {}, { html: record[h] });
+			}
+	
+			// const item = document.createElement('div');
+			// item.className = 'gridItem';
+			// item.textContent = record.dateof;
+			// gridContainer.appendChild(item);
+		});
+	}
+
+	function loadMoreRecords() {
+		loadRecords(currentPage).then(records => {
+			appendRecords(records);
+			currentPage++;
+		});
+	}
+
+	gridContainer.addEventListener('scroll', () => {
+		if (gridContainer.scrollTop + gridContainer.clientHeight >= gridContainer.scrollHeight) {
+			loadMoreRecords();
+		}
+	});
+
+	// Load initial records
+	loadMoreRecords();
+}
+async function test23_displayJustTheDateOf() {
+	let d = clearFlex(); //document.getElementById('gridContainer');
+
+	let recs = dbToList(qTTList()); //'select * from tags');
+	if (recs.length == 0) return;
+	let headers = Object.keys(recs[0]);//['id','description','amount','unit','sender_name','receiver_name']
+	let info = DA.info = { d, recs, headers };
+
+	let gridContainer = mDom(d, { className: 'gridContainer' }, { id: 'gridContainer' })
+	let totalRecords = recs.length; // Simulated total number of records
+	let pageSize = 50; // Number of records to load at a time
+	let currentPage = 0;
+
+	function loadRecords(page) {
+		// Simulate fetching data from a server
+		return new Promise(resolve => {
+			setTimeout(() => {
+				const records = [];
+				for (let i = 0; i < pageSize; i++) {
+					const recordIndex = page * pageSize + i;
+					if (recordIndex >= totalRecords) break;
+					records.push(recs[recordIndex]); //records.push(`Record ${recordIndex + 1}`);
+				}
+				resolve(records);
+			}, 500); // Simulate network delay
+		});
+	}
+
+	function appendRecords(records) {
+		records.forEach(record => {
+			const item = document.createElement('div');
+			item.className = 'gridItem';
+			item.textContent = record.dateof;
+			gridContainer.appendChild(item);
+		});
+	}
+
+	function loadMoreRecords() {
+		loadRecords(currentPage).then(records => {
+			appendRecords(records);
+			currentPage++;
+		});
+	}
+
+	gridContainer.addEventListener('scroll', () => {
+		if (gridContainer.scrollTop + gridContainer.clientHeight >= gridContainer.scrollHeight) {
+			loadMoreRecords();
+		}
+	});
+
+	// Load initial records
+	loadMoreRecords();
+}
+
+async function test22_aiSolution() {
+	let d = clearFlex(); //document.getElementById('gridContainer');
+
+	let gridContainer = mDom(d, { className: 'gridContainer' }, { id: 'gridContainer' })
+	let totalRecords = 10000; // Simulated total number of records
+	let pageSize = 100; // Number of records to load at a time
+	let currentPage = 0;
+
+	function loadRecords(page) {
+		// Simulate fetching data from a server
+		return new Promise(resolve => {
+			setTimeout(() => {
+				const records = [];
+				for (let i = 0; i < pageSize; i++) {
+					const recordIndex = page * pageSize + i;
+					if (recordIndex >= totalRecords) break;
+					records.push(`Record ${recordIndex + 1}`);
+				}
+				resolve(records);
+			}, 500); // Simulate network delay
+		});
+	}
+
+	function appendRecords(records) {
+		records.forEach(record => {
+			const item = document.createElement('div');
+			item.className = 'gridItem';
+			item.textContent = record;
+			gridContainer.appendChild(item);
+		});
+	}
+
+	function loadMoreRecords() {
+		loadRecords(currentPage).then(records => {
+			appendRecords(records);
+			currentPage++;
+		});
+	}
+
+	gridContainer.addEventListener('scroll', () => {
+		if (gridContainer.scrollTop + gridContainer.clientHeight >= gridContainer.scrollHeight) {
+			loadMoreRecords();
+		}
+	});
+
+	// Load initial records
+	loadMoreRecords();
+}
+
+async function test21_grid() {
+	let dParent = clearFlex();
+	let records = dbToList(qTTList()); //'select * from tags');
+	if (records.length == 0) return;
+	let headers = Object.keys(records[0]);//['id','description','amount','unit','sender_name','receiver_name']
+	let info = DA.info = { dParent, records, headers };
+
+	//let tCont = mDom(dParent, { h: 400, w100:true, overy: 'auto', border: '1px solid #ccc', padding: 0, 'caret-color': 'transparent' }); //table container important!
+	let dgrid = info.dgrid = gridCreate(dParent, records, headers);
+
+	DA.info = { dParent, records, headers, dgrid };
+	info.n = gridAddRows(dgrid, records, headers, 0, 50);
+
+	let gridContainer = dgrid;
+	gridContainer.addEventListener('scroll', () => {
+		console.log('scrolling...')
+		if (gridContainer.scrollTop + gridContainer.clientHeight >= gridContainer.scrollHeight) {
+			info.n = gridAddRows(dgrid, records, headers, info.n, 50);
+			// loadMoreRecords();
+		}
+	});
+
+	// tCont.onscroll = ()=>{if (tCont.scrollTop + tCont.clientHeight >= tCont.scrollHeight - 50) {
+	// 	console.log('...adding records...');
+	// 	gridAddRows(dgrid, records, headers, info.n, 50);
+	// }};
 
 
 }
-async function test20_grid(){
+
+
+
+
+
+async function test20_grid() {
 	let dParent = clearFlex();
 	let records = dbToList(qTTList()); //'select * from tags');
 	if (records.length == 0) return;
 	let headers = Object.keys(records[0]);//['id','description','amount','unit','sender_name','receiver_name']
 
-	let d=mGrid(records.length,headers.length,dParent,{h:500,w100:true,overy:'auto'});
-	for(const rec of arrTake(records,25)){
-		for(const h of headers){
-			mDom(d,{},{html:rec[h]});
+	let d = mGrid(records.length, headers.length, dParent, { h: 500, w100: true, overy: 'auto' });
+	for (const rec of arrTake(records, 25)) {
+		for (const h of headers) {
+			mDom(d, {}, { html: rec[h] });
 		}
 	}
 
 }
-
-async function test19_grid(){
+async function test19_grid() {
 	let dParent = clearFlex();
 	let records = dbToList(qTTList());
 	if (records.length == 0) return;
 	let headers = Object.keys(records[0]);//['id','description','amount','unit','sender_name','receiver_name']
 
-	let d=mGrid(records.length,headers.length,dParent);
-	for(const rec of records){
-		for(const h of headers){
-			mDom(d,{},{html:rec[h]});
+	let d = mGrid(records.length, headers.length, dParent);
+	for (const rec of records) {
+		for (const h of headers) {
+			mDom(d, {}, { html: rec[h] });
 		}
 	}
 
 }
-
 async function test18_16() {
 	let dParent = clearFlex();
 	showRecords(qTTList(), dParent);
@@ -75,8 +307,8 @@ async function test17_aggrid() {
 	let rowData = recs;
 	const gridOptions = { columnDefs: columnDefs, rowData: rowData };
 
-  // <div id="myGrid" style="height: 500px; width: 600px;" class="ag-theme-alpine"></div>
-	let dg= mDom(d,{h:500,w:600,className:'ag-theme-alpine'},{id:'myGrid'});
+	// <div id="myGrid" style="height: 500px; width: 600px;" class="ag-theme-alpine"></div>
+	let dg = mDom(d, { h: 500, w: 600, className: 'ag-theme-alpine' }, { id: 'myGrid' });
 	const gridDiv = document.querySelector('#myGrid');
 	//let gridapi = createGrid(gridDiv,gridOptions);
 	new agGrid.Grid(gridDiv, gridOptions);
@@ -104,7 +336,6 @@ async function test15_scrollable() {
 	});
 	tLoadMoreRows(t, recs, headers);
 }
-
 async function test14() {
 	//await switchToMainMenu('overview');
 	showRecords(qTTList(), 'dMain');

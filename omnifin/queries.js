@@ -54,7 +54,6 @@ function qTTList() {
 			t.dateof, 
 			sender.account_name AS sender_name, 
 			receiver.account_name AS receiver_name, 
-			t.description,
 			t.amount, 
 			a.asset_name AS unit, 
 			GROUP_CONCAT(
@@ -68,7 +67,8 @@ function qTTList() {
 					WHEN tg.category <> 'MCC' AND tg.tag_name NOT GLOB '*[0-9]*' THEN tg.tag_name 
 					ELSE NULL 
 				END
-			) AS tag_names 
+			) AS tag_names,
+			t.description
 		FROM 
 			transactions t
 		JOIN 
