@@ -184,6 +184,15 @@ fieldset .disabled {
   background-color: var(--bgButtonActive) !important;
 }
 
+.bg_silver{
+  background-color: silver;
+  color:black;
+}
+.bg_yellow{
+  background-color: yellow !important;
+  color:black;
+}
+
 .button {
   padding: 5px 10px;
   font-size: 16px;
@@ -2197,7 +2206,16 @@ input:checked+.swslider:before {
   position: sticky;
   top: 0;
   z-index: 1;
-  padding: 10px;
+  /* padding: 10px; */
+  font-weight: bold;
+}
+.grid_header {
+  background-color: #fff;
+  border-bottom: 2px solid #000;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  /* padding: 10px; */
   font-weight: bold;
 }
 .gridItem {

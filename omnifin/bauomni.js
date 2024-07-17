@@ -1,3 +1,40 @@
+
+function measureRecord(rec) {
+	let res = '';
+	var di = { dateof: 100, id: 40, sender_name: 120, receiver_name: 130, amount: 80, unit: 40, MCC: 40, tag_names:'auto', description:'1fr' };
+	for (const h in rec) {
+		let val = rec[h]; //console.log(typeof val, val, h);
+		let w=di[h];
+		w=isNumber(w)?`${w}px`:w??'auto';
+		res += ` ${w}`;
+		// if (isdef(w)) res += ` ${w}`;
+		// else if (isEmpty(val)) res += ' 1fr';
+		// else {
+		// 	res += ` ${Math.min(Math.max(measureTextWidth(val) * 2, 50), 300)}px`;
+		// }
+	}
+	//console.log(res)
+	return res;
+
+}
+function sqlUpdateOrderBy(q, headers, aggregate=true) {
+	let clauses = splitSQLClauses(q); // console.log('clauses',clauses)
+
+	let cl=clauses['ORDER BY'];
+	let sofar = aggregate && isdef(cl)? toWords(stringAfter(cl[0],'ORDER BY'),true):[];
+	//console.log('___',sofar);
+	headers.map(x=>addIf(sofar,x));
+
+	let qnew = '';
+	for(const k in clauses){
+		if (k == 'ORDER BY') continue;
+		for(const a of clauses[k]) qnew+= `${a.trim()}\n`;
+	}
+
+	qnew += `ORDER BY ${sofar.join(', ')};`;// = Object.values(clauses).join('\n')+ ' ' + cl;
+	return qnew;
+}
+
 //#region sorting records ui
 async function onclickAscDescButton(ev){
 	let inp = ev.target;
@@ -65,12 +102,13 @@ async function uiTypeSortForm(dParent, data, resolve) {
 
 //#region menu overview
 async function menuOpenOverview() {
-	let side = UI.sidebar = mSidebar();
+	let side = UI.sidebar = mSidebar('dLeft',110);
 	let gap = 5;
 	UI.commands.showSchema = mCommand(side.d, 'showSchema', 'DB Structure'); mNewline(side.d, gap);
 	mLinebreak(side.d, 10);
+	UI.d = mDom('dMain'); //, { className: 'section' });
 
-	UI.commands.translist = mCommand(side.d, 'translist', 'translist',{open:()=>showRecords(qTTList())}); mNewline(side.d, gap);
+	UI.commands.translist = mCommand(side.d, 'translist', 'translist',{open:()=>showRecords(qTTList(),UI.d)}); mNewline(side.d, gap);
 	UI.commands.translistlegacy = mCommand(side.d, 'translistlegacy', 'legacy',{open:onclickTranslist}); //()=>showRecords(qTTList())}); mNewline(side.d, gap);
 	// UI.commands.transcols = mCommand(side.d, 'transcols', 'transcols'); mNewline(side.d, gap);
 	// mLinebreak(side.d, 10);
@@ -82,7 +120,6 @@ async function menuOpenOverview() {
 	// UI.commands.verifications = mCommand(side.d, 'verifications', 'verifications'); mNewline(side.d, gap);
 	// UI.commands.tRevisions = mCommand(side.d, 'tRevisions', 'transaction revisions'); mNewline(side.d, gap);
 
-	UI.d = mDom('dMain', { className: 'section' });
 	await onclickCommand(null, 'translist');
 }
 async function menuCloseOverview() { closeLeftSidebar(); mClear('dMain'); M.qHistory = []; }
@@ -225,64 +262,6 @@ function showTableSortedBy(dParent, title, tablename, records, headers, header) 
 //#region filter records
 async function onclickFilter(ev) { await filterRecords(); }
 async function onclickFilterFast(ev) { await filterRecords(null, false); }
-async function filterRecords(exp, allowEdit = true) {
-	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header];
-	if (nundef(exp)) { exp = extractFilterExpression(); }
-	if (allowEdit) { let content = { exp, caption: 'Filter' }; exp = await mGather(null, {}, { content, type: 'textarea', value: exp }); }
-	if (!exp || isEmpty(exp)) { console.log('operation cancelled!'); return; }
-	let i = DA.tinfo;
-	records = dbToList(exp);
-	showChunkedSortedBy(i.dParent, i.title, i.tablename, records, headers, header);
-}
-function extractFilterExpression() {
-	let cells = DA.cells;
-	let selitems = cells.filter(x => x.isSelected); //console.log(selitems);
-
-	let q = DA.tinfo.q;
-	let clauses = splitSQLClauses(q); //console.log(clauses); 
-	let sc = clauses.SELECT[0];
-	assertion(isdef(sc), `NO SELECT CLAUSE!!! ${q}`);
-	assertion(clauses.SELECT.length == 1, `WRONG NUMBER OF SELECT CLAUSES!!! ${q}`);
-
-	let headers = extractHeadersFromSelect(sc).map(x => x.toLowerCase()); //console.log(headers)
-
-	for (const item of selitems) {
-		let h = item.header.toLowerCase(); //console.log(h)
-		let match = headers.find(x => x == h);
-		if (isdef(match)) { item.h = item.header; item.header = match; }//console.log('found',match);continue;}
-		match = headers.find(x => x.endsWith(h));
-		if (isdef(match)) { item.h = item.header; item.header = match; }//console.log('found',match);}
-	}
-
-	console.log(clauses)
-	let where = generateSQLWhereClause(selitems); //console.log(where)
-	if (where) {
-		if (isdef(clauses.WHERE)){
-			let cl=clauses.WHERE[0];
-			clauses.WHERE = [`WHERE `+stringAfter(cl,'WHERE')+' AND '+stringAfter(where,'WHERE')];
-		} 
-		else	clauses.WHERE = [where];
-	}
-
-	let having = generateSQLHavingClause(selitems); //console.log('!!!!',having)
-	if (having) {
-		if (isdef(clauses.HAVING)){
-			let cl=clauses.HAVING[0];
-			clauses.HAVING = [`HAVING (`+stringAfter(cl,'HAVING')+') AND '+stringAfter(having,'HAVING')];
-		} 
-		else	clauses.HAVING = [having];
-	}
-
-	let order = `SELECT|FROM|JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|OUTER JOIN|FULL JOIN|CROSS JOIN|UNION|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET`.split('|');
-	let sql = '';
-	for (const k of order) {
-		let list = lookup(clauses, [k]);
-		if (!list) continue;
-		sql += '\n' + list.join('\n');
-	}
-	return sql + ';';
-
-}
 function generateSQLWhereClause(cells) {
 	// // Example usage:
 	// const cells = [

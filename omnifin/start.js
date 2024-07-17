@@ -2,8 +2,24 @@
 const DB_PATH = '../db/test2.db'; // relative to omnifin dir
 onload = start;//onscroll = handleSticky;
 
-async function start() { await prelims(); test25(); }
+async function start() { await prelims(); test27(); }
 
+async function test27(){
+	await switchToMainMenu('overview');
+}
+
+async function test26_sql(){
+	let q = qTTList();
+	q=sqlUpdateOrderBy(q,['sender_name','receiver_name']);
+	//console.log(q);
+	let d=clearFlex();
+	showRecords(q,d);
+
+	q=sqlUpdateOrderBy(q,['amount']); 
+	//console.log(q)
+	showRecords(q,d);
+
+}
 async function test25(){
 	let d=clearFlex();
 	showRecords(qTTList(),d);
@@ -183,7 +199,6 @@ async function test23_displayJustTheDateOf() {
 	// Load initial records
 	loadMoreRecords();
 }
-
 async function test22_aiSolution() {
 	let d = clearFlex(); //document.getElementById('gridContainer');
 
@@ -232,7 +247,6 @@ async function test22_aiSolution() {
 	// Load initial records
 	loadMoreRecords();
 }
-
 async function test21_grid() {
 	let dParent = clearFlex();
 	let records = dbToList(qTTList()); //'select * from tags');
@@ -262,11 +276,6 @@ async function test21_grid() {
 
 
 }
-
-
-
-
-
 async function test20_grid() {
 	let dParent = clearFlex();
 	let records = dbToList(qTTList()); //'select * from tags');
@@ -749,7 +758,7 @@ async function prelims() {
 	M.dicolor = await mGetYaml(`../assets/dicolor.yaml`);[M.colorList, M.colorByHex, M.colorByName] = getListAndDictsForDicolors();
 	M.dbColors = await mGetYaml('../db/info.yaml');
 
-	mStyle('dMain', { padding: 10 });
+	//mStyle('dMain', { bg:'white', fg:'black' }); //padding: 10 });
 	UI.commands = {};
 	UI.nav = mNavMenu();
 	setColors('skyblue', 'white'); setCssVar('--bgNav', '#659AB0')

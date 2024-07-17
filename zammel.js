@@ -1,6 +1,245 @@
 
 //#region stages showRecord SEHR COOL!!!!
 
+//#region stage 7
+async function showRecords(q, dParent) {
+
+	mClear(dParent);//mStyle(dParent,{bg:'white',vpadding:10})
+	let recs = dbToList(q); //'select * from tags');
+	if (recs.length == 0) return;
+	let headers = Object.keys(recs[0]);//['id','description','amount','unit','sender_name','receiver_name']
+	DA.info = { q };//d: dParent, recs, headers };
+	//let db = mDom(dParent, { gap: 10, mabottom: 10, className: 'centerflexV' }); //mCenterCenterFlex(db);
+
+	mIfNotRelative(dParent);
+	let d=mDom(dParent,{position:'absolute',h:window.innerHeight-135,w:window.innerWidth-110});//,bg:'red'})
+
+	//let h=750;//window.innerHeight-150;
+	let styles = { bg:'white', fg:'black', margin:10, w:'98%', h:'97%', overy: 'auto', display: 'grid', gap: 4, box: true, border: '1px solid #ddd', };
+	styles.gridCols = measureRecord(recs[0]);
+
+	let dgrid = mDom(d, styles, { id: 'gridContainer' });
+
+	let dh = mDom(dgrid, { className: 'gridHeader' });
+	for (const h of headers) { 
+		let th = mDom(dh, { cursor: 'pointer' }, { html: h, onclick: mToggleSelection }); 
+	}
+
+	let totalRecords = recs.length; // Simulated total number of records
+	let pageSize = 50; // Number of records to load at a time
+	let currentPage = 0;
+
+	function loadRecords(page) {
+		// Simulate fetching data from a server
+		return new Promise(resolve => {
+			setTimeout(() => {
+				const records = [];
+				for (let i = 0; i < pageSize; i++) {
+					const recordIndex = page * pageSize + i;
+					if (recordIndex >= totalRecords) break;
+					records.push(recs[recordIndex]); //records.push(`Record ${recordIndex + 1}`);
+				}
+				resolve(records);
+			}, 0); // Simulate network delay
+		});
+	}
+
+	function appendRecords(records) {
+		let styles = {cursor:'pointer'};
+		records.forEach(record => {
+			for (const h of headers) {
+
+				let html = record[h];
+				styles.align = isNumber(html)?'right':'left';
+				if (h.includes('amount')) html = html.toFixed(2);
+
+				let td = mDom(dgrid, styles, { html,onclick:mToggleSelection });
+			}
+		});
+	}
+
+	function loadMoreRecords() {
+		loadRecords(currentPage).then(records => {
+			appendRecords(records);
+			currentPage++;
+		});
+	}
+
+	dgrid.addEventListener('scroll', () => {
+		if (dgrid.scrollTop + dgrid.clientHeight >= dgrid.scrollHeight) {
+			loadMoreRecords();
+		}
+	});
+
+	// Load initial records
+	loadMoreRecords();
+}
+async function filterRecords(exp, allowEdit = true) {
+	console.log('exp',exp);
+	exp = extractFilterExpression(q);
+
+	return;
+	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header];
+	if (nundef(exp)) { exp = extractFilterExpression(); }
+	if (allowEdit) { let content = { exp, caption: 'Filter' }; exp = await mGather(null, {}, { content, type: 'textarea', value: exp }); }
+	if (!exp || isEmpty(exp)) { console.log('operation cancelled!'); return; }
+	let i = DA.tinfo;
+	records = dbToList(exp);
+	showChunkedSortedBy(i.dParent, i.title, i.tablename, records, headers, header);
+}
+function extractFilterExpression() {
+	let cells = DA.cells;
+	let selitems = cells.filter(x => x.isSelected); //console.log(selitems);
+
+	let q = DA.tinfo.q;
+	let clauses = splitSQLClauses(q); //console.log(clauses); 
+	let sc = clauses.SELECT[0];
+	assertion(isdef(sc), `NO SELECT CLAUSE!!! ${q}`);
+	assertion(clauses.SELECT.length == 1, `WRONG NUMBER OF SELECT CLAUSES!!! ${q}`);
+
+	let headers = extractHeadersFromSelect(sc).map(x => x.toLowerCase()); //console.log(headers)
+
+	for (const item of selitems) {
+		let h = item.header.toLowerCase(); //console.log(h)
+		let match = headers.find(x => x == h);
+		if (isdef(match)) { item.h = item.header; item.header = match; }//console.log('found',match);continue;}
+		match = headers.find(x => x.endsWith(h));
+		if (isdef(match)) { item.h = item.header; item.header = match; }//console.log('found',match);}
+	}
+
+	console.log(clauses)
+	let where = generateSQLWhereClause(selitems); //console.log(where)
+	if (where) {
+		if (isdef(clauses.WHERE)){
+			let cl=clauses.WHERE[0];
+			clauses.WHERE = [`WHERE `+stringAfter(cl,'WHERE')+' AND '+stringAfter(where,'WHERE')];
+		} 
+		else	clauses.WHERE = [where];
+	}
+
+	let having = generateSQLHavingClause(selitems); //console.log('!!!!',having)
+	if (having) {
+		if (isdef(clauses.HAVING)){
+			let cl=clauses.HAVING[0];
+			clauses.HAVING = [`HAVING (`+stringAfter(cl,'HAVING')+') AND '+stringAfter(having,'HAVING')];
+		} 
+		else	clauses.HAVING = [having];
+	}
+
+	let order = `SELECT|FROM|JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|OUTER JOIN|FULL JOIN|CROSS JOIN|UNION|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET`.split('|');
+	let sql = '';
+	for (const k of order) {
+		let list = lookup(clauses, [k]);
+		if (!list) continue;
+		sql += '\n' + list.join('\n');
+	}
+	return sql + ';';
+
+}
+
+
+//#endregion
+
+//#region stage 6
+function generateSQLOrderByClause(headers) {
+	let res = 'ORDER BY ' + headers.join(',');
+	return res;
+}
+
+function sqlUpdateOrderBy(q, headers, aggregate=true) {
+	let clauses = splitSQLClauses(q);  console.log('clauses',clauses)
+
+	let cl=clauses['ORDER BY'];
+	if (nundef(cl)) cl='ORDER BY ' + headers.join(',');
+	else {
+		let otherHeaders = stringAfter(cl[0],'ORDER BY').trim();
+		otherHeaders = toWords(otherHeaders,true);
+		console.log(otherHeaders);
+		headers.map(x=>addIf(otherHeaders,x));
+		cl = 'ORDER BY ' + headers.join(',');
+
+	}
+
+	delete clauses['ORDER BY'];
+
+	let qnew = '';
+	for(const k in clauses){
+		for(const a of clauses[k]) qnew+= `${a.trim()}\n`
+	}
+	qnew += `${cl}`;// = Object.values(clauses).join('\n')+ ' ' + cl;
+	return qnew;
+}
+
+async function showRecords(q,dParent) {
+
+	let recs = dbToList(q); //'select * from tags');
+	if (recs.length == 0) return;
+	let headers = Object.keys(recs[0]);//['id','description','amount','unit','sender_name','receiver_name']
+	//let info = DA.info = { d: dParent, recs, headers };
+
+	let styles = {w100:true,h:400,overy:'auto',display:'grid',gap:10,hpadding:10, box:true,border:'1px solid #ddd',};
+	styles.gridCols = measureRecord(recs[0]);
+
+	// let gridContainer = mDom(d, { className: 'gridContainer' }, { id: 'gridContainer' })
+	let gridContainer = mDom(dParent, styles, { id: 'gridContainer' });
+
+	let dh=mDom(gridContainer,{className:'gridHeader'});
+	for(const h of headers) {
+		mDom(dh,{},{html:h});
+	}
+	//return;
+
+	let totalRecords = recs.length; // Simulated total number of records
+	let pageSize = 50; // Number of records to load at a time
+	let currentPage = 0;
+
+	function loadRecords(page) {
+		// Simulate fetching data from a server
+		return new Promise(resolve => {
+			setTimeout(() => {
+				const records = [];
+				for (let i = 0; i < pageSize; i++) {
+					const recordIndex = page * pageSize + i;
+					if (recordIndex >= totalRecords) break;
+					records.push(recs[recordIndex]); //records.push(`Record ${recordIndex + 1}`);
+				}
+				resolve(records);
+			}, 0); // Simulate network delay
+		});
+	}
+
+	function appendRecords(records) {
+		records.forEach(record => {
+			for (const h of headers) {
+				mDom(gridContainer, {}, { html: record[h] });
+			}
+	
+			// const item = document.createElement('div');
+			// item.className = 'gridItem';
+			// item.textContent = record.dateof;
+			// gridContainer.appendChild(item);
+		});
+	}
+
+	function loadMoreRecords() {
+		loadRecords(currentPage).then(records => {
+			appendRecords(records);
+			currentPage++;
+		});
+	}
+
+	gridContainer.addEventListener('scroll', () => {
+		if (gridContainer.scrollTop + gridContainer.clientHeight >= gridContainer.scrollHeight) {
+			loadMoreRecords();
+		}
+	});
+
+	// Load initial records
+	loadMoreRecords();
+}
+
+//#endregion
+
 //#region stage 6
 function gridAddRows(dgrid, records, headers, ifrom, n) {
 	ifrom = valf(ifrom, 0); console.log(ifrom);
@@ -781,7 +1020,7 @@ function showRecords(q,dParent,headers,header,sortDir='asc'){
 }
 //#endregion
 
-//#endregion
+//#_endregion
 
 //#region mSwitch
 function mSwitch(offstate,onstate){

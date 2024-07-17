@@ -1,0 +1,12 @@
+.gridHeader {
+  display: contents;
+}
+.gridHeader div {
+  /* background-color: #fff; */
+  border-bottom: 2px solid #000;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  /* padding: 10px; */
+  font-weight: bold;
+}
