@@ -5,7 +5,19 @@ onload = start;//onscroll = handleSticky;
 async function start() { await prelims(); test27(); }
 
 async function test27(){
-	await switchToMainMenu('overview');
+	await switchToMainMenu('overview');//return;
+	//await	sortRecordsBy('amount');
+	DA.sorting={MCC:'asc'}
+	await	sortRecordsBy('MCC');
+
+	// onclickSortFast();
+	return;
+
+	let grid = mBy('gridContainer'); //console.log(arrChildren(grid).length)
+	let ch=rChoose(arrTake(arrChildren(grid),20,3));mClass(ch,'bg_yellow')
+	//console.log('ch',ch)
+	//ch.map(x=>mClass(x,'bg_yellow'));
+	await filterRecords();
 }
 
 async function test26_sql(){

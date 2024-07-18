@@ -5,7 +5,11 @@ async function showRecords(q, dParent) {
 	let recs = dbToList(q); //'select * from tags');
 	if (recs.length == 0) return;
 	let headers = Object.keys(recs[0]);//['id','description','amount','unit','sender_name','receiver_name']
-	DA.info = { q,records:recs,headers };//d: dParent, recs, headers };
+	if (nundef(DA.info)) DA.info={sorting:{}};
+	DA.info.q=q;
+	DA.info.dParent=dParent;
+	DA.info.records=recs;
+	DA.info.headers=headers;
 	//let db = mDom(dParent, { gap: 10, mabottom: 10, className: 'centerflexV' }); //mCenterCenterFlex(db);
 
 	mIfNotRelative(dParent);
@@ -19,7 +23,7 @@ async function showRecords(q, dParent) {
 
 	let dh = mDom(dgrid, { className: 'gridHeader' });
 	for (const h of headers) { 
-		let th = mDom(dh, { cursor: 'pointer' }, { html: h, onclick: mToggleSelection }); 
+		let th = mDom(dh, { cursor: 'pointer' }, { html: h, onclick: ()=>sortRecordsBy(h) }); 
 	}
 
 	let totalRecords = recs.length; // Simulated total number of records
@@ -61,6 +65,11 @@ async function showRecords(q, dParent) {
 			currentPage++;
 		});
 	}
+	async function loadMoreRecordsAsync() {
+		let records = await loadRecords(currentPage);
+		appendRecords(records);
+		currentPage++;
+	}
 
 	dgrid.addEventListener('scroll', () => {
 		if (dgrid.scrollTop + dgrid.clientHeight >= dgrid.scrollHeight) {
@@ -69,7 +78,7 @@ async function showRecords(q, dParent) {
 	});
 
 	// Load initial records
-	loadMoreRecords();
+	await loadMoreRecordsAsync();
 }
 
 

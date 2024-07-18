@@ -1,5 +1,17 @@
 
+function findElementPosition(element,numHeaderElements) {
+	const gridContainer = document.getElementById('gridContainer'); //console.log(gridContainer);
+	const gridItems = Array.from(gridContainer.children); //console.log(gridItems)
+	const columns = getComputedStyle(gridContainer).gridTemplateColumns.split(' ').length; //console.log(columns)
 
+	const index = gridItems.indexOf(element)-numHeaderElements??0; //wegen header!!!
+	if (index === -1) return null;
+
+	const irow = Math.floor(index / columns);
+	const icol = index % columns;
+
+	return { irow, icol };
+}
 function measureTextWidth(text,fz,family,weight){
 	if (nundef(fz)) fz=measureTextWidth.fz || (measureTextWidth.fz = mGetStyle(document.body,'fz'));
 	if (nundef(family)) family=measureTextWidth.family || (measureTextWidth.family = mGetStyle(document.body,'family'));

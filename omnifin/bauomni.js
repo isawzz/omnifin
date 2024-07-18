@@ -17,30 +17,13 @@ function measureRecord(rec) {
 	return res;
 
 }
-function sqlUpdateOrderBy(q, headers, aggregate=true) {
-	let clauses = splitSQLClauses(q); // console.log('clauses',clauses)
-
-	let cl=clauses['ORDER BY'];
-	let sofar = aggregate && isdef(cl)? toWords(stringAfter(cl[0],'ORDER BY'),true):[];
-	//console.log('___',sofar);
-	headers.map(x=>addIf(sofar,x));
-
-	let qnew = '';
-	for(const k in clauses){
-		if (k == 'ORDER BY') continue;
-		for(const a of clauses[k]) qnew+= `${a.trim()}\n`;
-	}
-
-	qnew += `ORDER BY ${sofar.join(', ')};`;// = Object.values(clauses).join('\n')+ ' ' + cl;
-	return qnew;
-}
 
 //#region sorting records ui
 async function onclickAscDescButton(ev){
 	let inp = ev.target;
 	console.log(':::',inp)
 }
-async function onclickSort(ev) { await sortRecords(); }
+async function onclickSort(ev) { await sortRecordsBy(); }
 async function onclickSortFast(ev) { await sortRecords(null, false); }
 function onToggleState(ev, states, colors) {
 	let elem = ev.target;
