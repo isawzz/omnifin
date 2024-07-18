@@ -2208,6 +2208,7 @@ input:checked+.swslider:before {
   z-index: 1;
   /* padding: 10px; */
   font-weight: bold;
+  word-wrap: break-word;
 }
 .grid_header {
   background-color: #fff;

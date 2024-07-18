@@ -38,6 +38,17 @@ function mButtonX(dParent, handler = null, sz = 22, offset = 5, color = 'contras
 	let fg = color == 'contrast' ? colorIdealText(bg, true) : color;
 	el = mDom(bx, { fz: sz, hline: sz, family: 'fa6', fg, display: 'inline' }, { html: String.fromCharCode('0x' + o.fa6) });
 }
+function mCommand(dParent, key, html, styles={}, opts = {}) {
+	if (nundef(html)) html = capitalize(key);
+	let close = valf(opts.close, () => { console.log('close', key) });
+	let save = valf(opts.save, false);
+	let open = valf(opts.open, window[`onclick${capitalize(key)}`]);
+	let d = mDom(dParent, { display: 'inline-block' }, { key: key });
+	let a = mDom(d, styles, { id: `${key}`, key: `${key}`, tag: 'a', href: '#', html: html, className: 'nav-link', onclick: onclickCommand })
+	let cmd = { dParent, elem: d, div: a, key, open, close, save };
+	addKeys(opts, cmd);
+	return cmd;
+}
 function mDataTable(reclist, dParent, rowstylefunc, headers, id, showheaders = true) {
 	//console.log(reclist[0])
 	if (isEmpty(reclist)) { mText('no data', dParent); return null; }
@@ -162,8 +173,8 @@ async function onclickCommand(ev,key) {
 	let links = Array.from(mBy('dLeft').getElementsByTagName('a'));
 	links.map(x => mStyle(x, { fStyle: 'normal' }));
 	mStyle(iDiv(cmd), { fStyle: 'italic' });
-	UI.lastCommandKey = key;
 
+	UI.lastCommandKey = key;
 
 	await cmd.open();
 }

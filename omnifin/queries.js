@@ -111,8 +111,8 @@ function qTTCols() {
           ELSE NULL 
         END
       ) AS MCC,
-			t.description,
-			${s}
+			${s},
+			t.description
     FROM 
       transactions t
     JOIN 
@@ -128,6 +128,61 @@ function qTTCols() {
     GROUP BY 
       t.id, t.dateof, sender_name, receiver_name, t.amount, unit
   `;
+}
+function qTTColsSorted(sorting) {
+	if (nundef(sorting)) sorting=DA.info.sorting;
+	let recs = dbToList('select * from tags',false);
+	//console.log(recs)
+	let names = recs.map(x=>x.tag_name);
+	names = names.filter(x=>!isNumber(x));
+
+	let keysFirst = Object.keys(sorting).filter(x=>isdef(sorting[x]));
+	names = keysFirst.concat(arrMinus(names,keysFirst));
+
+	//console.log(names);
+	let s='';
+	for(const name of names){
+		s+=`MAX(CASE WHEN tg.tag_name = '${name}' THEN 'X' ELSE '' END) AS '${name}'`;
+		if (name != arrLast(names)) s+=',';
+	}
+
+  let q = `
+    SELECT 
+      t.id, 
+      t.dateof, 
+      sender.account_name AS sender_name, 
+      receiver.account_name AS receiver_name, 
+      t.amount, 
+      a.asset_name AS unit, 
+      GROUP_CONCAT(
+        CASE 
+          WHEN tg.category = 'MCC' THEN tg.tag_name 
+          ELSE NULL 
+        END
+      ) AS MCC,
+			${s},
+			t.description
+    FROM 
+      transactions t
+    JOIN 
+      accounts sender ON t.sender = sender.id
+    JOIN 
+      accounts receiver ON t.receiver = receiver.id
+    JOIN 
+      assets a ON t.unit = a.id
+		LEFT JOIN 
+			transaction_tags tt ON t.id = tt.id
+		LEFT JOIN 
+			tags tg ON tt.tag_id = tg.id
+    GROUP BY 
+      t.id, t.dateof, sender_name, receiver_name, t.amount, unit
+  `;
+		//separate non-tag_names from tag_names
+		//sort by tagNames first
+		//then by non-tag_names as sorting is set
+
+	q+= `ORDER BY ${keysFirst.map(x => x + ' DESC').join(', ')};`;
+	return q;
 }
 function qTransactions() {
 	return `

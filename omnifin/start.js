@@ -7,8 +7,9 @@ async function start() { await prelims(); test27(); }
 async function test27(){
 	await switchToMainMenu('overview');//return;
 	//await	sortRecordsBy('amount');
-	DA.sorting={MCC:'asc'}
-	await	sortRecordsBy('MCC');
+	DA.info.sorting={neurips22:'desc'};
+	await showRecords(qTTColsSorted({neurips22:'desc'}),UI.d);
+	//await	sortRecordsBy('MCC');
 
 	// onclickSortFast();
 	return;
@@ -772,7 +773,7 @@ async function prelims() {
 
 	//mStyle('dMain', { bg:'white', fg:'black' }); //padding: 10 });
 	UI.commands = {};
-	UI.nav = mNavMenu();
+	UI.nav = showNavMenu();
 	setColors('skyblue', 'white'); setCssVar('--bgNav', '#659AB0')
 
 	DB = await dbInit(DB_PATH);

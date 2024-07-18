@@ -1,7 +1,347 @@
 
 //#region stages showRecord SEHR COOL!!!!
 
+//#region stage 9
+async function menuOpenOverview() {
+	let side = UI.sidebar = mSidebar('dLeft',110);
+	UI.d = mDom('dMain'); //, { className: 'section' });
+	let gap = 5;
+
+	UI.commands.showSchema = mCommand(side.d, 'showSchema', 'DB Structure',{}); mNewline(side.d, gap);mLinebreak(side.d, 10);
+	UI.commands.translist = mCommand(side.d, 'translist', 'translist',{},{open:()=>showRecords(qTTList(),UI.d)}); mNewline(side.d, gap);
+	//UI.commands.translistlegacy = mCommand(side.d, 'translistlegacy', 'legacy',{open:onclickTranslist}); //()=>showRecords(qTTList())}); mNewline(side.d, gap);
+	// UI.commands.transcols = mCommand(side.d, 'transcols', 'transcols'); mNewline(side.d, gap);
+	// mLinebreak(side.d, 10);
+	// UI.commands.reports = mCommand(side.d, 'reports', 'reports'); mNewline(side.d, gap);
+	// UI.commands.assets = mCommand(side.d, 'assets', 'assets'); mNewline(side.d, gap);
+	// UI.commands.tags = mCommand(side.d, 'tags', 'tags'); mNewline(side.d, gap);
+	// UI.commands.accounts = mCommand(side.d, 'accounts', 'accounts'); mNewline(side.d, gap);
+	// UI.commands.statements = mCommand(side.d, 'statements', 'statements'); mNewline(side.d, gap);
+	// UI.commands.verifications = mCommand(side.d, 'verifications', 'verifications'); mNewline(side.d, gap);
+	// UI.commands.tRevisions = mCommand(side.d, 'tRevisions', 'transaction revisions'); mNewline(side.d, gap);
+
+	await onclickCommand(null, 'translist');
+}
+function showNavMenuRest(){
+	
+	let dTop=mDom(dNav,{class:'centerFlexV'});
+	//let dlogo = mDom(dTop, { fz:34 }, { html: `Omnifin` });
+
+	mDom(dTop, { fz: 34, mabottom: 10, w100: true }, { html: `Omnifin` });
+	let dm = mDom(dTop, { gap: 10, className: 'centerflexV' }); 
+	let nav = mMenu(dm);
+	let commands = {};
+	commands.overview = menuCommand(nav.l, 'nav', 'overview', 'Overview', menuOpenOverview, menuCloseOverview);
+	commands.sql = menuCommand(nav.l, 'nav', 'sql', 'Sql', menuOpenSql, menuCloseSql);
+	// commands.test = menuCommand(nav.l, 'nav', 'test', 'Test', menuOpenTest, menuCloseTest);
+	nav.commands = commands;
+
+	mLinebreak(dTop);
+	let db = mDom(dTop, { maleft:110, gap: 10, className: 'centerflexV' },{id:'dButtons'}); 
+	// mButton('<<', onclickBackHistory, db, {}, 'button', 'bBack');
+	mButton('clear sorting', ()=>DA.info.sorting={}, db, {}, 'button', 'bSortFast');
+	// mButton('clear filters', ()=>DA.info.filter={}, db, {}, 'button', 'bSortFast');
+	// mButton('sort', onclickSortFast, db, {}, 'button', 'bSortFast');
+	// mButton('filter', onclickFilterFast, db, {}, 'button', 'bFilterFast');
+	// mButton('custom filter', onclickFilter, db, {}, 'button', 'bFilter'); 
+	// mButton('custom sort', onclickSort, db, {}, 'button', 'bSort');
+	// // mButton('add tag', onclickTagForAll, db, {}, 'button','bAddTag');
+
+	// mDom(db,{w:20})
+	// mButton('PgUp', () => showChunk(-1), db, { w: 25 }, 'button', 'bPgUp');
+	// mButton('PgDn', () => showChunk(1), db, { w: 25 }, 'button', 'bPgDn');
+	// mButton('download db', onclickDownloadDb, db, {}, 'button', 'bDownload');
+
+
+	return nav;
+}
+
+//#endregion
+
 //#region stage 8
+function showNavMenu() {
+	let dNav = mBy('dNav');
+	mStyle(dNav, { overflow: 'hidden', box: true, padding: 10, className: 'nav' });
+	
+	let dTop=mDom(dNav,{class:'centerFlexV'});
+	//let dlogo = mDom(dTop, { fz:34 }, { html: `Omnifin` });
+
+	mDom(dTop, { fz: 34, mabottom: 10, w100: true }, { html: `Omnifin` });
+	let dm = mDom(dTop, { gap: 10, className: 'centerflexV' }); 
+	let nav = mMenu(dm);
+	let commands = {};
+	commands.overview = menuCommand(nav.l, 'nav', 'overview', 'Overview', menuOpenOverview, menuCloseOverview);
+	commands.sql = menuCommand(nav.l, 'nav', 'sql', 'Sql', menuOpenSql, menuCloseSql);
+	// commands.test = menuCommand(nav.l, 'nav', 'test', 'Test', menuOpenTest, menuCloseTest);
+	nav.commands = commands;
+
+	mLinebreak(dTop);
+	let db = mDom(dTop, { maleft:110, gap: 10, className: 'centerflexV' },{id:'dButtons'}); 
+	// mButton('<<', onclickBackHistory, db, {}, 'button', 'bBack');
+	mButton('clear sorting', ()=>DA.info.sorting={}, db, {}, 'button', 'bSortFast');
+	// mButton('clear filters', ()=>DA.info.filter={}, db, {}, 'button', 'bSortFast');
+	// mButton('sort', onclickSortFast, db, {}, 'button', 'bSortFast');
+	// mButton('filter', onclickFilterFast, db, {}, 'button', 'bFilterFast');
+	// mButton('custom filter', onclickFilter, db, {}, 'button', 'bFilter'); 
+	// mButton('custom sort', onclickSort, db, {}, 'button', 'bSort');
+	// // mButton('add tag', onclickTagForAll, db, {}, 'button','bAddTag');
+
+	// mDom(db,{w:20})
+	// mButton('PgUp', () => showChunk(-1), db, { w: 25 }, 'button', 'bPgUp');
+	// mButton('PgDn', () => showChunk(1), db, { w: 25 }, 'button', 'bPgDn');
+	// mButton('download db', onclickDownloadDb, db, {}, 'button', 'bDownload');
+
+
+	return nav;
+}
+async function menuOpenOverview() {
+	let side = UI.sidebar = mSidebar('dLeft',110);
+	UI.d = mDom('dMain'); //, { className: 'section' });
+	let gap = 5;
+
+	UI.commands.showSchema = mCommand(side.d, 'showSchema', 'DB Structure'); mNewline(side.d, gap);mLinebreak(side.d, 10);
+	UI.commands.translist = mCommand(side.d, 'translist', 'translist',{open:()=>showRecords(qTTList(),UI.d)}); mNewline(side.d, gap);
+	//UI.commands.translistlegacy = mCommand(side.d, 'translistlegacy', 'legacy',{open:onclickTranslist}); //()=>showRecords(qTTList())}); mNewline(side.d, gap);
+	// UI.commands.transcols = mCommand(side.d, 'transcols', 'transcols'); mNewline(side.d, gap);
+	// mLinebreak(side.d, 10);
+	// UI.commands.reports = mCommand(side.d, 'reports', 'reports'); mNewline(side.d, gap);
+	// UI.commands.assets = mCommand(side.d, 'assets', 'assets'); mNewline(side.d, gap);
+	// UI.commands.tags = mCommand(side.d, 'tags', 'tags'); mNewline(side.d, gap);
+	// UI.commands.accounts = mCommand(side.d, 'accounts', 'accounts'); mNewline(side.d, gap);
+	// UI.commands.statements = mCommand(side.d, 'statements', 'statements'); mNewline(side.d, gap);
+	// UI.commands.verifications = mCommand(side.d, 'verifications', 'verifications'); mNewline(side.d, gap);
+	// UI.commands.tRevisions = mCommand(side.d, 'tRevisions', 'transaction revisions'); mNewline(side.d, gap);
+
+	await onclickCommand(null, 'translist');
+}
+function sqlUpdateOrderBy(q, sorting) {
+	let clauses = splitSQLClauses(q); // console.log('clauses',clauses)
+	let qnew = '';
+	for(const k in clauses){
+		if (k.startsWith('ORDER BY')) continue;
+		for(const a of clauses[k]) qnew+= `${a.trim()}\n`;
+	}
+	if (!isEmpty(sorting)){		qnew += `ORDER BY ${Object.keys(sorting).map(x=>x+' '+sorting[x].toUpperCase()).join(', ')}`	}
+	qnew+=';'
+	return qnew;
+}
+
+
+function extractFilterExpression() {
+	let [records,headers,q]=[DA.info.records,DA.info.headers,DA.info.q];
+	let selist = Array.from(document.querySelectorAll('.bg_yellow'));
+	let selitems = [];
+	for(const sel of selist){
+		let o=findElementPosition(sel,1);
+		addKeys({div:sel,text:sel.innerHTML,header:headers[o.icol]},o);
+		selitems.push(o);
+	}
+	
+	//console.log(q,selist);
+	//selitems.map(x=>console.log(x));
+	let clauses = splitSQLClauses(q); //console.log(clauses); 
+	let sc = clauses.SELECT[0];
+	assertion(isdef(sc), `NO SELECT CLAUSE!!! ${q}`);
+	assertion(clauses.SELECT.length == 1, `WRONG NUMBER OF SELECT CLAUSES!!! ${q}`);
+
+	//add a item.h filed to all items
+	for (const item of selitems) {
+		let h = item.header.toLowerCase(); //console.log(h)
+		let match = headers.find(x => x == h);
+		if (isdef(match)) { item.h = item.header; item.header = match; }//console.log('found',match);continue;}
+		match = headers.find(x => x.endsWith(h));
+		if (isdef(match)) { item.h = item.header; item.header = match; }//console.log('found',match);}
+	}
+
+	//console.log(clauses)
+	let where = generateSQLWhereClause(selitems); console.log(where)
+	if (where) {
+		if (isdef(clauses.WHERE)){
+			let cl=clauses.WHERE[0];
+			clauses.WHERE = [`WHERE `+stringAfter(cl,'WHERE')+' AND '+stringAfter(where,'WHERE')];
+		} 
+		else	clauses.WHERE = [where];
+	}
+
+	let having = generateSQLHavingClause(selitems); //console.log('!!!!',having)
+	if (having) {
+		if (isdef(clauses.HAVING)){
+			let cl=clauses.HAVING[0];
+			clauses.HAVING = [`HAVING (`+stringAfter(cl,'HAVING')+') AND '+stringAfter(having,'HAVING')];
+		} 
+		else	clauses.HAVING = [having];
+	}
+
+	let order = `SELECT|FROM|JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|OUTER JOIN|FULL JOIN|CROSS JOIN|UNION|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET`.split('|');
+	let sql = '';
+	for (const k of order) {
+		let list = lookup(clauses, [k]);
+		if (!list) continue;
+		sql += '\n' + list.join('\n');
+	}
+	return sql + ';';
+
+}
+function mistextractFilterExpression(){
+	let cells = DA.cells;
+	let selitems = cells.filter(x => x.isSelected); //console.log(selitems);
+
+	let q = DA.tinfo.q;
+	let clauses = splitSQLClauses(q); //console.log(clauses); 
+	let sc = clauses.SELECT[0];
+	assertion(isdef(sc), `NO SELECT CLAUSE!!! ${q}`);
+	assertion(clauses.SELECT.length == 1, `WRONG NUMBER OF SELECT CLAUSES!!! ${q}`);
+
+	let headers = extractHeadersFromSelect(sc).map(x => x.toLowerCase()); //console.log(headers)
+
+	for (const item of selitems) {
+		let h = item.header.toLowerCase(); //console.log(h)
+		let match = headers.find(x => x == h);
+		if (isdef(match)) { item.h = item.header; item.header = match; }//console.log('found',match);continue;}
+		match = headers.find(x => x.endsWith(h));
+		if (isdef(match)) { item.h = item.header; item.header = match; }//console.log('found',match);}
+	}
+
+	console.log(clauses)
+	let where = generateSQLWhereClause(selitems); //console.log(where)
+	if (where) {
+		if (isdef(clauses.WHERE)){
+			let cl=clauses.WHERE[0];
+			clauses.WHERE = [`WHERE `+stringAfter(cl,'WHERE')+' AND '+stringAfter(where,'WHERE')];
+		} 
+		else	clauses.WHERE = [where];
+	}
+
+	let having = generateSQLHavingClause(selitems); //console.log('!!!!',having)
+	if (having) {
+		if (isdef(clauses.HAVING)){
+			let cl=clauses.HAVING[0];
+			clauses.HAVING = [`HAVING (`+stringAfter(cl,'HAVING')+') AND '+stringAfter(having,'HAVING')];
+		} 
+		else	clauses.HAVING = [having];
+	}
+
+	let order = `SELECT|FROM|JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|OUTER JOIN|FULL JOIN|CROSS JOIN|UNION|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET`.split('|');
+	let sql = '';
+	for (const k of order) {
+		let list = lookup(clauses, [k]);
+		if (!list) continue;
+		sql += '\n' + list.join('\n');
+	}
+	return sql + ';';
+
+}
+
+async function sortRecordsBy(h, allowEdit = false){
+	//sorting is a dict by header 'asc','desc'
+	let [q,dParent,sorting]=[DA.info.q,DA.info.dParent,DA.info.sorting];
+
+	let s=sorting[h];if (s == 'asc') sorting[h]='desc'; else sorting[h]='asc';
+
+	let q1=sqlUpdateOrderBy(q, sorting); console.log(q1); //return;
+
+	await showRecords(q1,dParent);
+
+}
+async function filterRecords(exp, allowEdit = true) {
+	//console.log('exp',exp);
+	exp = extractFilterExpression();
+	if (allowEdit) { let content = { exp, caption: 'Filter' }; exp = await mGather(null, {}, { content, type: 'textarea', value: exp }); }
+	if (!exp || isEmpty(exp)) { console.log('operation cancelled!'); return; }
+
+	await showRecords(exp,DA.info.dParent);
+
+	return;
+	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header];
+	if (nundef(exp)) { exp = extractFilterExpression(); }
+	if (allowEdit) { let content = { exp, caption: 'Filter' }; exp = await mGather(null, {}, { content, type: 'textarea', value: exp }); }
+	if (!exp || isEmpty(exp)) { console.log('operation cancelled!'); return; }
+	let i = DA.tinfo;
+	records = dbToList(exp);
+	showChunkedSortedBy(i.dParent, i.title, i.tablename, records, headers, header);
+}
+async function showRecords(q, dParent) {
+
+	mClear(dParent);//mStyle(dParent,{bg:'white',vpadding:10})
+	let recs = dbToList(q); //'select * from tags');
+	if (recs.length == 0) return;
+	let headers = Object.keys(recs[0]);//['id','description','amount','unit','sender_name','receiver_name']
+	if (nundef(DA.info)) DA.info={sorting:{}};
+	DA.info.q=q;
+	DA.info.dParent=dParent;
+	DA.info.records=recs;
+	DA.info.headers=headers;
+	//let db = mDom(dParent, { gap: 10, mabottom: 10, className: 'centerflexV' }); //mCenterCenterFlex(db);
+
+	mIfNotRelative(dParent);
+	let d=mDom(dParent,{position:'absolute',h:window.innerHeight-135,w:window.innerWidth-110});//,bg:'red'})
+
+	//let h=750;//window.innerHeight-150;
+	let styles = { bg:'white', fg:'black', margin:10, w:'98%', h:'97%', overy: 'auto', display: 'grid', gap: 4, box: true, border: '1px solid #ddd', };
+	styles.gridCols = measureRecord(recs[0]);
+
+	let dgrid = mDom(d, styles, { id: 'gridContainer' });
+
+	let dh = mDom(dgrid, { className: 'gridHeader' });
+	for (const h of headers) { 
+		let th = mDom(dh, { cursor: 'pointer' }, { html: h, onclick: ()=>sortRecordsBy(h) }); 
+	}
+
+	let totalRecords = recs.length; // Simulated total number of records
+	let pageSize = 50; // Number of records to load at a time
+	let currentPage = 0;
+
+	function loadRecords(page) {
+		// Simulate fetching data from a server
+		return new Promise(resolve => {
+			setTimeout(() => {
+				const records = [];
+				for (let i = 0; i < pageSize; i++) {
+					const recordIndex = page * pageSize + i;
+					if (recordIndex >= totalRecords) break;
+					records.push(recs[recordIndex]); //records.push(`Record ${recordIndex + 1}`);
+				}
+				resolve(records);
+			}, 0); // Simulate network delay
+		});
+	}
+
+	function appendRecords(records) {
+		let styles = {cursor:'pointer'};
+		records.forEach(record => {
+			for (const h of headers) {
+
+				let html = record[h];
+				styles.align = isNumber(html)?'right':'left';
+				if (h.includes('amount')) html = html.toFixed(2);
+
+				let td = mDom(dgrid, styles, { html,onclick:mToggleSelection });
+			}
+		});
+	}
+
+	function loadMoreRecords() {
+		loadRecords(currentPage).then(records => {
+			appendRecords(records);
+			currentPage++;
+		});
+	}
+	async function loadMoreRecordsAsync() {
+		let records = await loadRecords(currentPage);
+		appendRecords(records);
+		currentPage++;
+	}
+
+	dgrid.addEventListener('scroll', () => {
+		if (dgrid.scrollTop + dgrid.clientHeight >= dgrid.scrollHeight) {
+			loadMoreRecords();
+		}
+	});
+
+	// Load initial records
+	await loadMoreRecordsAsync();
+}
+
 function sqlUpdateOrderBy(q, headers, aggregate=true) {
 	let clauses = splitSQLClauses(q); // console.log('clauses',clauses)
 

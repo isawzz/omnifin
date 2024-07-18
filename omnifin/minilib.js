@@ -3826,7 +3826,7 @@ function mCols100(dParent, spec, gap = 4) {
 	}
 	return res;
 }
-function mCommand(dParent, key, html, opts = {}) {
+function mCommand_dep(dParent, key, html, opts = {}) {
 	if (nundef(html)) html = capitalize(key);
 	let close = valf(opts.close, () => { console.log('close', key) });
 	let save = valf(opts.save, false);
@@ -4875,7 +4875,8 @@ function menuCloseSimple() { closeLeftSidebar(); clearMain(); }
 function menuCloseTable() { if (T) Tid = T.id; T = null; delete DA.pendingChanges; clearMain(); }
 
 function menuCommand(dParent, menuKey, key, html, open, close) {
-	let cmd = mCommand(dParent, key, html, { open, close });
+
+	let cmd = mCommand(dParent, key, html,{vpadding:4, hpadding:10, rounding:6, fz:20}, { open, close });
 	let a = iDiv(cmd);
 	a.setAttribute('key', `${menuKey}_${key}`);
 	a.onclick = onclickMenu;
@@ -4984,10 +4985,10 @@ function normalizeString(s, sep = '_', keep = []) {
 }
 function nundef(x) { return x === null || x === undefined || x === 'undefined'; }
 
-async function onclickCommand(ev) {
+async function onclickCommand_dep(ev) {
 	let key = evToAttr(ev, 'key'); //console.log(key);
 	let cmd = key == 'user' ? UI.nav.commands.user : UI.commands[key];
-	assertion(isdef(cmd), `command ${key} not in UI!!!`)
+	assertion(isdef(cmd), `command ${key} not in UI!!!`);
 	await cmd.open();
 }
 function onclickMenu(ev) {

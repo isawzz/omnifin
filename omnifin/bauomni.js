@@ -1,11 +1,14 @@
 
 function measureRecord(rec) {
 	let res = '';
-	var di = { dateof: 100, id: 40, sender_name: 120, receiver_name: 130, amount: 80, unit: 40, MCC: 40, tag_names:'auto', description:'1fr' };
+	var di = {
+		amount: 80, asset_type:100, associated_account: 90, category: 120, dateof: 100, description: 'minmax(200px, 450px)', id: 45,
+		report: 55, receiver_name: 130, sender_name: 120, tag_name: 120, tag_names: 'auto', unit: 40, MCC: 45
+	};
 	for (const h in rec) {
 		let val = rec[h]; //console.log(typeof val, val, h);
-		let w=di[h];
-		w=isNumber(w)?`${w}px`:w??'auto';
+		let w = di[h];
+		w = isNumber(w) ? `${w}px` : w ?? 'auto';
 		res += ` ${w}`;
 		// if (isdef(w)) res += ` ${w}`;
 		// else if (isEmpty(val)) res += ' 1fr';
@@ -19,29 +22,29 @@ function measureRecord(rec) {
 }
 
 //#region sorting records ui
-async function onclickAscDescButton(ev){
+async function onclickAscDescButton(ev) {
 	let inp = ev.target;
-	console.log(':::',inp)
+	console.log(':::', inp)
 }
 async function onclickSort(ev) { await sortRecordsBy(); }
 async function onclickSortFast(ev) { await sortRecords(null, false); }
 function onToggleState(ev, states, colors) {
 	let elem = ev.target;
-	toggleState(elem,states,colors);
+	toggleState(elem, states, colors);
 }
 async function sortRecords(headerlist, allowEdit = true) {
 	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header];
 
 	if (nundef(headerlist)) {
 		let cells = DA.cells;
-		let selitems = cells.filter(x=>x.isSelected); console.log(selitems);
-		headerlist = selitems.map(x=>x.header);
+		let selitems = cells.filter(x => x.isSelected); console.log(selitems);
+		headerlist = selitems.map(x => x.header);
 	}
-	assertion(!isEmpty(headerlist),'sortRecords with empty headerlist!!!');
+	assertion(!isEmpty(headerlist), 'sortRecords with empty headerlist!!!');
 
 	console.log(headerlist);
 
-	let result = await mGather(null, {}, { content:{func:uiTypeSortForm,data:headerlist}, type: 'freeForm' });
+	let result = await mGather(null, {}, { content: { func: uiTypeSortForm, data: headerlist }, type: 'freeForm' });
 	if (!result || isEmpty(result)) { console.log('nothing selected'); return; }
 
 	console.log(result);
@@ -65,14 +68,14 @@ async function uiTypeSortForm(dParent, data, resolve) {
 	//was will ich von der sort form? reihenfolge der keys, up/down sort, 
 	console.log(data);
 
-	let headerlist=data;
+	let headerlist = data;
 
 	let dlist = mDom(dParent);
-	for(const h of headerlist){
+	for (const h of headerlist) {
 
-		let d=mDom(dlist,{className:'centerFlexV',gap:4});
-		let d1=mDom(d,{},{html:h});
-		let b=mToggleButton('asc','desc',null,d)
+		let d = mDom(dlist, { className: 'centerFlexV', gap: 4 });
+		let d1 = mDom(d, {}, { html: h });
+		let b = mToggleButton('asc', 'desc', null, d)
 
 
 	}
@@ -84,28 +87,6 @@ async function uiTypeSortForm(dParent, data, resolve) {
 //#endregion
 
 //#region menu overview
-async function menuOpenOverview() {
-	let side = UI.sidebar = mSidebar('dLeft',110);
-	let gap = 5;
-	UI.commands.showSchema = mCommand(side.d, 'showSchema', 'DB Structure'); mNewline(side.d, gap);
-	mLinebreak(side.d, 10);
-	UI.d = mDom('dMain'); //, { className: 'section' });
-
-	UI.commands.translist = mCommand(side.d, 'translist', 'translist',{open:()=>showRecords(qTTList(),UI.d)}); mNewline(side.d, gap);
-	UI.commands.translistlegacy = mCommand(side.d, 'translistlegacy', 'legacy',{open:onclickTranslist}); //()=>showRecords(qTTList())}); mNewline(side.d, gap);
-	// UI.commands.transcols = mCommand(side.d, 'transcols', 'transcols'); mNewline(side.d, gap);
-	// mLinebreak(side.d, 10);
-	// UI.commands.reports = mCommand(side.d, 'reports', 'reports'); mNewline(side.d, gap);
-	// UI.commands.assets = mCommand(side.d, 'assets', 'assets'); mNewline(side.d, gap);
-	// UI.commands.tags = mCommand(side.d, 'tags', 'tags'); mNewline(side.d, gap);
-	// UI.commands.accounts = mCommand(side.d, 'accounts', 'accounts'); mNewline(side.d, gap);
-	// UI.commands.statements = mCommand(side.d, 'statements', 'statements'); mNewline(side.d, gap);
-	// UI.commands.verifications = mCommand(side.d, 'verifications', 'verifications'); mNewline(side.d, gap);
-	// UI.commands.tRevisions = mCommand(side.d, 'tRevisions', 'transaction revisions'); mNewline(side.d, gap);
-
-	await onclickCommand(null, 'translist');
-}
-async function menuCloseOverview() { closeLeftSidebar(); mClear('dMain'); M.qHistory = []; }
 
 function onclickShowSchema() {
 	let res = dbRaw(`SELECT sql FROM sqlite_master WHERE type='table';`);
@@ -137,14 +118,14 @@ function onclickTRevisions() { let records = dbToList('select * from transaction
 //#endregion
 
 //#region show
-function addSumAmount(ui,records){
+function addSumAmount(ui, records) {
 	if (nundef(ui)) return;
 	//console.log(ui);
 
-	let sum = arrSum(records,'amount');
-	if (isNumber(sum)) sum=Math.round(sum);
+	let sum = arrSum(records, 'amount');
+	if (isNumber(sum)) sum = Math.round(sum);
 
-	mDom(ui,{},{html:sum})
+	mDom(ui, {}, { html: sum })
 
 }
 function showChunkedSortedBy(dParent, title, tablename, records, headers, header) {
@@ -190,7 +171,7 @@ function showChunk(inc) {
 		mStyle(ui, { cursor: 'pointer' });
 		ui.onclick = (ev) => { evNoBubble(ev); showChunkedSortedBy(dParent, title, tablename, records, headers, ui.innerHTML); }
 	}
-	addSumAmount(headeruis.find(x=>x.innerHTML == 'amount'),o.records);
+	addSumAmount(headeruis.find(x => x.innerHTML == 'amount'), o.records);
 	if (tablename != 'transactions') return;
 	DA.tinfo.ifrom = ifrom;
 	let cells = DA.cells = [];
@@ -206,7 +187,7 @@ function showChunk(inc) {
 			let bg = dbFindColor(item.tablename, item.header, ui.innerHTML);
 			mStyle(ui, { cursor: 'pointer' });
 			if (isdef(bg)) mStyle(ui, { bg, fg: 'contrast' });
-			ui.onclick = () => {toggleItemSelection(item);checkButtons();} //async()=>await onclickTablecell(ui,ri,o);
+			ui.onclick = () => { toggleItemSelection(item); checkButtons(); } //async()=>await onclickTablecell(ui,ri,o);
 		}
 	}
 	DA.tinfo.ifrom = ifrom;
@@ -354,7 +335,7 @@ function generateSQLEqualsWHERE(a, text) {
 //#region ui mNavMenu, checkButtons, handleSticky
 function handleSticky() { let d = mBy('dNav'); if (window.scrollY >= 88) mClass(d, 'sticky'); else mClassRemove(d, 'sticky'); }
 function checkButtons() {
-	let bs=arrChildren('dButtons'); bs.map(x=>disableButton(x));
+	let bs = arrChildren('dButtons'); bs.map(x => disableButton(x));
 	if (DB) enableButton('bDownload');
 	let info = DA.tinfo; //are there records shown?
 	if (nundef(info)) return;
@@ -363,38 +344,7 @@ function checkButtons() {
 	if (ifrom > 0) enableButton('bPgUp');
 	if (ito < records.length) enableButton('bPgDn');
 	if (!isEmpty(M.qHistory)) enableButton('bBack');
-	if (DA.cells.find(x=>x.isSelected)) ['bFilter','bFilterFast','bSort','bSortFast'].map(x=>enableButton(x));
-}
-function mNavMenu() {
-	let dNav = mBy('dNav');
-	mStyle(dNav, { overflow: 'hidden', box: true, padding: 10, className: 'nav' });
-	
-	let dTop=mDom(dNav,{class:'centerFlexV'});
-	mDom(dTop, { fz: 34, mabottom: 10, w100: true }, { html: `Omnifin` });
-	let dm = mDom(dTop, { gap: 10, className: 'centerflexV' }); 
-	let nav = mMenu(dm);
-	let commands = {};
-	commands.overview = menuCommand(nav.l, 'nav', 'overview', 'Overview', menuOpenOverview, menuCloseOverview);
-	commands.sql = menuCommand(nav.l, 'nav', 'sql', 'Sql', menuOpenSql, menuCloseSql);
-	// commands.test = menuCommand(nav.l, 'nav', 'test', 'Test', menuOpenTest, menuCloseTest);
-	nav.commands = commands;
-
-	mLinebreak(dTop);
-	let db = mDom(dTop, { gap: 10, className: 'centerflexV' },{id:'dButtons'}); 
-	mButton('<<', onclickBackHistory, db, {}, 'button', 'bBack');
-	mButton('filter', onclickFilterFast, db, {}, 'button', 'bFilterFast');
-	mButton('custom filter', onclickFilter, db, {}, 'button', 'bFilter'); 
-	mButton('sort', onclickSortFast, db, {}, 'button', 'bSortFast');
-	mButton('custom sort', onclickSort, db, {}, 'button', 'bSort');
-	// mButton('add tag', onclickTagForAll, db, {}, 'button','bAddTag');
-
-	mDom(db,{w:20})
-	mButton('PgUp', () => showChunk(-1), db, { w: 25 }, 'button', 'bPgUp');
-	mButton('PgDn', () => showChunk(1), db, { w: 25 }, 'button', 'bPgDn');
-	mButton('download db', onclickDownloadDb, db, {}, 'button', 'bDownload');
-
-
-	return nav;
+	if (DA.cells.find(x => x.isSelected)) ['bFilter', 'bFilterFast', 'bSort', 'bSortFast'].map(x => enableButton(x));
 }
 
 //#endregion
@@ -404,11 +354,11 @@ async function onclickBackHistory() {
 	console.log(M.qHistory)
 	let o = M.qHistory.pop();
 	if (isdef(o)) {
-		let records = dbToList(o.q,false);
+		let records = dbToList(o.q, false);
 		showChunkedSortedBy(UI.d, o.tablename, o.tablename, records);
 	}
 }
-function dbHistory(q,addToHistory){
+function dbHistory(q, addToHistory) {
 	if (addToHistory) {
 		let q1 = q.toLowerCase().trim();
 		if (q1.startsWith('select')) {
@@ -420,8 +370,8 @@ function dbHistory(q,addToHistory){
 //#endregion
 
 //#region main menu weiter test
-async function menuOpenTest(){}
-async function menuCloseTest(){closeLeftSidebar();mClear('dMain')}
+async function menuOpenTest() { }
+async function menuCloseTest() { closeLeftSidebar(); mClear('dMain') }
 //#endregion
 
 //#region onclickAddTag
@@ -430,27 +380,27 @@ async function onclickAddTag(idtrans, index) {
 	let item = UI.dataTable.rowitems[index];
 	//console.log('item',item);
 
-	let colitem = item.colitems.find(x=>x.key == 'tag_names');
+	let colitem = item.colitems.find(x => x.key == 'tag_names');
 	//console.log(colitem);
-	if (nundef(colitem)) {console.log('cannot execute because tag_names column missing!'); return;}
+	if (nundef(colitem)) { console.log('cannot execute because tag_names column missing!'); return; }
 
 	let currentTagNames = colitem.val.split(',');
-	console.log('current tagnames',currentTagNames);
+	console.log('current tagnames', currentTagNames);
 
-	let allTagNames = Object.keys(M.tagsByName).filter(x=>!isNumber(x)); //console.log(allTagNames.filter(x=>x.startsWith('palma')));
-	let content = allTagNames.map(x => ({ key: x, value:currentTagNames.some(y=>y == x) }));
-	let list = await mGather(null, {h:800,hmax:800}, { content, type: 'checkListInput', charsAllowedInWord:['-_'] });
+	let allTagNames = Object.keys(M.tagsByName).filter(x => !isNumber(x)); //console.log(allTagNames.filter(x=>x.startsWith('palma')));
+	let content = allTagNames.map(x => ({ key: x, value: currentTagNames.some(y => y == x) }));
+	let list = await mGather(null, { h: 800, hmax: 800 }, { content, type: 'checkListInput', charsAllowedInWord: ['-_'] });
 	console.log(list);
-	if (!list) {console.log('add tag CANCELLED!!!'); return; }
+	if (!list) { console.log('add tag CANCELLED!!!'); return; }
 	//look if there is any tag that has not been there before
-	let newTagNames=arrWithout(list,currentTagNames);
-	console.log('new tags',newTagNames);
+	let newTagNames = arrWithout(list, currentTagNames);
+	console.log('new tags', newTagNames);
 
 	return;
-	for(const t of newTagNames){
+	for (const t of newTagNames) {
 		//need to create a report and add it to reports,
 		//need to add a record in transaction_tags with corresponding trans_id,tag_id,report_id
-		dbAddTagAndReport(idtrans,t);
+		dbAddTagAndReport(idtrans, t);
 		break;
 	}
 }
@@ -482,7 +432,7 @@ function _addTagAndReport(transactionId, tagName, reportCategory = 'default') {
 		VALUES (?, ?, ?)
 	`, [transactionId, tagId, reportId]);
 
-	dbSaveToLocalStorage();	
+	dbSaveToLocalStorage();
 
 	alert("Tag and report added successfully.");
 }
@@ -499,7 +449,7 @@ function uiTypeCheckListInput(any, dParent, styles = {}, opts = {}) {
 		let div = mCheckbox(dg, o.name, o.value);
 		items.push({ nam: o.name, div, w: mGetStyle(div, 'w'), h: mGetStyle(div, 'h') });
 	}
-	let wmax = arrMax(items, 'w'); 
+	let wmax = arrMax(items, 'w');
 	let cols = 4;
 	let wgrid = wmax * cols + 100;
 	dg.remove();
@@ -580,8 +530,8 @@ function doYourThing(inp, grid, charsAllowed = ' ') {
 //#endregion
 
 //#region build a query (empty)
-function buildTransactionQuery(){
-	let q=`
+function buildTransactionQuery() {
+	let q = `
 	
 		`;
 }

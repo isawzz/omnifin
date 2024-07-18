@@ -1,27 +1,61 @@
 
-function sqlUpdateOrderBy(q, sorting, aggregate=true) {
+async function sortRecordsBy(h, allowEdit = false) {
+	//sorting is a dict by header 'asc','desc'
+	let [q, dParent, sorting] = [DA.info.q, DA.info.dParent, DA.info.sorting];
+
+	let qnew;
+	if (UI.lastCommandKey != 'transcols'){
+		let s = sorting[h]; if (s == 'asc') sorting[h] = 'desc'; else sorting[h] = 'asc';
+		qnew = sqlUpdateOrderBy(q, sorting); console.log(q1); //return;
+	}else{
+		qnew = qTTColsSorted(sorting);
+
+	}
+
+	await showRecords(qnew, dParent);
+
+}
+async function filterRecords(exp, allowEdit = true) {
+	//console.log('exp',exp);
+	exp = extractFilterExpression();
+	if (allowEdit) { let content = { exp, caption: 'Filter' }; exp = await mGather(null, {}, { content, type: 'textarea', value: exp }); }
+	if (!exp || isEmpty(exp)) { console.log('operation cancelled!'); return; }
+
+	await showRecords(exp, DA.info.dParent);
+
+	return;
+	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header];
+	if (nundef(exp)) { exp = extractFilterExpression(); }
+	if (allowEdit) { let content = { exp, caption: 'Filter' }; exp = await mGather(null, {}, { content, type: 'textarea', value: exp }); }
+	if (!exp || isEmpty(exp)) { console.log('operation cancelled!'); return; }
+	let i = DA.tinfo;
+	records = dbToList(exp);
+	showChunkedSortedBy(i.dParent, i.title, i.tablename, records, headers, header);
+}
+
+function sqlUpdateOrderBy(q, sorting) {
 	let clauses = splitSQLClauses(q); // console.log('clauses',clauses)
 	let qnew = '';
-	for(const k in clauses){
+	for (const k in clauses) {
 		if (k.startsWith('ORDER BY')) continue;
-		for(const a of clauses[k]) qnew+= `${a.trim()}\n`;
+		for (const a of clauses[k]) qnew += `${a.trim()}\n`;
 	}
-	if (!isEmpty(sorting)){		qnew += `ORDER BY ${Object.keys(sorting).map(x=>x+' '+sorting[x].toUpperCase()).join(', ')}`	}
-	qnew+=';'
+	if (!isEmpty(sorting)) { qnew += `ORDER BY ${Object.keys(sorting).map(x => x + ' ' + sorting[x].toUpperCase()).join(', ')}`; }
+	qnew += ';'
 	return qnew;
 }
 
 
 function extractFilterExpression() {
-	let [records,headers,q]=[DA.info.records,DA.info.headers,DA.info.q];
+	let [records, headers, q] = [DA.info.records, DA.info.headers, DA.info.q];
 	let selist = Array.from(document.querySelectorAll('.bg_yellow'));
 	let selitems = [];
-	for(const sel of selist){
-		let o=findElementPosition(sel,1);
-		addKeys({div:sel,text:sel.innerHTML,header:headers[o.icol]},o);
+	for (const sel of selist) {
+		let o = findElementPosition(sel, 1);
+		addKeys({ div: sel, text: sel.innerHTML, header: headers[o.icol] }, o);
 		selitems.push(o);
 	}
-	
+
 	//console.log(q,selist);
 	//selitems.map(x=>console.log(x));
 	let clauses = splitSQLClauses(q); //console.log(clauses); 
@@ -41,20 +75,20 @@ function extractFilterExpression() {
 	//console.log(clauses)
 	let where = generateSQLWhereClause(selitems); console.log(where)
 	if (where) {
-		if (isdef(clauses.WHERE)){
-			let cl=clauses.WHERE[0];
-			clauses.WHERE = [`WHERE `+stringAfter(cl,'WHERE')+' AND '+stringAfter(where,'WHERE')];
-		} 
-		else	clauses.WHERE = [where];
+		if (isdef(clauses.WHERE)) {
+			let cl = clauses.WHERE[0];
+			clauses.WHERE = [`WHERE ` + stringAfter(cl, 'WHERE') + ' AND ' + stringAfter(where, 'WHERE')];
+		}
+		else clauses.WHERE = [where];
 	}
 
 	let having = generateSQLHavingClause(selitems); //console.log('!!!!',having)
 	if (having) {
-		if (isdef(clauses.HAVING)){
-			let cl=clauses.HAVING[0];
-			clauses.HAVING = [`HAVING (`+stringAfter(cl,'HAVING')+') AND '+stringAfter(having,'HAVING')];
-		} 
-		else	clauses.HAVING = [having];
+		if (isdef(clauses.HAVING)) {
+			let cl = clauses.HAVING[0];
+			clauses.HAVING = [`HAVING (` + stringAfter(cl, 'HAVING') + ') AND ' + stringAfter(having, 'HAVING')];
+		}
+		else clauses.HAVING = [having];
 	}
 
 	let order = `SELECT|FROM|JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|OUTER JOIN|FULL JOIN|CROSS JOIN|UNION|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET`.split('|');
@@ -67,7 +101,7 @@ function extractFilterExpression() {
 	return sql + ';';
 
 }
-function mistextractFilterExpression(){
+function mistextractFilterExpression() {
 	let cells = DA.cells;
 	let selitems = cells.filter(x => x.isSelected); //console.log(selitems);
 
@@ -90,20 +124,20 @@ function mistextractFilterExpression(){
 	console.log(clauses)
 	let where = generateSQLWhereClause(selitems); //console.log(where)
 	if (where) {
-		if (isdef(clauses.WHERE)){
-			let cl=clauses.WHERE[0];
-			clauses.WHERE = [`WHERE `+stringAfter(cl,'WHERE')+' AND '+stringAfter(where,'WHERE')];
-		} 
-		else	clauses.WHERE = [where];
+		if (isdef(clauses.WHERE)) {
+			let cl = clauses.WHERE[0];
+			clauses.WHERE = [`WHERE ` + stringAfter(cl, 'WHERE') + ' AND ' + stringAfter(where, 'WHERE')];
+		}
+		else clauses.WHERE = [where];
 	}
 
 	let having = generateSQLHavingClause(selitems); //console.log('!!!!',having)
 	if (having) {
-		if (isdef(clauses.HAVING)){
-			let cl=clauses.HAVING[0];
-			clauses.HAVING = [`HAVING (`+stringAfter(cl,'HAVING')+') AND '+stringAfter(having,'HAVING')];
-		} 
-		else	clauses.HAVING = [having];
+		if (isdef(clauses.HAVING)) {
+			let cl = clauses.HAVING[0];
+			clauses.HAVING = [`HAVING (` + stringAfter(cl, 'HAVING') + ') AND ' + stringAfter(having, 'HAVING')];
+		}
+		else clauses.HAVING = [having];
 	}
 
 	let order = `SELECT|FROM|JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|OUTER JOIN|FULL JOIN|CROSS JOIN|UNION|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET`.split('|');

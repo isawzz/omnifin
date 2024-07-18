@@ -2,13 +2,13 @@
 async function showRecords(q, dParent) {
 
 	mClear(dParent);//mStyle(dParent,{bg:'white',vpadding:10})
-	let recs = dbToList(q); //'select * from tags');
-	if (recs.length == 0) return;
-	let headers = Object.keys(recs[0]);//['id','description','amount','unit','sender_name','receiver_name']
+	let records = dbToList(q); //'select * from tags');
+	if (records.length == 0) return;
+	let headers = Object.keys(records[0]);//['id','description','amount','unit','sender_name','receiver_name']
 	if (nundef(DA.info)) DA.info={sorting:{}};
 	DA.info.q=q;
 	DA.info.dParent=dParent;
-	DA.info.records=recs;
+	DA.info.records=records;
 	DA.info.headers=headers;
 	//let db = mDom(dParent, { gap: 10, mabottom: 10, className: 'centerflexV' }); //mCenterCenterFlex(db);
 
@@ -17,7 +17,7 @@ async function showRecords(q, dParent) {
 
 	//let h=750;//window.innerHeight-150;
 	let styles = { bg:'white', fg:'black', margin:10, w:'98%', h:'97%', overy: 'auto', display: 'grid', gap: 4, box: true, border: '1px solid #ddd', };
-	styles.gridCols = measureRecord(recs[0]);
+	styles.gridCols = measureRecord(records[0]);
 
 	let dgrid = mDom(d, styles, { id: 'gridContainer' });
 
@@ -26,7 +26,7 @@ async function showRecords(q, dParent) {
 		let th = mDom(dh, { cursor: 'pointer' }, { html: h, onclick: ()=>sortRecordsBy(h) }); 
 	}
 
-	let totalRecords = recs.length; // Simulated total number of records
+	let totalRecords = records.length; // Simulated total number of records
 	let pageSize = 50; // Number of records to load at a time
 	let currentPage = 0;
 
@@ -34,24 +34,24 @@ async function showRecords(q, dParent) {
 		// Simulate fetching data from a server
 		return new Promise(resolve => {
 			setTimeout(() => {
-				const records = [];
+				const recpartial = [];
 				for (let i = 0; i < pageSize; i++) {
 					const recordIndex = page * pageSize + i;
 					if (recordIndex >= totalRecords) break;
-					records.push(recs[recordIndex]); //records.push(`Record ${recordIndex + 1}`);
+					recpartial.push(records[recordIndex]); //records.push(`Record ${recordIndex + 1}`);
 				}
-				resolve(records);
+				resolve(recpartial);
 			}, 0); // Simulate network delay
 		});
 	}
 
-	function appendRecords(records) {
+	function appendRecords(recpartial) {
 		let styles = {cursor:'pointer'};
-		records.forEach(record => {
+		recpartial.forEach(record => {
 			for (const h of headers) {
 
 				let html = record[h];
-				styles.align = isNumber(html)?'right':'left';
+				styles.align = isNumber(html) && !['asset_name'].includes(h)?'right':'left';
 				if (h.includes('amount')) html = html.toFixed(2);
 
 				let td = mDom(dgrid, styles, { html,onclick:mToggleSelection });
@@ -60,14 +60,14 @@ async function showRecords(q, dParent) {
 	}
 
 	function loadMoreRecords() {
-		loadRecords(currentPage).then(records => {
-			appendRecords(records);
+		loadRecords(currentPage).then(recpartial => {
+			appendRecords(recpartial);
 			currentPage++;
 		});
 	}
 	async function loadMoreRecordsAsync() {
-		let records = await loadRecords(currentPage);
-		appendRecords(records);
+		let recpartial = await loadRecords(currentPage);
+		appendRecords(recpartial);
 		currentPage++;
 	}
 
