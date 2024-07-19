@@ -14,6 +14,7 @@ async function showRecords(q, dParent, clearInfo = false) {
 	DA.info.dParent = dParent;
 	DA.info.records = records;
 	DA.info.headers = headers;
+	let tablename = DA.info.tablename = dbGetTableName(q);
 	//let db = mDom(dParent, { gap: 10, mabottom: 10, className: 'centerflexV' }); //mCenterCenterFlex(db);
 
 	mIfNotRelative(dParent);
@@ -27,7 +28,7 @@ async function showRecords(q, dParent, clearInfo = false) {
 
 	let dh = mDom(dgrid, { className: 'gridHeader' });
 	for (const h of headers) {
-		let th = mDom(dh, { cursor: 'pointer' }, { onclick: () => sortRecordsBy(h) });
+		let th = mDom(dh, { cursor: 'pointer',hpadding:4 }, { onclick: () => sortRecordsBy(h) });
 
 		let html = getHeaderHtml(h, DA.info.sorting[h])
 		mDom(th, {}, { html });
@@ -70,6 +71,8 @@ async function showRecords(q, dParent, clearInfo = false) {
 				}
 
 				let td = mDom(dgrid, styles, { html, onclick: mToggleSelection });
+
+				let bg = dbFindColor(html, h);if (isdef(bg)) mStyle(td, { bg, fg: 'contrast' });
 			}
 		});
 	}

@@ -8,7 +8,8 @@ function qAusgaben(){
     receiver.account_name AS receiver_name, 
     t.amount, 
     a.asset_name AS unit, 
-    t.description
+    t.description,
+		t.report
 	FROM 
 			transactions t
 	JOIN 
@@ -32,7 +33,8 @@ function qEinnahmen(){
     receiver.account_name AS receiver_name, 
     t.amount, 
     a.asset_name AS unit, 
-    t.description
+    t.description,
+		t.report
 	FROM 
 			transactions t
 	JOIN 
@@ -58,7 +60,8 @@ function qtest0(){
 					a.asset_name AS unit,
 					GROUP_CONCAT(CASE WHEN tg.category = 'MCC' THEN tg.tag_name ELSE NULL END) AS MCC,
 					GROUP_CONCAT(CASE WHEN tg.category <> 'MCC' AND tg.tag_name NOT GLOB '*[0-9]*' THEN tg.tag_name ELSE NULL END) AS tag_names,
-					t.description
+					t.description,
+					t.report
 			FROM
 					transactions t
 			JOIN
@@ -100,7 +103,8 @@ function qTTList() {
 					ELSE NULL 
 				END
 			) AS tag_names,
-			t.description
+			t.description,
+			t.report
 		FROM 
 			transactions t
 		JOIN 
@@ -137,8 +141,9 @@ function qTTCols() {
           ELSE NULL 
         END
       ) AS MCC,
+			t.description,
 			${s}
-			t.description
+			t.report
     FROM 
       transactions t
     JOIN 

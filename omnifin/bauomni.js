@@ -1,4 +1,14 @@
 
+function addSumAmount(ui, records) {
+	if (nundef(ui)) return;
+	//console.log(ui);
+
+	let sum = arrSum(records, 'amount');
+	if (isNumber(sum)) sum = Math.round(sum);
+
+	mDom(ui, {}, { html: sum })
+
+}
 function clsGetHeaderMapping(clauses, sorting) {
 	let sc = clauses.SELECT[0];
 	assertion(isdef(sc), `NO SELECT CLAUSE!!! ${clauses}`);
@@ -24,9 +34,9 @@ function clsGetHeaderMapping(clauses, sorting) {
 function measureRecord(rec) {
 	let res = '';
 	var di = {
-		account_name:140, account_type:140, account_owner:140, amount: 80, asset_name:120, asset_type:120, associated_account: 90, 
+		account_name:145, account_type:140, account_owner:150, amount: 80, asset_name:120, asset_type:120, associated_account: 90, 
 		category: 120, dateof: 100, description: 'minmax(200px,1fr)', id: 40,
-		report: 55, receiver_name: 140, sender_name: 140, tag_name: 120, tag_names: 'auto', unit: 50, MCC: 60
+		report: 80, receiver_name: 140, sender_name: 140, tag_name: 120, tag_names: 'auto', unit: 50, MCC: 60
 	};
 	for (const h in rec) {
 		let val = rec[h]; //console.log(typeof val, val, h);
@@ -99,8 +109,9 @@ async function sortRecordsBy(h, allowEdit = false) {
 						ELSE NULL 
 					END
 				) AS MCC,
+				t.description,
 				${s}
-				t.description
+				t.report
 				`;
 
 		qnew = select + '\n';
