@@ -28,4 +28,4 @@ I want the ui to show a simple list of checkboxes
 instead of drag drop, let the elements be selectable and add a button 'move up' and 'move down' to change the order of the elements. also instead of checkboxes list the element name
 I want: a list of elements when press element, highlight it. below the elements, 1 button Move up and 1 button move down that will move the highlighted element up or down the list
 
-
+js function getHeaderHtml(header,sorting) that returns html code for header with an uparrow appended if sorting=='asc', down-arrow if 'desc' and nothing if null or undefined

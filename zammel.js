@@ -1,7 +1,291 @@
 
 //#region stages showRecord SEHR COOL!!!!
 
+//#region stage 10
+
+//#endregion
+
 //#region stage 9
+
+function _sqlReplaceStar(q){
+
+	//console.log(':::::::::::',q);
+	let qTemp = q.toLowerCase().trim();
+	if (qTemp.startsWith('select * from')){
+
+		//if (qTemp.endsWith(';')) qTemp = stringBeforeLast(qTemp,';');
+		//qTemp += ` LIMIT 1;`;
+		console.log(qTemp)
+		let records = dbToList(qTemp); //'select * from tags');
+		if (isEmpty(records)) return [q,[]];
+
+		let headers = Object.keys(records[0]);
+		let qnew = `SELECT ${headers.join(', ')}\n${stringAfter(q,' * ')}`;
+		return [qnew, records];
+
+
+	}
+	return [q,null];
+}
+
+//#region sorting records ui
+function qTTColsSorted(sorting) {
+	if (nundef(sorting)) sorting=DA.info.sorting;
+	let recs = dbToList('select * from tags',false);
+	//console.log(recs)
+	let names = recs.map(x=>x.tag_name);
+	names = names.filter(x=>!isNumber(x));
+
+	let sortKeys = Object.keys(sorting);
+	let keysFirst = sortKeys.filter(x=>isdef(sorting[x]));
+	let keysOther = sortKeys.filter(x=>!keysFirst.includes(x));
+	names = keysFirst.concat(arrMinus(names,keysFirst));
+
+	//console.log(names);
+	let s='';
+	for(const name of names){
+		s+=`MAX(CASE WHEN tg.tag_name = '${name}' THEN 'X' ELSE '' END) AS '${name}'`;
+		if (name != arrLast(names)) s+=',';
+	}
+
+  let q = `
+    SELECT 
+      t.id, 
+      t.dateof, 
+      sender.account_name AS sender_name, 
+      receiver.account_name AS receiver_name, 
+      t.amount, 
+      a.asset_name AS unit, 
+      GROUP_CONCAT(
+        CASE 
+          WHEN tg.category = 'MCC' THEN tg.tag_name 
+          ELSE NULL 
+        END
+      ) AS MCC,
+			${s},
+			t.description
+    FROM 
+      transactions t
+    JOIN 
+      accounts sender ON t.sender = sender.id
+    JOIN 
+      accounts receiver ON t.receiver = receiver.id
+    JOIN 
+      assets a ON t.unit = a.id
+		LEFT JOIN 
+			transaction_tags tt ON t.id = tt.id
+		LEFT JOIN 
+			tags tg ON tt.tag_id = tg.id
+    GROUP BY 
+      t.id, t.dateof, sender_name, receiver_name, t.amount, unit
+  `;
+
+	if (!isEmpty(sortKeys)){
+		q+= `ORDER BY`;
+		if (!isEmpty(keysFirst)) q+=` ${keysFirst.map(x => x + ' DESC').join(', ')}`;
+		if (!isEmpty(keysOther)) q+=` ${keysOther.map(x => x + ` ${sorting[x].toUpperCase()}`).join(', ')}`;
+	}
+
+	return q+';';
+}
+async function onclickAscDescButton(ev) {
+	let inp = ev.target;
+	console.log(':::', inp)
+}
+function onToggleState(ev, states, colors) {
+	let elem = ev.target;
+	toggleState(elem, states, colors);
+}
+async function sortRecords(headerlist, allowEdit = true) {
+	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header];
+
+	if (nundef(headerlist)) {
+		let cells = DA.cells;
+		let selitems = cells.filter(x => x.isSelected); console.log(selitems);
+		headerlist = selitems.map(x => x.header);
+	}
+	assertion(!isEmpty(headerlist), 'sortRecords with empty headerlist!!!');
+
+	console.log(headerlist);
+
+	let result = await mGather(null, {}, { content: { func: uiTypeSortForm, data: headerlist }, type: 'freeForm' });
+	if (!result || isEmpty(result)) { console.log('nothing selected'); return; }
+
+	console.log(result);
+	return;
+	records.sort(multiSort(result));// = sortByMultipleProperties(records,...result);
+	DA.tinfo.records = records;
+	DA.tinfo.header = result;
+	showChunkedSortedBy(DA.tinfo.dParent, DA.tinfo.title, DA.tinfo.tablename, DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header)
+
+}
+function uiGadgetTypeFreeForm(dParent, content, resolve, styles = {}, opts = {}) {
+	addKeys({ hmax: 500, wmax: 200, bg: 'white', fg: 'black', padding: 10, rounding: 10, box: true }, styles)
+	let dOuter = mDom(dParent, styles);
+	let hmax = styles.hmax - 193, wmax = styles.wmax;
+	let innerStyles = { hmax, wmax, box: true };
+	let d = mDom(dOuter, innerStyles, opts);
+	content.func(d, content.data, resolve);
+	return dOuter;
+}
+async function uiTypeSortForm(dParent, data, resolve) {
+	//was will ich von der sort form? reihenfolge der keys, up/down sort, 
+	console.log(data);
+
+	let headerlist = data;
+
+	let dlist = mDom(dParent);
+	for (const h of headerlist) {
+
+		let d = mDom(dlist, { className: 'centerFlexV', gap: 4 });
+		let d1 = mDom(d, {}, { html: h });
+		let b = mToggleButton('asc', 'desc', null, d)
+
+
+	}
+
+
+	let handler = () => resolve(null);
+	// mButton('done', handler, d, { classes: 'input', margin: 10 });
+}
+//#endregion
+//#region menu overview
+
+function onclickTesttrans() { let records = dbToList(qTT()); showTableSortedBy(UI.d, 'TEST', 'transactions', records); }
+function onclickTranslist() { let records = dbToList(qTTList()); showChunkedSortedBy(UI.d, 'tag list', 'transactions', records); }
+function onclickTranscols() { let records = dbToList(qTTCols()); showChunkedSortedBy(UI.d, 'tag columns', 'transactions', records); }
+function onclickTransactions() { let records = dbToList(qTransactions()); showChunkedSortedBy(UI.d, 'transactions', 'transactions', records); }
+function onclickFlex() { let records = dbToList(qTransFlex()); showTableSortedBy(UI.d, 'flex-perks', 'transactions', records); }
+function onclickTagged() { let records = dbToList(qTranstags()); showTableSortedBy(UI.d, 'tagged transactions', 'transactions', records); }
+function onclickMultiTagged() { let records = dbToList(qTransmultitag()); showTableSortedBy(UI.d, 'transactionsw/  multiple tags', 'transactions', records); }
+function onclickLimit20() { let records = dbToList(qLimit20()); showTableSortedBy(UI.d, '20 transactions', 'transactions', records); }
+
+function onclickReports() { let records = dbToList('select * from reports;'); showTableSortedBy(UI.d, 'reports', 'reports', records); }
+function onclickAssets() { let records = dbToList('select * from assets;'); showTableSortedBy(UI.d, 'assets', 'assets', records); }
+function onclickTags() { let records = dbToList('select * from tags;'); showTableSortedBy(UI.d, 'tags', 'tags', records); }
+function onclickAccounts() { let records = dbToList('select * from accounts;'); showTableSortedBy(UI.d, 'accounts', 'accounts', records); }
+function onclickStatements() { let records = dbToList('select * from statements;'); showTableSortedBy(UI.d, 'statements', 'statements', records); }
+function onclickVerifications() { let records = dbToList('select * from verifications;'); showTableSortedBy(UI.d, 'verifications', 'verifications', records); }
+function onclickTRevisions() { let records = dbToList('select * from transaction_revisions;'); showTableSortedBy(UI.d, 'transaction revisions', 'transaction_revisions', records); }
+//#endregion
+//#region show
+function showChunkedSortedBy(dParent, title, tablename, records, headers, header) {
+	if (isEmpty(records)) { mText('no data', dParent); return null; }
+	if (nundef(headers)) headers = Object.keys(records[0]);
+	if (nundef(header)) header = headers[0];
+
+	if (isList(header)) DA.sortedBy = null; //ist multi-sorted!
+	else if (DA.sortedBy == header) { records = sortByEmptyLast(records, header); DA.sortedBy = null; }
+	else { records = sortByDescending(records, header); DA.sortedBy = header; }
+
+	mClear(dParent);
+	let db = mDom(dParent, { gap: 10, mabottom: 10, className: 'centerflexV' }); //mCenterCenterFlex(db);
+
+	mText(`${tablename} (${records.length})`, db, { weight: 'bold', fz: 20, maleft: 12 });
+	// mButton('fifast', onclickFilterFast, db, {}, 'button', 'bFilterFast');
+	// mButton('filter', onclickFilter, db, {}, 'button', 'bFilter');
+	// mButton('back', onclickBackHistory, db, {}, 'button', 'bBack');
+	// mButton('PgDn', () => showChunk(1), db, { w: 25 }, 'button', 'bPgDn');
+	// mButton('PgUp', () => showChunk(-1), db, { w: 25 }, 'button', 'bPgUp');
+	// mButton('multi-sort', onclickMultiSort, db, {}, 'button', 'bMultiSort');
+	// // mButton('filter1', onclickFilter1, db, {}, 'button','bFilter1');
+	// // mButton('add tag', onclickTagForAll, db, {}, 'button','bAddTag');
+	// mButton('download db', onclickDownloadDb, db, {}, 'button', 'bDownload');
+	let dTable = mDom(dParent)
+	DA.tinfo = {};
+	// if (nundef(masterRecords)) masterRecords = records;
+	addKeys({ q: DA.qCurrent, dParent, title, tablename, dTable, records, headers, header, ifrom: 0, size: 100 }, DA.tinfo);
+	showChunk(0);
+}
+function showChunk(inc) {
+	let o = DA.tinfo;
+	let [dParent, title, tablename, dTable, records, headers, header] = [o.dParent, o.title, o.tablename, o.dTable, o.records, o.headers, o.header];
+	let [ifrom, ito] = calcIndexFromTo(inc, o); //console.log(ifrom,ito)
+	let chunkRecords = records.slice(ifrom, ito);
+	if (isdef(UI.dataTable)) mRemove(UI.dataTable.div); mClear(dTable);
+	let t = UI.dataTable = mDataTable(chunkRecords, dTable, null, headers, 'records');
+	if (nundef(t)) { console.log('UI.dataTable is NULL'); return; }
+	let d = t.div;
+	mStyle(d, { 'caret-color': 'transparent' });
+	let headeruis = Array.from(d.firstChild.getElementsByTagName('th'));
+	for (const ui of headeruis) {
+		mStyle(ui, { cursor: 'pointer' });
+		ui.onclick = (ev) => { evNoBubble(ev); showChunkedSortedBy(dParent, title, tablename, records, headers, ui.innerHTML); }
+	}
+	addSumAmount(headeruis.find(x => x.innerHTML == 'amount'), o.records);
+	if (tablename != 'transactions') return;
+	DA.tinfo.ifrom = ifrom;
+	let cells = DA.cells = [];
+	for (const ri of t.rowitems) {
+		let r = iDiv(ri);
+		//console.log(r,arrChildren(r)); break;
+		//let id = ri.o.id; let h = hFunc('tag', 'onclickAddTag', id, ri.index); let c = mAppend(r, mCreate('td')); c.innerHTML = h;
+		let tds = arrChildren(r);
+		for (const ui of tds) {
+			let item = { ri, div: ui, text: ui.innerHTML, record: ri.o, isSelected: false, irow: t.rowitems.indexOf(ri), icol: tds.indexOf(ui) };
+			item.header = headers[item.icol];
+			cells.push(item);
+			let bg = dbFindColor(item.tablename, item.header, ui.innerHTML);
+			mStyle(ui, { cursor: 'pointer' });
+			if (isdef(bg)) mStyle(ui, { bg, fg: 'contrast' });
+			ui.onclick = () => { toggleItemSelection(item); checkButtons(); } //async()=>await onclickTablecell(ui,ri,o);
+		}
+	}
+	DA.tinfo.ifrom = ifrom;
+	checkButtons();
+}
+function showTableSortedBy(dParent, title, tablename, records, headers, header) {
+	if (isEmpty(records)) { mText('no data', dParent); return null; }
+	if (nundef(headers)) headers = Object.keys(records[0]);
+	if (nundef(header)) header = headers[0];
+	console.log('___ show Full Table', Counter++, DA.tinfo);
+	console.log(DA.sortedBy, header);
+
+	if (isList(header)) DA.sortedBy = null; //ist multi-sorted!
+	else if (DA.sortedBy == header) { sortBy(records, header); DA.sortedBy = null; }
+	else { sortByDescending(records, header); DA.sortedBy = header; }
+	if (isdef(UI.dataTable)) mRemove(UI.dataTable.div); mClear(dParent);
+	mText(`<h2>${title} (${tablename})</h2>`, dParent, { maleft: 12 })
+	let t = UI.dataTable = mDataTable(records, dParent, null, headers, 'records');
+	if (nundef(t)) return;
+	let d = t.div;
+	mStyle(d, { 'caret-color': 'transparent' });
+	let headeruis = Array.from(d.firstChild.getElementsByTagName('th'));
+	for (const ui of headeruis) {
+		mStyle(ui, { cursor: 'pointer' });
+		ui.onclick = () => showTableSortedBy(dParent, title, tablename, records, headers, ui.innerHTML);
+	}
+	if (tablename != 'transactions') return records;
+	for (const ri of t.rowitems) {
+		let r = iDiv(ri);
+		let id = ri.o.id;
+		let h = hFunc('tag', 'onclickAddTag', id, ri.index); let c = mAppend(r, mCreate('td')); c.innerHTML = h;
+	}
+}
+//#endregion
+
+
+
+function extractHeadersFromSelect(sc) {
+	sc = stringAfter(sc, 'SELECT');
+	scs = sc.split(',').map(x => x.trim()).map(x => x.includes(' as ') ? stringAfter(x, ' as ').trim() : x);
+	//scs.map(x=>console.log(x));
+	return scs;
+}
+function sqlUpdateOrderBy(q, sorting) {
+	let clauses = splitSQLClauses(q); // console.log('clauses',clauses)
+	let qnew = '';
+	for (const k in clauses) {
+		if (k.startsWith('ORDER BY')) continue;
+		for (const a of clauses[k]) qnew += `${a.trim()}\n`;
+	}
+	if (!isEmpty(sorting)) { qnew += `ORDER BY ${Object.keys(sorting).map(x => x + ' ' + sorting[x].toUpperCase()).join(', ')}`; }
+	qnew += ';'
+	return qnew;
+}
+async function onclickSort(ev) { await sortRecordsBy(); }
+async function onclickSortFast(ev) { await sortRecords(null, false); }
+
 async function menuOpenOverview() {
 	let side = UI.sidebar = mSidebar('dLeft',110);
 	UI.d = mDom('dMain'); //, { className: 'section' });

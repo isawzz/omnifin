@@ -5,10 +5,14 @@ onload = start;//onscroll = handleSticky;
 async function start() { await prelims(); test27(); }
 
 async function test27(){
-	await switchToMainMenu('overview');//return;
-	//await	sortRecordsBy('amount');
-	DA.info.sorting={neurips22:'desc'};
-	await showRecords(qTTColsSorted({neurips22:'desc'}),UI.d);
+	await switchToMainMenu('overview');
+
+	await showRecords(qtest0(),UI.d); return;
+
+	await onclickCommand(null, 'translist');//	await showRecords(qTTCols(),UI.d); //return;
+	//await	sortRecordsBy('prudential');
+	//DA.info.sorting={neurips22:'desc'};
+	//await showRecords(qTTColsSorted({amount:'asc',neurips23:'desc'}),UI.d);
 	//await	sortRecordsBy('MCC');
 
 	// onclickSortFast();

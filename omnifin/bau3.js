@@ -1,20 +1,3 @@
-
-async function sortRecordsBy(h, allowEdit = false) {
-	//sorting is a dict by header 'asc','desc'
-	let [q, dParent, sorting] = [DA.info.q, DA.info.dParent, DA.info.sorting];
-
-	let qnew;
-	if (UI.lastCommandKey != 'transcols'){
-		let s = sorting[h]; if (s == 'asc') sorting[h] = 'desc'; else sorting[h] = 'asc';
-		qnew = sqlUpdateOrderBy(q, sorting); console.log(q1); //return;
-	}else{
-		qnew = qTTColsSorted(sorting);
-
-	}
-
-	await showRecords(qnew, dParent);
-
-}
 async function filterRecords(exp, allowEdit = true) {
 	//console.log('exp',exp);
 	exp = extractFilterExpression();
@@ -32,20 +15,6 @@ async function filterRecords(exp, allowEdit = true) {
 	records = dbToList(exp);
 	showChunkedSortedBy(i.dParent, i.title, i.tablename, records, headers, header);
 }
-
-function sqlUpdateOrderBy(q, sorting) {
-	let clauses = splitSQLClauses(q); // console.log('clauses',clauses)
-	let qnew = '';
-	for (const k in clauses) {
-		if (k.startsWith('ORDER BY')) continue;
-		for (const a of clauses[k]) qnew += `${a.trim()}\n`;
-	}
-	if (!isEmpty(sorting)) { qnew += `ORDER BY ${Object.keys(sorting).map(x => x + ' ' + sorting[x].toUpperCase()).join(', ')}`; }
-	qnew += ';'
-	return qnew;
-}
-
-
 function extractFilterExpression() {
 	let [records, headers, q] = [DA.info.records, DA.info.headers, DA.info.q];
 	let selist = Array.from(document.querySelectorAll('.bg_yellow'));

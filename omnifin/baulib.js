@@ -12,6 +12,9 @@ function findElementPosition(element,numHeaderElements) {
 
 	return { irow, icol };
 }
+function firstWord(text, allow_ = true) {
+	return isEmptyOrWhiteSpace(text) ? '' : toWords(text, allow_)[0]
+}
 function measureTextWidth(text,fz,family,weight){
 	if (nundef(fz)) fz=measureTextWidth.fz || (measureTextWidth.fz = mGetStyle(document.body,'fz'));
 	if (nundef(family)) family=measureTextWidth.family || (measureTextWidth.family = mGetStyle(document.body,'family'));
@@ -71,7 +74,10 @@ function mToggleSelection(ev) {
 	//console.log(elem)
 	if (mHasClass(elem,cl)) mClassRemove(elem,cl); else mClass(elem,cl);
 }
-function toggleState(elem,states,colors){
+function splitAtStringCI(s, sSub) {
+  const regex = new RegExp(sSub, 'gi'); // Create a case-insensitive regular expression for the substring
+  return s.split(regex); // Use the regular expression to split the string
+}function toggleState(elem,states,colors){
 	let i=Number(elem.getAttribute('istate'));
 	i++; if (i >= states.length) { i = 0; }
 	elem.setAttribute('istate',i)
@@ -80,4 +86,6 @@ function toggleState(elem,states,colors){
 	//console.log(elem,i,states,colors,states[i],colors[i])
 	return i;
 }
+function trimQuotes(str) { return str.trim().replace(/^['"`]+|['"`]+$/g, ''); }
+
 

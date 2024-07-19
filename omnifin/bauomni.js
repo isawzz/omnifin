@@ -1,9 +1,31 @@
 
+function clsGetHeaderMapping(clauses, sorting) {
+	let sc = clauses.SELECT[0];
+	assertion(isdef(sc), `NO SELECT CLAUSE!!! ${clauses}`);
+	assertion(clauses.SELECT.length == 1, `WRONG NUMBER OF SELECT CLAUSES!!! ${clauses}`);
+	//jetzt hab ich die clauses!
+
+	sc = stringAfter(sc, 'SELECT');
+	let selectHeaders = sc.split(',').map(x => x.includes(' as ') ? stringAfter(x, ' as ') : x.includes(' AS ') ? stringAfter(x, ' AS ') : x);
+	
+	selectHeaders=selectHeaders.map(x=>trimQuotes(x)); console.log('select headers:', selectHeaders);
+	//assertion(false,"*** THE END ***")
+
+	//die sorting params sollen jetzt verwandelt werden in die select headers
+	let sortHeaders = Object.keys(sorting).filter(x => isdef(sorting[x]));
+	console.log('sort headers:', sortHeaders);
+	let headerMapping = {};
+	for (const hSort of sortHeaders) {
+		let hSelect = selectHeaders.find(x => x.endsWith(hSort))
+		if (hSelect) headerMapping[hSort] = hSelect;
+	}
+	return headerMapping;
+}
 function measureRecord(rec) {
 	let res = '';
 	var di = {
-		amount: 80, asset_type:100, associated_account: 90, category: 120, dateof: 100, description: 'minmax(200px, 450px)', id: 45,
-		report: 55, receiver_name: 130, sender_name: 120, tag_name: 120, tag_names: 'auto', unit: 40, MCC: 45
+		account_name:140, account_type:140, account_owner:140, amount: 80, asset_name:120, asset_type:120, associated_account: 90, category: 120, dateof: 100, description: 'minmax(200px,1fr)', id: 45,
+		report: 55, receiver_name: 140, sender_name: 140, tag_name: 120, tag_names: 'auto', unit: 50, MCC: 60
 	};
 	for (const h in rec) {
 		let val = rec[h]; //console.log(typeof val, val, h);
@@ -20,522 +42,114 @@ function measureRecord(rec) {
 	return res;
 
 }
+async function sortRecordsBy(h, allowEdit = false) {
 
-//#region sorting records ui
-async function onclickAscDescButton(ev) {
-	let inp = ev.target;
-	console.log(':::', inp)
-}
-async function onclickSort(ev) { await sortRecordsBy(); }
-async function onclickSortFast(ev) { await sortRecords(null, false); }
-function onToggleState(ev, states, colors) {
-	let elem = ev.target;
-	toggleState(elem, states, colors);
-}
-async function sortRecords(headerlist, allowEdit = true) {
-	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header];
+	let [q, dParent, sorting] = [DA.info.q, DA.info.dParent, DA.info.sorting]; //sorting is a dict by header 'asc','desc'
 
-	if (nundef(headerlist)) {
-		let cells = DA.cells;
-		let selitems = cells.filter(x => x.isSelected); console.log(selitems);
-		headerlist = selitems.map(x => x.header);
-	}
-	assertion(!isEmpty(headerlist), 'sortRecords with empty headerlist!!!');
+	let s = sorting[h]; if (s == 'asc') sorting[h] = 'desc'; else if (sorting[h] == 'desc') delete sorting[h]; else sorting[h] = 'asc';
+	//assertion(!isEmpty(sorting),`sortRecordsBy ${h} but EMPTY sorting ${sorting}`)
 
-	console.log(headerlist);
+	let clauses = splitSQLClauses(q); //console.log(clauses); 
 
-	let result = await mGather(null, {}, { content: { func: uiTypeSortForm, data: headerlist }, type: 'freeForm' });
-	if (!result || isEmpty(result)) { console.log('nothing selected'); return; }
+	let qnew = sqlWithoutClause(clauses, 'ORDER BY'); //remove orderBy from q
 
-	console.log(result);
-	return;
-	records.sort(multiSort(result));// = sortByMultipleProperties(records,...result);
-	DA.tinfo.records = records;
-	DA.tinfo.header = result;
-	showChunkedSortedBy(DA.tinfo.dParent, DA.tinfo.title, DA.tinfo.tablename, DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header)
+	let headerMapping = clsGetHeaderMapping(clauses, sorting); console.log(headerMapping);//zuerst muss ich alle headers die verwenden kann suchen aus dem SELECT
 
-}
-function uiGadgetTypeFreeForm(dParent, content, resolve, styles = {}, opts = {}) {
-	addKeys({ hmax: 500, wmax: 200, bg: 'white', fg: 'black', padding: 10, rounding: 10, box: true }, styles)
-	let dOuter = mDom(dParent, styles);
-	let hmax = styles.hmax - 193, wmax = styles.wmax;
-	let innerStyles = { hmax, wmax, box: true };
-	let d = mDom(dOuter, innerStyles, opts);
-	content.func(d, content.data, resolve);
-	return dOuter;
-}
-async function uiTypeSortForm(dParent, data, resolve) {
-	//was will ich von der sort form? reihenfolge der keys, up/down sort, 
-	console.log(data);
+	//if (!isEmpty(sorting)) {
 
-	let headerlist = data;
+	if (UI.lastCommandKey == 'transcols' && isEmpty(sorting)) { await showRecords(qTTCols(), UI.d, true); return; }
 
-	let dlist = mDom(dParent);
-	for (const h of headerlist) {
+	else if (UI.lastCommandKey == 'transcols') {
+		let tags = dbGetTagNames();
 
-		let d = mDom(dlist, { className: 'centerFlexV', gap: 4 });
-		let d1 = mDom(d, {}, { html: h });
-		let b = mToggleButton('asc', 'desc', null, d)
+		let sortKeys = Object.keys(sorting); // tag_name sorting is ALWAYS first priority
+		let tagKeys = sortKeys.filter(x => tags.includes(x));
+
+		if (isdef(sorting[h]) && tagKeys.includes(h)) { tagKeys = [h].concat(arrWithout(tagKeys, h)); }
+
+		let otherKeys = sortKeys.filter(x => !tags.includes(x));
+		sortKeys = tagKeys.concat(otherKeys);
 
 
-	}
 
+		for (const k of tagKeys) sorting[k] = 'desc';		// tag_name columns werden immer nur X first sortiert!
 
-	let handler = () => resolve(null);
-	// mButton('done', handler, d, { classes: 'input', margin: 10 });
-}
-//#endregion
+		//ich muss in der selectClause das order aendern!!!
+		let tagOrder = tagKeys.concat(tags.filter(x => !tagKeys.includes(x)));
 
-//#region menu overview
+		console.log('tagOrder', tagOrder);
 
-function onclickShowSchema() {
-	let res = dbRaw(`SELECT sql FROM sqlite_master WHERE type='table';`);
-	let text = res.map(({ columns, values }) => {
-		// return columns.join('\t') + '\n' + values.map(row => row.join('\t')).join('\n');
-		return values.map(row => row.join('\t')).join('\n');
-	}).join('\n\n');
-	let d = UI.d;
-	mClear(d)
-	mText(`<h2>Schema</h2>`, d, { maleft: 12 })
-	mDom(d, {}, { tag: 'pre', html: text });
-}
-function onclickTesttrans() { let records = dbToList(qTT()); showTableSortedBy(UI.d, 'TEST', 'transactions', records); }
-function onclickTranslist() { let records = dbToList(qTTList()); showChunkedSortedBy(UI.d, 'tag list', 'transactions', records); }
-function onclickTranscols() { let records = dbToList(qTTCols()); showChunkedSortedBy(UI.d, 'tag columns', 'transactions', records); }
-function onclickTransactions() { let records = dbToList(qTransactions()); showChunkedSortedBy(UI.d, 'transactions', 'transactions', records); }
-function onclickFlex() { let records = dbToList(qTransFlex()); showTableSortedBy(UI.d, 'flex-perks', 'transactions', records); }
-function onclickTagged() { let records = dbToList(qTranstags()); showTableSortedBy(UI.d, 'tagged transactions', 'transactions', records); }
-function onclickMultiTagged() { let records = dbToList(qTransmultitag()); showTableSortedBy(UI.d, 'transactionsw/  multiple tags', 'transactions', records); }
-function onclickLimit20() { let records = dbToList(qLimit20()); showTableSortedBy(UI.d, '20 transactions', 'transactions', records); }
-
-function onclickReports() { let records = dbToList('select * from reports;'); showTableSortedBy(UI.d, 'reports', 'reports', records); }
-function onclickAssets() { let records = dbToList('select * from assets;'); showTableSortedBy(UI.d, 'assets', 'assets', records); }
-function onclickTags() { let records = dbToList('select * from tags;'); showTableSortedBy(UI.d, 'tags', 'tags', records); }
-function onclickAccounts() { let records = dbToList('select * from accounts;'); showTableSortedBy(UI.d, 'accounts', 'accounts', records); }
-function onclickStatements() { let records = dbToList('select * from statements;'); showTableSortedBy(UI.d, 'statements', 'statements', records); }
-function onclickVerifications() { let records = dbToList('select * from verifications;'); showTableSortedBy(UI.d, 'verifications', 'verifications', records); }
-function onclickTRevisions() { let records = dbToList('select * from transaction_revisions;'); showTableSortedBy(UI.d, 'transaction revisions', 'transaction_revisions', records); }
-//#endregion
-
-//#region show
-function addSumAmount(ui, records) {
-	if (nundef(ui)) return;
-	//console.log(ui);
-
-	let sum = arrSum(records, 'amount');
-	if (isNumber(sum)) sum = Math.round(sum);
-
-	mDom(ui, {}, { html: sum })
-
-}
-function showChunkedSortedBy(dParent, title, tablename, records, headers, header) {
-	if (isEmpty(records)) { mText('no data', dParent); return null; }
-	if (nundef(headers)) headers = Object.keys(records[0]);
-	if (nundef(header)) header = headers[0];
-
-	if (isList(header)) DA.sortedBy = null; //ist multi-sorted!
-	else if (DA.sortedBy == header) { records = sortByEmptyLast(records, header); DA.sortedBy = null; }
-	else { records = sortByDescending(records, header); DA.sortedBy = header; }
-
-	mClear(dParent);
-	let db = mDom(dParent, { gap: 10, mabottom: 10, className: 'centerflexV' }); //mCenterCenterFlex(db);
-
-	mText(`${tablename} (${records.length})`, db, { weight: 'bold', fz: 20, maleft: 12 });
-	// mButton('fifast', onclickFilterFast, db, {}, 'button', 'bFilterFast');
-	// mButton('filter', onclickFilter, db, {}, 'button', 'bFilter');
-	// mButton('back', onclickBackHistory, db, {}, 'button', 'bBack');
-	// mButton('PgDn', () => showChunk(1), db, { w: 25 }, 'button', 'bPgDn');
-	// mButton('PgUp', () => showChunk(-1), db, { w: 25 }, 'button', 'bPgUp');
-	// mButton('multi-sort', onclickMultiSort, db, {}, 'button', 'bMultiSort');
-	// // mButton('filter1', onclickFilter1, db, {}, 'button','bFilter1');
-	// // mButton('add tag', onclickTagForAll, db, {}, 'button','bAddTag');
-	// mButton('download db', onclickDownloadDb, db, {}, 'button', 'bDownload');
-	let dTable = mDom(dParent)
-	DA.tinfo = {};
-	// if (nundef(masterRecords)) masterRecords = records;
-	addKeys({ q: DA.qCurrent, dParent, title, tablename, dTable, records, headers, header, ifrom: 0, size: 100 }, DA.tinfo);
-	showChunk(0);
-}
-function showChunk(inc) {
-	let o = DA.tinfo;
-	let [dParent, title, tablename, dTable, records, headers, header] = [o.dParent, o.title, o.tablename, o.dTable, o.records, o.headers, o.header];
-	let [ifrom, ito] = calcIndexFromTo(inc, o); //console.log(ifrom,ito)
-	let chunkRecords = records.slice(ifrom, ito);
-	if (isdef(UI.dataTable)) mRemove(UI.dataTable.div); mClear(dTable);
-	let t = UI.dataTable = mDataTable(chunkRecords, dTable, null, headers, 'records');
-	if (nundef(t)) { console.log('UI.dataTable is NULL'); return; }
-	let d = t.div;
-	mStyle(d, { 'caret-color': 'transparent' });
-	let headeruis = Array.from(d.firstChild.getElementsByTagName('th'));
-	for (const ui of headeruis) {
-		mStyle(ui, { cursor: 'pointer' });
-		ui.onclick = (ev) => { evNoBubble(ev); showChunkedSortedBy(dParent, title, tablename, records, headers, ui.innerHTML); }
-	}
-	addSumAmount(headeruis.find(x => x.innerHTML == 'amount'), o.records);
-	if (tablename != 'transactions') return;
-	DA.tinfo.ifrom = ifrom;
-	let cells = DA.cells = [];
-	for (const ri of t.rowitems) {
-		let r = iDiv(ri);
-		//console.log(r,arrChildren(r)); break;
-		//let id = ri.o.id; let h = hFunc('tag', 'onclickAddTag', id, ri.index); let c = mAppend(r, mCreate('td')); c.innerHTML = h;
-		let tds = arrChildren(r);
-		for (const ui of tds) {
-			let item = { ri, div: ui, text: ui.innerHTML, record: ri.o, isSelected: false, irow: t.rowitems.indexOf(ri), icol: tds.indexOf(ui) };
-			item.header = headers[item.icol];
-			cells.push(item);
-			let bg = dbFindColor(item.tablename, item.header, ui.innerHTML);
-			mStyle(ui, { cursor: 'pointer' });
-			if (isdef(bg)) mStyle(ui, { bg, fg: 'contrast' });
-			ui.onclick = () => { toggleItemSelection(item); checkButtons(); } //async()=>await onclickTablecell(ui,ri,o);
+		let s = '';
+		for (const name of tagOrder) {
+			s += `MAX(CASE WHEN tg.tag_name = '${name}' THEN 'X' ELSE '' END) AS '${name}',\n`;
+			//if (name != arrLast(tags)) s += ',';
 		}
-	}
-	DA.tinfo.ifrom = ifrom;
-	checkButtons();
-}
-function showTableSortedBy(dParent, title, tablename, records, headers, header) {
-	if (isEmpty(records)) { mText('no data', dParent); return null; }
-	if (nundef(headers)) headers = Object.keys(records[0]);
-	if (nundef(header)) header = headers[0];
-	console.log('___ show Full Table', Counter++, DA.tinfo);
-	console.log(DA.sortedBy, header);
 
-	if (isList(header)) DA.sortedBy = null; //ist multi-sorted!
-	else if (DA.sortedBy == header) { sortBy(records, header); DA.sortedBy = null; }
-	else { sortByDescending(records, header); DA.sortedBy = header; }
-	if (isdef(UI.dataTable)) mRemove(UI.dataTable.div); mClear(dParent);
-	mText(`<h2>${title} (${tablename})</h2>`, dParent, { maleft: 12 })
-	let t = UI.dataTable = mDataTable(records, dParent, null, headers, 'records');
-	if (nundef(t)) return;
-	let d = t.div;
-	mStyle(d, { 'caret-color': 'transparent' });
-	let headeruis = Array.from(d.firstChild.getElementsByTagName('th'));
-	for (const ui of headeruis) {
-		mStyle(ui, { cursor: 'pointer' });
-		ui.onclick = () => showTableSortedBy(dParent, title, tablename, records, headers, ui.innerHTML);
-	}
-	if (tablename != 'transactions') return records;
-	for (const ri of t.rowitems) {
-		let r = iDiv(ri);
-		let id = ri.o.id;
-		let h = hFunc('tag', 'onclickAddTag', id, ri.index); let c = mAppend(r, mCreate('td')); c.innerHTML = h;
-	}
-}
-//#endregion
+		console.log('s', s); //return;
 
-//#region filter records
-async function onclickFilter(ev) { await filterRecords(); }
-async function onclickFilterFast(ev) { await filterRecords(null, false); }
-function generateSQLWhereClause(cells) {
-	// // Example usage:
-	// const cells = [
-	//   { icol: 0, irow: 0, text: 'Alice', header: 'name' },
-	//   { icol: 1, irow: 0, text: 'Engineering', header: 'department' },
-	//   { icol: 0, irow: 1, text: 'Bob', header: 'name' },
-	//   { icol: 1, irow: 1, text: 'HR', header: 'department' }
-	// ];
+		let select = `SELECT 
+				t.id, 
+				t.dateof, 
+				sender.account_name AS sender_name, 
+				receiver.account_name AS receiver_name, 
+				t.amount, 
+				a.asset_name AS unit, 
+				GROUP_CONCAT(
+					CASE 
+						WHEN tg.category = 'MCC' THEN tg.tag_name 
+						ELSE NULL 
+					END
+				) AS MCC,
+				${s}
+				t.description
+				`;
 
-	// console.log(generateSQLWhereClause(cells));
-	if (cells.length === 0) {
-		return '';
-	}
-
-	// Group cells by their rows and columns
-	const rows = {};
-	const cols = {};
-
-	cells.forEach(cell => {
-		if (!rows[cell.irow]) {
-			rows[cell.irow] = [];
+		qnew = select + '\n';
+		for (const k in clauses) {
+			if (['SELECT', 'ORDER BY'].includes(k)) continue;
+			for (const a of clauses[k]) qnew += `${a.trim()}\n`;
 		}
-		rows[cell.irow].push(cell);
 
-		if (!cols[cell.icol]) {
-			cols[cell.icol] = [];
-		}
-		cols[cell.icol].push(cell);
-	});
+		qnew += `ORDER BY ${sortKeys.map(x => `"${headerMapping[x]}" ${sorting[x].toUpperCase()}`).join(', ')}`;
 
-	//console.log(rows,cols)
-
-	let ands = [];
-	for (const irow in rows) {
-		let rcells = rows[irow];
-		let cl = rcells.map(cell => generateSQLEqualsWHERE(cell.header, cell.text)).filter(cell => !isEmpty(cell)).join(' AND ');
-		ands.push(cl);
-	}
-	ands = ands.filter(x => !isEmpty(x))
-	let res = isEmpty(ands) ? null : ' WHERE ' + ands.join(' OR ');
-	return res;
-}
-function generateSQLHavingClause(cells) {
-	// // Example usage:
-	// const cells = [
-	//   { icol: 0, irow: 0, text: 'Alice', header: 'name' },
-	//   { icol: 1, irow: 0, text: 'Engineering', header: 'department' },
-	//   { icol: 0, irow: 1, text: 'Bob', header: 'name' },
-	//   { icol: 1, irow: 1, text: 'HR', header: 'department' }
-	// ];
-
-	// console.log(generateSQLWhereClause(cells));
-	if (cells.length === 0) {
-		return '';
+	} else if (!isEmpty(sorting)) {
+		qnew += `ORDER BY ${Object.keys(sorting).map(x => `"${headerMapping[x]}" ${sorting[x].toUpperCase()}`).join(', ')}`;
 	}
 
-	// Group cells by their rows and columns
-	const rows = {};
-	const cols = {};
+	console.log(qnew);
+	await showRecords(qnew, dParent);
 
-	cells.forEach(cell => {
-		if (!rows[cell.irow]) {
-			rows[cell.irow] = [];
-		}
-		rows[cell.irow].push(cell);
+}
+function sqlReplaceStar(q){
 
-		if (!cols[cell.icol]) {
-			cols[cell.icol] = [];
-		}
-		cols[cell.icol].push(cell);
-	});
+	//console.log(':::::::::::',q);
+	let qTemp = q.toLowerCase().trim();
+	if (qTemp.startsWith('select * from')){
 
-	//console.log(rows,cols)
+		if (qTemp.endsWith(';')) qTemp = stringBeforeLast(qTemp,';');
+		qTemp += ` LIMIT 1;`;
+		console.log(qTemp)
+		let records = dbToList(qTemp); //'select * from tags');
+		if (isEmpty(records)) return q;
 
-	let ands = [];
-	for (const irow in rows) {
-		let rcells = rows[irow];
-		let cl = rcells.map(cell => generateSQLEqualsHAVING(cell.header, cell.text)).filter(cell => !isEmpty(cell)).join(' AND ');
-		ands.push(cl);
+		let headers = Object.keys(records[0]);
+		let qnew = `SELECT ${headers.join(', ')}\n${stringAfter(q,' * ')}`;
+		return qnew;
+
+
 	}
-	ands = ands.filter(x => !isEmpty(x))
-	let res = isEmpty(ands) ? null : ' HAVING ' + ands.join(' OR ');
-	return res;
+	return q;
 }
-function generateSQLEqualsHAVING(a, text) {
-	if (a != 'mcc' && a != 'tag_names') return null;
-	//return isNumber(text) ? Number(text) == 0 ? `(${a} IS NULL OR ${a}=0)` : `${a}=${text}`
-	if (a == 'mcc' && isEmpty(text)) {
-		return `group_concat(CASE WHEN tg.category = 'mcc' THEN tg.tag_name ELSE NULL END) IS NULL OR
-    group_concat(CASE WHEN tg.category = 'mcc' THEN tg.tag_name ELSE NULL END) = ''`;
-	} else if (a == 'tag_names' && isEmpty(text)) {
-		return `group_concat(CASE WHEN tg.category <> 'mcc' AND tg.tag_name NOT GLOB '*[0-9]*' THEN tg.tag_name ELSE NULL END) IS NULL OR
-    group_concat(CASE WHEN tg.category <> 'mcc' AND tg.tag_name NOT GLOB '*[0-9]*' THEN tg.tag_name ELSE NULL END) = ''`;
-
-	} else if (a == 'mcc') {
-		return `group_concat(CASE WHEN tg.category = 'mcc' THEN tg.tag_name ELSE NULL END) = '${text}`;
-	} else if (a == 'tag_names') {
-		return `group_concat(CASE WHEN tg.category <> 'mcc' AND tg.tag_name NOT GLOB '*[0-9]*' THEN tg.tag_name ELSE NULL END) = '${text}'`;
+function sqlWithoutClause(clauses,which='ORDER BY') {
+	let qnew = '';
+	for (const k in clauses) {
+		if (k.startsWith(which)) continue;
+		for (const a of clauses[k]) qnew += `${a.trim()}\n`;
 	}
-}
-function generateSQLEqualsWHERE(a, text) {
-	if (a == 'mcc' || a == 'tag_names') return null;
-	return isEmpty(text) ? `(${a} IS NULL OR ${a}='')` : `${a}='${text}'`;
-}
-//#endregion
-
-//#region ui mNavMenu, checkButtons, handleSticky
-function handleSticky() { let d = mBy('dNav'); if (window.scrollY >= 88) mClass(d, 'sticky'); else mClassRemove(d, 'sticky'); }
-function checkButtons() {
-	let bs = arrChildren('dButtons'); bs.map(x => disableButton(x));
-	if (DB) enableButton('bDownload');
-	let info = DA.tinfo; //are there records shown?
-	if (nundef(info)) return;
-	let [ifrom, ito, records] = [info.ifrom, info.ito, info.records];
-	//console.log('checkButtons',ifrom,ito,records.length)
-	if (ifrom > 0) enableButton('bPgUp');
-	if (ito < records.length) enableButton('bPgDn');
-	if (!isEmpty(M.qHistory)) enableButton('bBack');
-	if (DA.cells.find(x => x.isSelected)) ['bFilter', 'bFilterFast', 'bSort', 'bSortFast'].map(x => enableButton(x));
+	return qnew;
 }
 
-//#endregion
 
-//#region history
-async function onclickBackHistory() {
-	console.log(M.qHistory)
-	let o = M.qHistory.pop();
-	if (isdef(o)) {
-		let records = dbToList(o.q, false);
-		showChunkedSortedBy(UI.d, o.tablename, o.tablename, records);
-	}
-}
-function dbHistory(q, addToHistory) {
-	if (addToHistory) {
-		let q1 = q.toLowerCase().trim();
-		if (q1.startsWith('select')) {
-			if (isdef(DA.qCurrent)) M.qHistory.push({ q: DA.qCurrent, tablename: wordAfter(q1, 'from') });
-			DA.qCurrent = q1;
-		}
-	}
-}
-//#endregion
-
-//#region main menu weiter test
-async function menuOpenTest() { }
-async function menuCloseTest() { closeLeftSidebar(); mClear('dMain') }
-//#endregion
-
-//#region onclickAddTag
-async function onclickAddTag(idtrans, index) {
-
-	let item = UI.dataTable.rowitems[index];
-	//console.log('item',item);
-
-	let colitem = item.colitems.find(x => x.key == 'tag_names');
-	//console.log(colitem);
-	if (nundef(colitem)) { console.log('cannot execute because tag_names column missing!'); return; }
-
-	let currentTagNames = colitem.val.split(',');
-	console.log('current tagnames', currentTagNames);
-
-	let allTagNames = Object.keys(M.tagsByName).filter(x => !isNumber(x)); //console.log(allTagNames.filter(x=>x.startsWith('palma')));
-	let content = allTagNames.map(x => ({ key: x, value: currentTagNames.some(y => y == x) }));
-	let list = await mGather(null, { h: 800, hmax: 800 }, { content, type: 'checkListInput', charsAllowedInWord: ['-_'] });
-	console.log(list);
-	if (!list) { console.log('add tag CANCELLED!!!'); return; }
-	//look if there is any tag that has not been there before
-	let newTagNames = arrWithout(list, currentTagNames);
-	console.log('new tags', newTagNames);
-
-	return;
-	for (const t of newTagNames) {
-		//need to create a report and add it to reports,
-		//need to add a record in transaction_tags with corresponding trans_id,tag_id,report_id
-		dbAddTagAndReport(idtrans, t);
-		break;
-	}
-}
-function _addTagAndReport(transactionId, tagName, reportCategory = 'default') {
-	// Insert a new report with default values
-	let db = DB;
-	db.run(`
-		INSERT INTO reports (category, associated_account, description)
-		VALUES (?, NULL, '')
-	`, [reportCategory]);
-
-	// Get the last inserted report ID
-	const reportId = db.exec("SELECT last_insert_rowid() AS id;")[0].values[0][0];
-
-	console.log(reportId);
-
-	// Insert the tag
-	db.run(`
-		INSERT INTO tags (tag_name, category, description, report)
-		VALUES (?, '', '', ?)
-	`, [tagName, reportId]);
-
-	// Get the last inserted tag ID
-	const tagId = db.exec("SELECT last_insert_rowid() AS id;")[0].values[0][0];
-
-	// Associate the tag with the transaction
-	db.run(`
-		INSERT INTO transaction_tags (id, tag_id, report)
-		VALUES (?, ?, ?)
-	`, [transactionId, tagId, reportId]);
-
-	dbSaveToLocalStorage();
-
-	alert("Tag and report added successfully.");
-}
-//#endregion
-
-//#region NEEDS TO BE FIXED!!!!
-function uiTypeCheckListInput(any, dParent, styles = {}, opts = {}) {
-	addKeys({ charsAllowedInWord: [' '] }, opts);
-	let dg = mDom(dParent);
-	let list = toNameValueList(any); list.map(x => { if (x.value != true) x.value = false; });
-	let items = [];
-	for (const o of list) {
-		//console.log(o.value)
-		let div = mCheckbox(dg, o.name, o.value);
-		items.push({ nam: o.name, div, w: mGetStyle(div, 'w'), h: mGetStyle(div, 'h') });
-	}
-	let wmax = arrMax(items, 'w');
-	let cols = 4;
-	let wgrid = wmax * cols + 100;
-	dg.remove();
-	dg = mDom(dParent);
-	let inp = mDom(dg, { w100: true, box: true, mabottom: 10 }, { className: 'input', tag: 'input', type: 'text' });
-	let db = mDom(dg, { w100: true, box: true, align: 'right', mabottom: 4 });
-	mButton('cancel', () => opts.handler(null), db, {}, 'input');
-	mButton('clear', ev => { onclickClear(inp, grid) }, db, { maleft: 10 }, 'input');
-	mButton('done', () => opts.handler(extractWords(inp.value, opts.charsAllowedInWord)), db, { maleft: 10 }, 'input');
-	mStyle(dg, { w: wgrid, box: true, padding: 10 }); //, w: wgrid })
-	//let hmax = isdef(styles.hmax) ? styles.hmax - 150 : 300;
-	//console.log('...hmax',styles.hmax)
-	//addKeys({hmax:450},styles);
-	let hmax = valf(styles.hmax, 450); //isdef(styles.hmax) ? styles.hmax - 150 : 300;
-	let grid = mGrid(null, cols, dg, { w100: true, gap: 10, matop: 4, hmax: hmax - 150 }); //, bg:'red' });
-	items.map(x => mAppend(grid, iDiv(x)));
-	sortCheckboxes(grid);
-	let chks = Array.from(dg.querySelectorAll('input[type="checkbox"]'));
-	for (const chk of chks) {
-		chk.addEventListener('click', ev => checkToInput(ev, inp, grid))
-	}
-	inp.value = list.filter(x => x.value).map(x => x.name).join(', ');
-	inp.addEventListener('keypress', ev => inpToChecklist(ev, grid, opts.charsAllowedInWord));
-	return { dg, inp, grid };
-}
-function getSeparators(allowed) {
-	let specialChars = toLetters(' ,-.!?;:');
-	if (isdef(allowed)) specialChars = arrMinus(specialChars, toLetters(allowed));
-	return specialChars;
-}
-function inpToChecklist(ev, grid, charsAllowedInWord) {
-	let key = ev.key;
-	let inp = ev.target;
-	if (key == 'Backspace') {
-		let s = inp.value;
-		let cursorPos = inp.selectionStart;
-		let ch = cursorPos == 0 ? null : inp.value[cursorPos - 1];
-		if (!ch || isWhiteSpace(ch)) {
-			doYourThing(inp, grid, charsAllowedInWord);
-		}
-		console.log('Backspace', ch);
-		return;
-	}
-	if (key == 'Enter') ev.preventDefault();
-	if (isExpressionSeparator(key, charsAllowedInWord) || key == 'Enter') doYourThing(inp, grid, charsAllowedInWord);
-}
-function isExpressionSeparator(ch, charsAllowed) {
-	let seps = getSeparators(charsAllowed);
-	return seps.includes(ch);
-}
-function doYourThing(inp, grid, charsAllowed = ' ') {
-	let words = extractWords(inp.value, charsAllowed).map(x => x.toLowerCase());
-	let checklist = Array.from(grid.querySelectorAll('input[type="checkbox"]')); //chks=items.map(x=>iDiv(x).firstChild);
-	let allNames = checklist.map(x => x.name);
-	let names = checklist.filter(x => x.checked).map(x => x.name);
-	for (const w of words) {
-		if (!allNames.includes(w)) {
-			let div = mCheckbox(grid, w);
-			let chk = div.firstChild;
-			chk.checked = true;
-			chk.addEventListener('click', ev => checkToInput(ev, inp, grid))
-			needToSortChildren = true;
-		} else {
-			let chk = checklist.find(x => x.name == w);
-			if (!chk.checked) chk.checked = true;
-		}
-	}
-	for (const name of names) {
-		if (!words.includes(name)) {
-			let chk = checklist.find(x => x.name == name);
-			chk.checked = false;
-		}
-	}
-	sortCheckboxes(grid);
-	words.sort();
-	inp.value = words.join(', ') + ', ';
-}
-//#endregion
-
-//#region build a query (empty)
-function buildTransactionQuery() {
-	let q = `
-	
-		`;
-}
-//#endregion
 
 
 

@@ -1,31 +1,41 @@
 
-async function showRecords(q, dParent) {
+async function showRecords(q, dParent, clearInfo = false) {
 
+	//#region vorher
 	mClear(dParent);//mStyle(dParent,{bg:'white',vpadding:10})
-	let records = dbToList(q); //'select * from tags');
-	if (records.length == 0) return;
+	//console.log('________',q)
+	//q = sqlReplaceStar(q); //console.log(q)
+	let records = dbToList(q); 
+	if (records.length == 0) {mDom(dParent,{className:'section'},{html:'no records found'});return;}
+
 	let headers = Object.keys(records[0]);//['id','description','amount','unit','sender_name','receiver_name']
-	if (nundef(DA.info)) DA.info={sorting:{}};
-	DA.info.q=q;
-	DA.info.dParent=dParent;
-	DA.info.records=records;
-	DA.info.headers=headers;
+	if (clearInfo || nundef(DA.info)) DA.info = { sorting: {} };
+	DA.info.q = q;
+	DA.info.dParent = dParent;
+	DA.info.records = records;
+	DA.info.headers = headers;
 	//let db = mDom(dParent, { gap: 10, mabottom: 10, className: 'centerflexV' }); //mCenterCenterFlex(db);
 
 	mIfNotRelative(dParent);
-	let d=mDom(dParent,{position:'absolute',h:window.innerHeight-135,w:window.innerWidth-110});//,bg:'red'})
+	let d = mDom(dParent, { position: 'absolute', h: window.innerHeight - 135, w: window.innerWidth - 110 });//,bg:'red'})
 
 	//let h=750;//window.innerHeight-150;
-	let styles = { bg:'white', fg:'black', margin:10, w:'98%', h:'97%', overy: 'auto', display: 'grid', gap: 4, box: true, border: '1px solid #ddd', };
+	let styles = { bg: 'white', fg: 'black', margin: 10, w: '98%', h: '97%', overy: 'auto', display: 'grid', gap: 4, box: true, border: '1px solid #ddd', };
 	styles.gridCols = measureRecord(records[0]);
 
 	let dgrid = mDom(d, styles, { id: 'gridContainer' });
+	//#endregion
 
 	let dh = mDom(dgrid, { className: 'gridHeader' });
-	for (const h of headers) { 
-		let th = mDom(dh, { cursor: 'pointer' }, { html: h, onclick: ()=>sortRecordsBy(h) }); 
+	for (const h of headers) {
+		let th = mDom(dh, { cursor: 'pointer' }, { onclick: () => sortRecordsBy(h) });
+
+		let html =  getHeaderHtml(h, DA.info.sorting[h])
+		mDom(th,{},{html});
+		//if (h == 'amount') addSumAmount(th,records);
 	}
 
+	//#region nachher
 	let totalRecords = records.length; // Simulated total number of records
 	let pageSize = 50; // Number of records to load at a time
 	let currentPage = 0;
@@ -46,15 +56,18 @@ async function showRecords(q, dParent) {
 	}
 
 	function appendRecords(recpartial) {
-		let styles = {cursor:'pointer'};
+		let styles = { cursor: 'pointer' };
 		recpartial.forEach(record => {
 			for (const h of headers) {
 
 				let html = record[h];
-				styles.align = isNumber(html) && !['asset_name'].includes(h)?'right':'left';
-				if (h.includes('amount')) html = html.toFixed(2);
+				styles.align = isNumber(html) && !['asset_name'].includes(h) ? 'right' : 'left';
+				if (h.includes('amount')) {
+					if (!isNumber(html) && isEmpty(html)) console.log('amount empty!', record);
+					html = isEmpty(html) ? '0.00' : html.toFixed(2);
+				}
 
-				let td = mDom(dgrid, styles, { html,onclick:mToggleSelection });
+				let td = mDom(dgrid, styles, { html, onclick: mToggleSelection });
 			}
 		});
 	}
@@ -79,10 +92,31 @@ async function showRecords(q, dParent) {
 
 	// Load initial records
 	await loadMoreRecordsAsync();
+	//#endregion
 }
 
+function _getHeaderHtml(header, sorting) {
+  let arrowHtml = '';
+  
+  if (sorting === 'asc') {
+    arrowHtml = ' &uarr;'; // Up arrow
+  } else if (sorting === 'desc') {
+    arrowHtml = ' &darr;'; // Down arrow
+  }
 
+  return `${header}${arrowHtml}`;
+}
+function getHeaderHtml(header, sorting) {
+	let arrowHtml = '';
+	
+	if (sorting === 'asc') {
+		arrowHtml = ' <span class="arrow">&#9650;</span>'; // Up arrow
+	} else if (sorting === 'desc') {
+		arrowHtml = ' <span class="arrow">&#9660;</span>'; // Down arrow
+	}
 
+	return `${header}${arrowHtml}`;
+}
 
 
 
