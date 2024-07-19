@@ -17,7 +17,7 @@ function clsGetHeaderMapping(clauses, sorting) {
 	let headerMapping = {};
 	for (const hSort of sortHeaders) {
 		let hSelect = selectHeaders.find(x => x.endsWith(hSort))
-		if (hSelect) headerMapping[hSort] = hSelect;
+		if (hSelect) headerMapping[hSort] = hSelect.includes('.')?hSelect:`'${hSelect}'`;
 	}
 	return headerMapping;
 }
@@ -70,8 +70,6 @@ async function sortRecordsBy(h, allowEdit = false) {
 		let otherKeys = sortKeys.filter(x => !tags.includes(x));
 		sortKeys = tagKeys.concat(otherKeys);
 
-
-
 		for (const k of tagKeys) sorting[k] = 'desc';		// tag_name columns werden immer nur X first sortiert!
 
 		//ich muss in der selectClause das order aendern!!!
@@ -110,10 +108,10 @@ async function sortRecordsBy(h, allowEdit = false) {
 			for (const a of clauses[k]) qnew += `${a.trim()}\n`;
 		}
 
-		qnew += `ORDER BY ${sortKeys.map(x => `"${headerMapping[x]}" ${sorting[x].toUpperCase()}`).join(', ')}`;
+		qnew += `ORDER BY ${sortKeys.map(x => `${headerMapping[x]} ${sorting[x].toUpperCase()}`).join(', ')}`;
 
 	} else if (!isEmpty(sorting)) {
-		qnew += `ORDER BY ${Object.keys(sorting).map(x => `"${headerMapping[x]}" ${sorting[x].toUpperCase()}`).join(', ')}`;
+		qnew += `ORDER BY ${Object.keys(sorting).map(x => `${headerMapping[x]} ${sorting[x].toUpperCase()}`).join(', ')}`;
 	}
 
 	console.log(qnew);
