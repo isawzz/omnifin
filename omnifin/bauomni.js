@@ -24,7 +24,8 @@ function clsGetHeaderMapping(clauses, sorting) {
 function measureRecord(rec) {
 	let res = '';
 	var di = {
-		account_name:140, account_type:140, account_owner:140, amount: 80, asset_name:120, asset_type:120, associated_account: 90, category: 120, dateof: 100, description: 'minmax(200px,1fr)', id: 45,
+		account_name:140, account_type:140, account_owner:140, amount: 80, asset_name:120, asset_type:120, associated_account: 90, 
+		category: 120, dateof: 100, description: 'minmax(200px,1fr)', id: 40,
 		report: 55, receiver_name: 140, sender_name: 140, tag_name: 120, tag_names: 'auto', unit: 50, MCC: 60
 	};
 	for (const h in rec) {
