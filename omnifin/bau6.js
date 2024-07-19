@@ -27,6 +27,8 @@ async function menuOpenOverview() {
 	UI.commands.showSchema = mCommand(side.d, 'showSchema', 'DB Structure', {}); mNewline(side.d, gap); mLinebreak(side.d, 10);
 	UI.commands.translist = mCommand(side.d, 'translist', 'translist', {}, { open: () => showRecords(qTTList(), UI.d, true) }); mNewline(side.d, gap);
 	UI.commands.transcols = mCommand(side.d, 'transcols', 'transcols', {}, { open: () => showRecords(qTTCols(), UI.d, true) }); mNewline(side.d, gap);
+	UI.commands.ausgaben = mCommand(side.d, 'ausgaben', 'ausgaben', {}, { open: () => showRecords(qAusgaben(), UI.d, true) }); mNewline(side.d, gap);
+	UI.commands.einnahmen = mCommand(side.d, 'einnahmen', 'einnahmen', {}, { open: () => showRecords(qEinnahmen(), UI.d, true) }); mNewline(side.d, gap);
 	mLinebreak(side.d, 10);
 	UI.commands.reports = mCommand(side.d, 'reports', 'reports', {}, { open: () => showRecords('SELECT * from reports', UI.d, true) }); mNewline(side.d, gap);
 	UI.commands.assets = mCommand(side.d, 'assets', 'assets', {}, { open: () => showRecords('SELECT * from assets', UI.d, true) }); mNewline(side.d, gap);

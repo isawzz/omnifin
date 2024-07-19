@@ -1,3 +1,6 @@
+
+sql statement: return all transactions that have sender an account with account_owner=external and unit has asset_type=currency
+
 js function that splits an sql statement into its different clauses. the function returns an object where the keys are starting word (from, select, join...) and values the clause. multiple similar clauses should be put in a list 
 allow lowercase sql as well
 the last ';' should be removed from the last clause. Also, remove all tab or newline characters

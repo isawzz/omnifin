@@ -4,7 +4,7 @@ async function showRecords(q, dParent, clearInfo = false) {
 	//#region vorher
 	mClear(dParent);//mStyle(dParent,{bg:'white',vpadding:10})
 	//console.log('________',q)
-	//q = sqlReplaceStar(q); //console.log(q)
+	q = sqlReplaceStar(q); //console.log(q)
 	let records = dbToList(q); 
 	if (records.length == 0) {mDom(dParent,{className:'section'},{html:'no records found'});return;}
 
@@ -32,7 +32,7 @@ async function showRecords(q, dParent, clearInfo = false) {
 
 		let html =  getHeaderHtml(h, DA.info.sorting[h])
 		mDom(th,{},{html});
-		//if (h == 'amount') addSumAmount(th,records);
+		if (h == 'amount') addSumAmount(th,records);
 	}
 
 	//#region nachher

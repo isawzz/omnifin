@@ -1,4 +1,52 @@
 
+function qAusgaben(){
+	return `
+	SELECT 
+    t.id, 
+    t.dateof, 
+    sender.account_name AS sender_name, 
+    receiver.account_name AS receiver_name, 
+    t.amount, 
+    a.asset_name AS unit, 
+    t.description
+	FROM 
+			transactions t
+	JOIN 
+			accounts sender ON t.sender = sender.id
+	JOIN 
+			accounts receiver ON t.receiver = receiver.id
+	JOIN 
+			assets a ON t.unit = a.id
+	WHERE 
+			receiver.account_owner = 'external' 
+			AND a.asset_type = 'currency';
+
+	`;
+}
+function qEinnahmen(){
+	return `
+	SELECT 
+    t.id, 
+    t.dateof, 
+    sender.account_name AS sender_name, 
+    receiver.account_name AS receiver_name, 
+    t.amount, 
+    a.asset_name AS unit, 
+    t.description
+	FROM 
+			transactions t
+	JOIN 
+			accounts sender ON t.sender = sender.id
+	JOIN 
+			accounts receiver ON t.receiver = receiver.id
+	JOIN 
+			assets a ON t.unit = a.id
+	WHERE 
+			sender.account_owner = 'external' 
+			AND a.asset_type = 'currency';
+
+	`;
+}
 function qtest0(){
 	return 	`
 			SELECT

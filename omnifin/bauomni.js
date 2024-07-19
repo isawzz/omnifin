@@ -17,7 +17,7 @@ function clsGetHeaderMapping(clauses, sorting) {
 	let headerMapping = {};
 	for (const hSort of sortHeaders) {
 		let hSelect = selectHeaders.find(x => x.endsWith(hSort))
-		if (hSelect) headerMapping[hSort] = hSelect.includes('.')?hSelect:`'${hSelect}'`;
+		if (hSelect) headerMapping[hSort] = hSelect.includes('.')?hSelect:`"${hSelect}"`;
 	}
 	return headerMapping;
 }

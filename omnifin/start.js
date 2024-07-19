@@ -7,9 +7,9 @@ async function start() { await prelims(); test27(); }
 async function test27(){
 	await switchToMainMenu('overview');
 
-	await showRecords(qtest0(),UI.d); return;
+	await showRecords(qAusgaben(),UI.d); return;
 
-	await onclickCommand(null, 'translist');//	await showRecords(qTTCols(),UI.d); //return;
+	//await onclickCommand(null, 'transcols');//	await showRecords(qTTCols(),UI.d); //return;
 	//await	sortRecordsBy('prudential');
 	//DA.info.sorting={neurips22:'desc'};
 	//await showRecords(qTTColsSorted({amount:'asc',neurips23:'desc'}),UI.d);
