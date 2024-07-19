@@ -91,7 +91,8 @@ async function showRecords(q, dParent, clearInfo = false) {
 	}
 
 	dgrid.addEventListener('scroll', () => {
-		if (dgrid.scrollTop + dgrid.clientHeight >= dgrid.scrollHeight) {
+		console.log('hallo!',dgrid.scrollTop, dgrid.clientHeight, dgrid.scrollHeight)
+		if (dgrid.scrollTop + dgrid.clientHeight >= dgrid.scrollHeight-20) {
 			loadMoreRecords();
 		}
 	});
