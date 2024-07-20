@@ -10,8 +10,8 @@ function qCurrency(){
     a.asset_name AS unit, 
     t.description,
 		t.report,
-    sender.account_owner AS from_owner, 
-    receiver.account_owner AS to_owner
+    sender.account_owner AS snd_owner, 
+    receiver.account_owner AS rec_owner
 	FROM 
 			transactions t
 	JOIN 
@@ -78,36 +78,30 @@ function qEinnahmen(){
 
 	`;
 }
-function qtest0(){
-	return 	`
-			SELECT
-					t.id,
-					t.dateof,
-					sender.account_name AS sender_name,
-					receiver.account_name AS receiver_name,
-					t.amount,
-					a.asset_name AS unit,
-					GROUP_CONCAT(CASE WHEN tg.category = 'MCC' THEN tg.tag_name ELSE NULL END) AS MCC,
-					GROUP_CONCAT(CASE WHEN tg.category <> 'MCC' AND tg.tag_name NOT GLOB '*[0-9]*' THEN tg.tag_name ELSE NULL END) AS tag_names,
-					t.description,
-					t.report
-			FROM
-					transactions t
-			JOIN
-					accounts sender ON t.sender = sender.id
-			JOIN
-					accounts receiver ON t.receiver = receiver.id
-			JOIN
-					assets a ON t.unit = a.id
-			LEFT JOIN
-					transaction_tags tt ON t.id = tt.id
-			LEFT JOIN
-					tags tg ON tt.tag_id = tg.id
-			GROUP BY
-					t.id, t.dateof, sender_name, receiver_name, t.amount, unit, t.description
-			ORDER BY
-					t.description DESC;
-		`;
+function qStocks(){
+	return `
+	SELECT 
+    t.id, 
+    t.dateof, 
+    sender.account_name AS sender_name, 
+    receiver.account_name AS receiver_name, 
+    t.amount, 
+    a.asset_name AS unit, 
+    t.description,
+		t.report,
+    sender.account_owner AS snd_owner, 
+    receiver.account_owner AS rec_owner
+	FROM 
+			transactions t
+	JOIN 
+			accounts sender ON t.sender = sender.id
+	JOIN 
+			accounts receiver ON t.receiver = receiver.id
+	JOIN 
+			assets a ON t.unit = a.id
+	WHERE 
+			a.asset_type = 'stock';
+	`;
 }
 function qTTList() {
 	return `
@@ -195,6 +189,38 @@ function qTTCols() {
 
 
 
+//#region testing
+function qtest0(){
+	return 	`
+			SELECT
+					t.id,
+					t.dateof,
+					sender.account_name AS sender_name,
+					receiver.account_name AS receiver_name,
+					t.amount,
+					a.asset_name AS unit,
+					GROUP_CONCAT(CASE WHEN tg.category = 'MCC' THEN tg.tag_name ELSE NULL END) AS MCC,
+					GROUP_CONCAT(CASE WHEN tg.category <> 'MCC' AND tg.tag_name NOT GLOB '*[0-9]*' THEN tg.tag_name ELSE NULL END) AS tag_names,
+					t.description,
+					t.report
+			FROM
+					transactions t
+			JOIN
+					accounts sender ON t.sender = sender.id
+			JOIN
+					accounts receiver ON t.receiver = receiver.id
+			JOIN
+					assets a ON t.unit = a.id
+			LEFT JOIN
+					transaction_tags tt ON t.id = tt.id
+			LEFT JOIN
+					tags tg ON tt.tag_id = tg.id
+			GROUP BY
+					t.id, t.dateof, sender_name, receiver_name, t.amount, unit, t.description
+			ORDER BY
+					t.description DESC;
+		`;
+}
 
 
 //#region unused

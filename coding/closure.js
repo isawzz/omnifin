@@ -97,7 +97,7 @@ async function _integrate(pathLarge,pathNew){
   let text = '';
   for (const k of keys) { 
     let s=bykey[k].code;
-    if (!s.includes('\n')) {console.log('oneliner',s); s+='\n';}
+    if (!s.includes('\n')) {s+='\n';} //console.log('oneliner',s); 
     text += s + '\n'; 
   }
   AU.ta.value = text;
@@ -708,7 +708,7 @@ function fisherYates(arr) {
 function get_keys(o) { return Object.keys(o); }
 function get_values(o) { return Object.values(o); }
 async function getCodeDictByKey(path){
-  let list = await codeParseFile(path); console.log(list)
+  let list = await codeParseFile(path); //console.log(list)
   let bykey = list2dict(list, 'key');
   return bykey;
 }

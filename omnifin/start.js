@@ -1,6 +1,6 @@
 
 const DB_PATH = '../db/test2.db'; // relative to omnifin dir
-onload = start;//onscroll = handleSticky;
+onload = start;onresize = ()=>{if (UI.nav.cur == 'overview' && lookup(DA,['info','q'])) showRecords(DA.info.q,UI.d); }//onscroll = handleSticky;
 
 async function start() { await prelims(); test29(); }
 

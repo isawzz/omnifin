@@ -3,7 +3,7 @@ async function start() { test10(); }
 
 async function test10(){
 	//await _sortFunctionsOfAFile();
-	await _integrate(`../omnifin/done.js`,'../ode/bausammel.js');
+	await _integrate(`../omnifin/minilib.js`,'../omnifin/baulib.js');
 	//await _closureFromProject('ode'); 
 }
 

@@ -103,6 +103,15 @@ function dbGetTableName(q) { return wordAfter(q.toLowerCase(), 'from'); }
 
 function dbGetTableNames() { return dbToList(qTablenames(),false); }
 
+function dbHistory(q, addToHistory) {
+	if (addToHistory) {
+		let q1 = q.toLowerCase().trim();
+		if (q1.startsWith('select')) {
+			if (isdef(DA.qCurrent)) M.qHistory.push({ q: DA.qCurrent, tablename: wordAfter(q1, 'from') });
+			DA.qCurrent = q1;
+		}
+	}
+}
 async function dbInit(path) {
 	try {
 		const response = await fetch(path);
@@ -237,6 +246,6 @@ function dbToObject(q) {
 	//console.log('tablename',dbGetTableName(q))
 	return isList(res) && res.length == 1 && isdef(res[0].columns) ? res[0] : isEmpty(res) ? { columns: [], values: [] } : res;
 }
-//#endregion
+//#_endregion
 
 

@@ -1,91 +1,4 @@
 
-
-
-
-//#region filter records
-async function onclickFilter(ev) { await filterRecords(); }
-async function onclickFilterFast(ev) { await filterRecords(null, false); }
-function generateSQLHavingClause(cells) {
-	// // Example usage:
-	// const cells = [
-	//   { icol: 0, irow: 0, text: 'Alice', header: 'name' },
-	//   { icol: 1, irow: 0, text: 'Engineering', header: 'department' },
-	//   { icol: 0, irow: 1, text: 'Bob', header: 'name' },
-	//   { icol: 1, irow: 1, text: 'HR', header: 'department' }
-	// ];
-
-	// console.log(generateSQLWhereClause(cells));
-	if (cells.length === 0) {
-		return '';
-	}
-
-	// Group cells by their rows and columns
-	const rows = {};
-	const cols = {};
-
-	cells.forEach(cell => {
-		if (!rows[cell.irow]) {
-			rows[cell.irow] = [];
-		}
-		rows[cell.irow].push(cell);
-
-		if (!cols[cell.icol]) {
-			cols[cell.icol] = [];
-		}
-		cols[cell.icol].push(cell);
-	});
-
-	//console.log(rows,cols)
-
-	let ands = [];
-	for (const irow in rows) {
-		let rcells = rows[irow];
-		let cl = rcells.map(cell => generateSQLEqualsHAVING(cell.header, cell.text)).filter(cell => !isEmpty(cell)).join(' AND ');
-		ands.push(cl);
-	}
-	ands = ands.filter(x => !isEmpty(x))
-	let res = isEmpty(ands) ? null : ' HAVING ' + ands.join(' OR ');
-	return res;
-}
-function generateSQLEqualsHAVING(a, text) {
-	if (a != 'mcc' && a != 'tag_names') return null;
-	//return isNumber(text) ? Number(text) == 0 ? `(${a} IS NULL OR ${a}=0)` : `${a}=${text}`
-	if (a == 'mcc' && isEmpty(text)) {
-		return `group_concat(CASE WHEN tg.category = 'mcc' THEN tg.tag_name ELSE NULL END) IS NULL OR
-    group_concat(CASE WHEN tg.category = 'mcc' THEN tg.tag_name ELSE NULL END) = ''`;
-	} else if (a == 'tag_names' && isEmpty(text)) {
-		return `group_concat(CASE WHEN tg.category <> 'mcc' AND tg.tag_name NOT GLOB '*[0-9]*' THEN tg.tag_name ELSE NULL END) IS NULL OR
-    group_concat(CASE WHEN tg.category <> 'mcc' AND tg.tag_name NOT GLOB '*[0-9]*' THEN tg.tag_name ELSE NULL END) = ''`;
-
-	} else if (a == 'mcc') {
-		return `group_concat(CASE WHEN tg.category = 'mcc' THEN tg.tag_name ELSE NULL END) = '${text}`;
-	} else if (a == 'tag_names') {
-		return `group_concat(CASE WHEN tg.category <> 'mcc' AND tg.tag_name NOT GLOB '*[0-9]*' THEN tg.tag_name ELSE NULL END) = '${text}'`;
-	}
-}
-function generateSQLEqualsWHERE(a, text) {
-	if (a == 'mcc' || a == 'tag_names') return null;
-	return isEmpty(text) ? `(${a} IS NULL OR ${a}='')` : `${a}='${text}'`;
-}
-//#endregion
-
-//#region ui mNavMenu, checkButtons, handleSticky
-function handleSticky() { let d = mBy('dNav'); if (window.scrollY >= 88) mClass(d, 'sticky'); else mClassRemove(d, 'sticky'); }
-function checkButtons() {
-	let bs = arrChildren('dButtons'); bs.map(x => disableButton(x));
-	if (DB) enableButton('bDownload');
-	let info = DA.tinfo; //are there records shown?
-	if (nundef(info)) return;
-	let [ifrom, ito, records] = [info.ifrom, info.ito, info.records];
-	//console.log('checkButtons',ifrom,ito,records.length)
-	if (ifrom > 0) enableButton('bPgUp');
-	if (ito < records.length) enableButton('bPgDn');
-	if (!isEmpty(M.qHistory)) enableButton('bBack');
-	if (DA.cells.find(x => x.isSelected)) ['bFilter', 'bFilterFast', 'bSort', 'bSortFast'].map(x => enableButton(x));
-}
-
-//#endregion
-
 //#region history
 async function onclickBackHistory() {
 	console.log(M.qHistory)
@@ -93,15 +6,6 @@ async function onclickBackHistory() {
 	if (isdef(o)) {
 		let records = dbToList(o.q, false);
 		showChunkedSortedBy(UI.d, o.tablename, o.tablename, records);
-	}
-}
-function dbHistory(q, addToHistory) {
-	if (addToHistory) {
-		let q1 = q.toLowerCase().trim();
-		if (q1.startsWith('select')) {
-			if (isdef(DA.qCurrent)) M.qHistory.push({ q: DA.qCurrent, tablename: wordAfter(q1, 'from') });
-			DA.qCurrent = q1;
-		}
 	}
 }
 //#endregion
@@ -302,77 +206,6 @@ async function onclickExecute() {
 //#endregion
 
 //#region helpers
-function consloghist() {
-	for (const s of M.qHistory) {
-		let q = s.q;
-		let q1 = replaceAllSpecialCharsFromList(q, ['\t', '\n'], ' ');
-		console.log(q)
-		console.log(q1)
-	}
-}
-function insertWhereClause(sql, whereClause) {
-
-	// // Example usage:
-	// const sql = `
-	//   SELECT id, name, age
-	//   FROM employees
-	//   LEFT JOIN departments ON employees.department_id = departments.id
-	//   WHERE salary > 50000
-	//   GROUP BY department_id
-	//   HAVING COUNT(*) > 5
-	//   ORDER BY age DESC
-	//   LIMIT 10 OFFSET 5;
-	// `;
-
-	// const whereClause = `age > 30`;
-
-	// console.log(insertWhereClause(sql, whereClause));
-
-	// Trim any existing semicolons and whitespace from the input
-	sql = sql.trim().replace(/;$/, '');
-	whereClause = whereClause.trim().replace(/^WHERE\s+/i, '');
-
-	// Define regex patterns to locate positions in the SQL statement
-	const selectPattern = /SELECT\s+.*?\s+FROM\s+/i;
-	const fromPattern = /\bFROM\b/i;
-	const wherePattern = /\bWHERE\b/i;
-	const groupByPattern = /\bGROUP BY\b/i;
-	const orderByPattern = /\bORDER BY\b/i;
-	const havingPattern = /\bHAVING\b/i;
-	const limitPattern = /\bLIMIT\b/i;
-	const offsetPattern = /\bOFFSET\b/i;
-	const joinPattern = /\b(JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|OUTER JOIN|FULL JOIN|CROSS JOIN)\b/i;
-
-	// Check if the SQL already contains a WHERE clause
-	if (wherePattern.test(sql)) {
-		// If there is an existing WHERE clause, append the new one with AND
-		sql = sql.replace(wherePattern, match => `${match} (${whereClause}) AND `);
-	} else {
-		// Find the position to insert the WHERE clause
-		let position = sql.search(groupByPattern);
-		const insertPositionPatterns = [fromPattern, groupByPattern, orderByPattern, havingPattern, limitPattern, offsetPattern, joinPattern];
-		insertPositionPatterns.forEach(pattern => {
-			const pos = sql.search(pattern);
-			if (pos !== -1 && (position === -1 || pos < position)) {
-				position = pos;
-			}
-		});
-
-		if (position === -1) {
-			position = sql.length;
-		}
-
-		// Insert the WHERE clause at the correct position
-		sql = `${sql.slice(0, position)} WHERE ${whereClause} ${sql.slice(position)}`;
-	}
-
-	// Remove consecutive spaces
-	sql = sql.replace(/\s+/g, ' ').trim();
-
-	return sql;
-}
-function arrIsLast(arr, el) { return arrLast(arr) == el; }
-
 async function onclickTagForAll(ev, list) {
 	let [records, headers, header] = [DA.tinfo.records, DA.tinfo.headers, DA.tinfo.header];
 
@@ -402,57 +235,6 @@ async function onclickTagForAll(ev, list) {
 
 }
 async function onclickDownloadDb() { dbDownload(); }
-
-function splitSQLClauses(sql) {
-	// Remove all tab or newline characters and trim spaces
-	sql = sql.replace(/[\t\n]/g, ' ').trim();
-
-	// Replace multiple consecutive spaces with a single space
-	sql = sql.replace(/\s\s+/g, ' ');
-
-	// Remove the last semicolon if present
-	if (sql.endsWith(';')) {
-		sql = sql.slice(0, -1);
-	}
-
-	// Define the regex pattern for SQL clauses
-	const pattern = /\b(SELECT|FROM|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET|JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|OUTER JOIN|FULL JOIN|CROSS JOIN|UNION)\b/gi;
-
-	// Split the SQL statement into parts based on the pattern
-	const parts = sql.split(pattern).filter(Boolean);
-	assertion(parts.length % 2 == 0, 'WTF')
-	// console.log(parts.length,parts)
-	const clauses = {};
-	for (let i = 0; i < parts.length; i += 2) {
-		//console.log(parts[i].toUpperCase())
-		let key = parts[i].toUpperCase().trim();
-		if (nundef(clauses[key])) clauses[key] = [];
-		lookupAddToList(clauses, [key], `${key}\n${parts[i + 1]}`);
-	}
-	return clauses;
-}
-function uiGadgetTypeTextarea(dParent, dict, resolve, styles = {}, opts = {}) {
-	//let wIdeal = 500;
-	let formStyles = { maleft: 10, box: true, padding: 10, bg: 'white', fg: 'black', rounding: 10 };
-	let form = mDom(dParent, formStyles, {})
-	addKeys({ className: 'input', tag: 'textarea', id: 'taFilter', rows: 25 }, opts);
-	//let df = mDom(form);
-
-	addKeys({ fz: 14, family: 'tahoma', w: 500, padding: 10, resize: 'none' }, styles);
-	let taStyles = styles;
-	mDom(form, { mabottom: 4 }, { html: 'Filter expression:' });
-	let ta = mDom(form, taStyles, opts);
-	let db = mDom(form, { vmargin: 10, align: 'right' });
-
-	// let ta = mDom(df, {}, { tag: 'textarea', rows: 20, cols: 80, id: 'taFilter', value:dict.exp, padding:10 });
-	// let ta = UI.ta = mDom(df, { bg:'violet','white-space': 'pre-wrap', w100: true, 'border-color': 'transparent' }, { rows: 25, tag: 'textarea', id: 'taFilter', value: dict.exp });
-	// ta.addEventListener('keydown', ev => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); resolve(mBy('taFilter').value); } });
-
-	mButton('Cancel', ev => resolve(null), db, { classes: 'button', maright: 10 });
-	mButton(dict.caption, ev => { resolve(mBy('taFilter').value); }, db, { classes: 'button' });
-
-	return form;
-}
 
 
 
