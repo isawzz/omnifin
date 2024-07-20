@@ -1,106 +1,211 @@
 
 function qCurrency(){
 	return `
-	SELECT 
-    t.id, 
-    t.dateof, 
-    sender.account_name AS sender_name, 
-    receiver.account_name AS receiver_name, 
-    t.amount, 
-    a.asset_name AS unit, 
-    t.description,
-		t.report,
-    sender.account_owner AS snd_owner, 
-    receiver.account_owner AS rec_owner
-	FROM 
+		SELECT 
+			t.id, 
+			t.dateof, 
+			sender.account_name AS sender_name, 
+			receiver.account_name AS receiver_name, 
+			t.amount, 
+			a.asset_name AS unit, 
+			GROUP_CONCAT(
+				CASE 
+					WHEN tg.category = 'MCC' THEN tg.tag_name 
+					ELSE NULL 
+				END
+			) AS MCC,
+			GROUP_CONCAT(
+				CASE 
+					WHEN tg.category <> 'MCC' AND tg.tag_name NOT GLOB '*[0-9]*' THEN tg.tag_name 
+					ELSE NULL 
+				END
+			) AS tag_names,
+			t.description,
+			sender.account_owner AS snd_owner, 
+			receiver.account_owner AS rec_owner,
+			t.report
+		FROM 
 			transactions t
-	JOIN 
+		JOIN 
 			accounts sender ON t.sender = sender.id
-	JOIN 
+		JOIN 
 			accounts receiver ON t.receiver = receiver.id
-	JOIN 
+		JOIN 
 			assets a ON t.unit = a.id
-	WHERE 
-			receiver.account_owner != 'internal' 
-			AND sender.account_owner != 'internal' 
-			AND a.asset_type = 'currency';
+		LEFT JOIN 
+			transaction_tags tt ON t.id = tt.id
+		LEFT JOIN 
+			tags tg ON tt.tag_id = tg.id
+		WHERE 
+				a.asset_type = 'currency'
+		GROUP BY 
+			t.id, t.dateof, sender_name, receiver_name, t.amount, unit;
+		`;
+}
+function qCurrency() {
+	return `
+			SELECT 
+					t.id, 
+					t.dateof, 
+					sender.account_name AS sender_name, 
+					receiver.account_name AS receiver_name, 
+					t.amount, 
+					a.asset_name AS unit, 
+					GROUP_CONCAT(
+							CASE 
+									WHEN tg.category = 'MCC' THEN tg.tag_name 
+									ELSE NULL 
+							END
+					) AS MCC,
+					GROUP_CONCAT(
+							CASE 
+									WHEN tg.category <> 'MCC' AND tg.tag_name NOT GLOB '*[0-9]*' THEN tg.tag_name 
+									ELSE NULL 
+							END
+					) AS tag_names,
+					t.description,
+					sender.account_owner AS snd_owner, 
+					receiver.account_owner AS rec_owner,
+					t.report
+			FROM 
+					transactions t
+			JOIN 
+					accounts sender ON t.sender = sender.id
+			JOIN 
+					accounts receiver ON t.receiver = receiver.id
+			JOIN 
+					assets a ON t.unit = a.id
+			LEFT JOIN 
+					transaction_tags tt ON t.id = tt.id
+			LEFT JOIN 
+					tags tg ON tt.tag_id = tg.id
+			WHERE 
+					a.asset_type = 'currency'
+			GROUP BY 
+					t.id, t.dateof, sender_name, receiver_name, t.amount, unit
+			ORDER BY t.id;
 	`;
 }
 function qAusgaben(){
 	return `
-	SELECT 
-    t.id, 
-    t.dateof, 
-    sender.account_name AS sender_name, 
-    receiver.account_name AS receiver_name, 
-    t.amount, 
-    a.asset_name AS unit, 
-    t.description,
-		t.report
-	FROM 
-			transactions t
-	JOIN 
-			accounts sender ON t.sender = sender.id
-	JOIN 
-			accounts receiver ON t.receiver = receiver.id
-	JOIN 
-			assets a ON t.unit = a.id
-	WHERE 
-			receiver.account_owner = 'external' 
-			AND sender.account_owner != 'internal' 
-			AND a.asset_type = 'currency';
+		SELECT 
+			t.id, 
+			t.dateof, 
+			sender.account_name AS sender_name, 
+			receiver.account_name AS receiver_name, 
+			t.amount, 
+			a.asset_name AS unit, 
+			t.description,
+			t.report
+		FROM 
+				transactions t
+		JOIN 
+				accounts sender ON t.sender = sender.id
+		JOIN 
+				accounts receiver ON t.receiver = receiver.id
+		JOIN 
+				assets a ON t.unit = a.id
+		WHERE 
+				receiver.account_owner = 'external' 
+				AND sender.account_owner != 'internal' 
+				AND a.asset_type = 'currency';
 
+	`;
+}
+function qAusgaben() {
+	return `
+			SELECT 
+					t.id, 
+					t.dateof, 
+					sender.account_name AS sender_name, 
+					receiver.account_name AS receiver_name, 
+					t.amount, 
+					a.asset_name AS unit, 
+					GROUP_CONCAT(
+							CASE 
+									WHEN tg.category = 'MCC' THEN tg.tag_name 
+									ELSE NULL 
+							END
+					) AS MCC,
+					GROUP_CONCAT(
+							CASE 
+									WHEN tg.category <> 'MCC' AND tg.tag_name NOT GLOB '*[0-9]*' THEN tg.tag_name 
+									ELSE NULL 
+							END
+					) AS tag_names,
+					t.description,
+					sender.account_owner AS snd_owner, 
+					receiver.account_owner AS rec_owner,
+					t.report
+			FROM 
+					(SELECT * FROM transactions ORDER BY id) t
+			JOIN 
+					accounts sender ON t.sender = sender.id
+			JOIN 
+					accounts receiver ON t.receiver = receiver.id
+			JOIN 
+					assets a ON t.unit = a.id
+			LEFT JOIN 
+					transaction_tags tt ON t.id = tt.id
+			LEFT JOIN 
+					tags tg ON tt.tag_id = tg.id
+			WHERE 
+				receiver.account_owner = 'external' 
+				AND sender.account_owner != 'internal' 
+				AND a.asset_type = 'currency'
+			GROUP BY 
+					t.id, t.dateof, sender_name, receiver_name, t.amount, unit;
 	`;
 }
 function qEinnahmen(){
 	return `
-	SELECT 
-    t.id, 
-    t.dateof, 
-    sender.account_name AS sender_name, 
-    receiver.account_name AS receiver_name, 
-    t.amount, 
-    a.asset_name AS unit, 
-    t.description,
-		t.report
-	FROM 
-			transactions t
-	JOIN 
-			accounts sender ON t.sender = sender.id
-	JOIN 
-			accounts receiver ON t.receiver = receiver.id
-	JOIN 
-			assets a ON t.unit = a.id
-	WHERE 
-			sender.account_owner = 'external' 
-			AND receiver.account_owner != 'internal' 
-			AND a.asset_type = 'currency';
+		SELECT 
+			t.id, 
+			t.dateof, 
+			sender.account_name AS sender_name, 
+			receiver.account_name AS receiver_name, 
+			t.amount, 
+			a.asset_name AS unit, 
+			t.description,
+			t.report
+		FROM 
+				transactions t
+		JOIN 
+				accounts sender ON t.sender = sender.id
+		JOIN 
+				accounts receiver ON t.receiver = receiver.id
+		JOIN 
+				assets a ON t.unit = a.id
+		WHERE 
+				sender.account_owner = 'external' 
+				AND receiver.account_owner != 'internal' 
+				AND a.asset_type = 'currency';
 
 	`;
 }
 function qStocks(){
 	return `
-	SELECT 
-    t.id, 
-    t.dateof, 
-    sender.account_name AS sender_name, 
-    receiver.account_name AS receiver_name, 
-    t.amount, 
-    a.asset_name AS unit, 
-    t.description,
-		t.report,
-    sender.account_owner AS snd_owner, 
-    receiver.account_owner AS rec_owner
-	FROM 
-			transactions t
-	JOIN 
-			accounts sender ON t.sender = sender.id
-	JOIN 
-			accounts receiver ON t.receiver = receiver.id
-	JOIN 
-			assets a ON t.unit = a.id
-	WHERE 
-			a.asset_type = 'stock';
+		SELECT 
+			t.id, 
+			t.dateof, 
+			sender.account_name AS sender_name, 
+			receiver.account_name AS receiver_name, 
+			t.amount, 
+			a.asset_name AS unit, 
+			t.description,
+			t.report,
+			sender.account_owner AS snd_owner, 
+			receiver.account_owner AS rec_owner
+		FROM 
+				transactions t
+		JOIN 
+				accounts sender ON t.sender = sender.id
+		JOIN 
+				accounts receiver ON t.receiver = receiver.id
+		JOIN 
+				assets a ON t.unit = a.id
+		WHERE 
+				a.asset_type = 'stock';
 	`;
 }
 function qTTList() {

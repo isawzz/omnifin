@@ -99,7 +99,10 @@ function dbGetTagNames() {
 	names.sort();
 	return names;
 }
-function dbGetTableName(q) { return wordAfter(q.toLowerCase(), 'from'); }
+function dbGetTableName(q) { 
+	return wordAfter(q.toLowerCase(), 'from'); 
+	//return firstWord(stringAfterLast(q.toLowerCase(),'from'));
+}
 
 function dbGetTableNames() { return dbToList(qTablenames(),false); }
 

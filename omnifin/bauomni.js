@@ -457,6 +457,8 @@ function splitSQLClauses(sql) {
 		if (nundef(clauses[key])) clauses[key] = [];
 		lookupAddToList(clauses, [key], `${key}\n${parts[i + 1]}`);
 	}
+
+	console.log(clauses);
 	return clauses;
 }
 function sqlReplaceStar(q){
