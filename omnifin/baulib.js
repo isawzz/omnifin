@@ -74,10 +74,29 @@ function mToggleSelection(ev) {
 	//console.log(elem)
 	if (mHasClass(elem,cl)) mClassRemove(elem,cl); else mClass(elem,cl);
 }
+function splitAtAnyString(s, listOfStrings, case_insensitive = false) {
+	if (case_insensitive) {
+			// Create a case-insensitive version of the string and list of strings
+			s = s.toLowerCase();
+			listOfStrings = listOfStrings.map(str => str.toLowerCase());
+	}
+
+	// Escape special characters in the list of strings for use in regex
+	const escapedList = listOfStrings.map(str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+	// Create a regex pattern that matches any of the strings in the list
+	const pattern = new RegExp(escapedList.join('|'), 'g');
+
+	// Split the string at the pattern
+	const result = s.split(pattern);
+
+	return result;
+}
 function splitAtStringCI(s, sSub) {
   const regex = new RegExp(sSub, 'gi'); // Create a case-insensitive regular expression for the substring
   return s.split(regex); // Use the regular expression to split the string
-}function toggleState(elem,states,colors){
+}
+function toggleState(elem,states,colors){
 	let i=Number(elem.getAttribute('istate'));
 	i++; if (i >= states.length) { i = 0; }
 	elem.setAttribute('istate',i)

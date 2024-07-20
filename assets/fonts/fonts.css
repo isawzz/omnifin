@@ -19,6 +19,18 @@
 	src: url('./opensansregular.ttf') format("truetype");
 }
 @font-face {
+  font-family: 'condensed';
+	src: url('./RobotoCondensed-Bold.ttf') format("truetype");
+}
+@font-face {
+  font-family: 'roboto';
+	src: url('./fonts/roboto.ttf') format("truetype");
+}
+@font-face {
+  font-family: 'robotoweb';
+	src: url('./fonts/roboto_cond_bold.woff') format("truetype");
+}
+@font-face {
 	font-family: 'summervibes';
 	src: url('./summervibes.otf') format("truetype");
 }

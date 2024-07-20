@@ -15,20 +15,21 @@ async function showRecords(q, dParent, clearInfo = false) {
 	DA.info.records = records;
 	DA.info.headers = headers;
 	let tablename = DA.info.tablename = dbGetTableName(q);
-	//let db = mDom(dParent, { gap: 10, mabottom: 10, className: 'centerflexV' }); //mCenterCenterFlex(db);
 
 	mIfNotRelative(dParent);
-	let d = mDom(dParent, { position: 'absolute', h: window.innerHeight - 135, w: window.innerWidth - 110 });//,bg:'red'})
+	let h= window.innerHeight - 130;
+	let d = mDom(dParent, { h, w: window.innerWidth - 110}); //,bg:'red'})
+	let dtitle = mDom(d, {w100:true,box:true, bg:'#00000080',fg:'white',padding:10,fz:24}, {html:`${tablename} (${records.length})`});//,bg:'red'})
 
 	//let h=750;//window.innerHeight-150;
-	let styles = { bg: 'white', fg: 'black', margin: 10, w: '98%', h: '97%', overy: 'auto', display: 'grid', box: true, border: '1px solid #ddd', };
+	let styles = { h:h-48,bg: 'white', fg: 'black', w100:true, overy: 'auto', display: 'grid', box: true }; //, border: '1px solid #ddd', };
 	styles.gridCols = measureRecord(records[0]);
 
 	let dgrid = mDom(d, styles, { id: 'gridContainer' });
 
 	let dh = mDom(dgrid, { className: 'gridHeader' });
 	for (const h of headers) {
-		let th = mDom(dh, { cursor: 'pointer',hpadding:4 }, { onclick: () => sortRecordsBy(h) });
+		let th = mDom(dh, { cursor: 'pointer', hpadding: 4 }, { onclick: () => sortRecordsBy(h) });
 
 		let html = getHeaderHtml(h, DA.info.sorting[h])
 		mDom(th, {}, { html });
@@ -46,7 +47,7 @@ async function showRecords(q, dParent, clearInfo = false) {
 				const recpartial = [];
 				for (let i = 0; i < pageSize; i++) {
 					const recordIndex = page * pageSize + i;
-					if (recordIndex >= totalRecords) break;
+					if (recordIndex >= totalRecords) { dgrid.removeEventListener('scroll', onScrollGrid); break; }
 					recpartial.push(records[recordIndex]); //records.push(`Record ${recordIndex + 1}`);
 				}
 				resolve(recpartial);
@@ -56,15 +57,15 @@ async function showRecords(q, dParent, clearInfo = false) {
 	//#endregion
 
 	function appendRecords(recpartial) {
-		let styles = { cursor: 'pointer', hpadding: 4, vpadding:1 }; //,'border-bottom': '2px solid #eee' };
+		let styles = { cursor: 'pointer', hpadding: 4, vpadding: 1 }; //,'border-bottom': '2px solid #eee' };
 
 		recpartial.forEach(record => {
 			let [bg1, bg2] = ['#ffffff', '#00000010'];
-			styles.bg = (styles.bg ==bg1? bg2 :bg1);
+			styles.bg = (styles.bg == bg1 ? bg2 : bg1);
 			for (const h of headers) {
 
 				let html = record[h];
-				styles.align = isNumber(html) && !['asset_name', 'id'].includes(h) ? 'right' : isString(html) && html.length < 2 ? 'center' : 'left';
+				styles.align = ['asset_name', 'id', 'report'].includes(h) ? 'center':isNumber(html)? 'right' : isString(html) && html.length < 2 ? 'center' : 'left';
 				if (h.includes('amount')) {
 					if (!isNumber(html) && isEmpty(html)) console.log('amount empty!', record);
 					html = isEmpty(html) ? '0.00' : html.toFixed(2);
@@ -72,7 +73,7 @@ async function showRecords(q, dParent, clearInfo = false) {
 
 				let td = mDom(dgrid, styles, { html, onclick: mToggleSelection });
 
-				let bg = dbFindColor(html, h);if (isdef(bg)) mStyle(td, { bg, fg: 'contrast' });
+				let bg = dbFindColor(html, h); if (isdef(bg)) mStyle(td, { bg, fg: 'contrast' });
 			}
 		});
 	}
@@ -89,13 +90,14 @@ async function showRecords(q, dParent, clearInfo = false) {
 		appendRecords(recpartial);
 		currentPage++;
 	}
-
-	dgrid.addEventListener('scroll', () => {
-		console.log('hallo!',dgrid.scrollTop, dgrid.clientHeight, dgrid.scrollHeight)
-		if (dgrid.scrollTop + dgrid.clientHeight >= dgrid.scrollHeight-20) {
-			loadMoreRecords();
+	async function onScrollGrid() {
+		//console.log('hallo!', dgrid.scrollTop, dgrid.clientHeight, dgrid.scrollHeight);
+		if (dgrid.scrollTop + dgrid.clientHeight >= dgrid.scrollHeight - 20) {
+			await loadMoreRecordsAsync();
 		}
-	});
+	}
+
+	dgrid.addEventListener('scroll', onScrollGrid);
 
 	// Load initial records
 	await loadMoreRecordsAsync();

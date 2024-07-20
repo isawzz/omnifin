@@ -2,13 +2,43 @@
 const DB_PATH = '../db/test2.db'; // relative to omnifin dir
 onload = start;//onscroll = handleSticky;
 
-async function start() { await prelims(); test27(); }
+async function start() { await prelims(); test29(); }
 
-async function test27(){
+async function test29(){
+	await switchToMainMenu('overview');
+	await showRecords(qTTList(),UI.d); return;
+	let grid = mBy('gridContainer'); //console.log(arrChildren(grid).length)
+	ch = arrChildren(grid)[17];
+	mClass(ch,'bg_yellow')
+	await filterRecords();
+}
+async function test28(){
 	await switchToMainMenu('overview');
 
-	await showRecords(qAusgaben(),UI.d); return;
+	let q = qTTList();q=stringBeforeLast(q,';');
 
+	q+=`\nHAVING GROUP_CONCAT(CASE WHEN tg.category = 'MCC' THEN tg.tag_name ELSE NULL END) IS NULL
+    OR GROUP_CONCAT(CASE WHEN tg.category = 'MCC' THEN tg.tag_name ELSE NULL END) = '';`
+
+	console.log(q)
+	//q+=`HAVING MCC IS NULL OR MCC = '';`
+	// q += `\nHAVING group_concat(CASE WHEN tg.category = 'mcc' THEN tg.tag_name ELSE NULL END) IS NULL OR
+  //   group_concat(CASE WHEN tg.category = 'mcc' THEN tg.tag_name ELSE NULL END) = ''`;
+
+	await showRecords(q,UI.d); return;
+
+	await showRecords(qTTList(),UI.d); 
+	let grid = mBy('gridContainer'); //console.log(arrChildren(grid).length)
+	let ch=rChoose(arrTake(arrChildren(grid),7,3));
+
+	ch = arrChildren(grid)[17];
+
+	mClass(ch,'bg_yellow')
+	//console.log('ch',ch)
+	//ch.map(x=>mClass(x,'bg_yellow'));
+	await filterRecords();
+}
+async function test27(){
 	//await onclickCommand(null, 'transcols');//	await showRecords(qTTCols(),UI.d); //return;
 	//await	sortRecordsBy('prudential');
 	//DA.info.sorting={neurips22:'desc'};

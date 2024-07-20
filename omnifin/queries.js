@@ -1,4 +1,31 @@
 
+function qCurrency(){
+	return `
+	SELECT 
+    t.id, 
+    t.dateof, 
+    sender.account_name AS sender_name, 
+    receiver.account_name AS receiver_name, 
+    t.amount, 
+    a.asset_name AS unit, 
+    t.description,
+		t.report,
+    sender.account_owner AS from_owner, 
+    receiver.account_owner AS to_owner
+	FROM 
+			transactions t
+	JOIN 
+			accounts sender ON t.sender = sender.id
+	JOIN 
+			accounts receiver ON t.receiver = receiver.id
+	JOIN 
+			assets a ON t.unit = a.id
+	WHERE 
+			receiver.account_owner != 'internal' 
+			AND sender.account_owner != 'internal' 
+			AND a.asset_type = 'currency';
+	`;
+}
 function qAusgaben(){
 	return `
 	SELECT 
@@ -20,6 +47,7 @@ function qAusgaben(){
 			assets a ON t.unit = a.id
 	WHERE 
 			receiver.account_owner = 'external' 
+			AND sender.account_owner != 'internal' 
 			AND a.asset_type = 'currency';
 
 	`;
@@ -45,6 +73,7 @@ function qEinnahmen(){
 			assets a ON t.unit = a.id
 	WHERE 
 			sender.account_owner = 'external' 
+			AND receiver.account_owner != 'internal' 
 			AND a.asset_type = 'currency';
 
 	`;
@@ -80,8 +109,6 @@ function qtest0(){
 					t.description DESC;
 		`;
 }
-
-
 function qTTList() {
 	return `
 		SELECT 

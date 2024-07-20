@@ -1,85 +1,10 @@
 
 
-async function menuOpenOverview() {
-	let side = UI.sidebar = mSidebar('dLeft', 110);
-	UI.d = mDom('dMain'); //, { className: 'section' });
-	let gap = 5;
-
-	UI.commands.showSchema = mCommand(side.d, 'showSchema', 'DB Structure', {}); mNewline(side.d, gap); mLinebreak(side.d, 10);
-	UI.commands.translist = mCommand(side.d, 'translist', 'translist', {}, { open: () => showRecords(qTTList(), UI.d, true) }); mNewline(side.d, gap);
-	UI.commands.transcols = mCommand(side.d, 'transcols', 'transcols', {}, { open: () => showRecords(qTTCols(), UI.d, true) }); mNewline(side.d, gap);
-	UI.commands.ausgaben = mCommand(side.d, 'ausgaben', 'ausgaben', {}, { open: () => showRecords(qAusgaben(), UI.d, true) }); mNewline(side.d, gap);
-	UI.commands.einnahmen = mCommand(side.d, 'einnahmen', 'einnahmen', {}, { open: () => showRecords(qEinnahmen(), UI.d, true) }); mNewline(side.d, gap);
-	mLinebreak(side.d, 10);
-	UI.commands.reports = mCommand(side.d, 'reports', 'reports', {}, { open: () => showRecords('SELECT * from reports', UI.d, true) }); mNewline(side.d, gap);
-	UI.commands.assets = mCommand(side.d, 'assets', 'assets', {}, { open: () => showRecords('SELECT * from assets', UI.d, true) }); mNewline(side.d, gap);
-	UI.commands.tags = mCommand(side.d, 'tags', 'tags', {}, { open: () => showRecords('SELECT * from tags', UI.d, true) }); mNewline(side.d, gap);
-	UI.commands.accounts = mCommand(side.d, 'accounts', 'accounts', {}, { open: () => showRecords('SELECT * from accounts', UI.d, true) }); mNewline(side.d, gap);
-	UI.commands.statements = mCommand(side.d, 'statements', 'statements', {}, { open: () => showRecords('SELECT * from statements', UI.d, true) }); mNewline(side.d, gap);
-	UI.commands.verifications = mCommand(side.d, 'verifications', 'verifications', {}, { open: () => showRecords('SELECT * from verifications', UI.d, true) }); mNewline(side.d, gap);
-	UI.commands.tRevisions = mCommand(side.d, 'tRevisions', 'revisions', {}, { open: () => showRecords('SELECT * from revisions', UI.d, true) }); mNewline(side.d, gap);
-
-	//await onclickCommand(null, 'translist');
-}
-async function menuCloseOverview() { closeLeftSidebar(); mClear('dMain'); M.qHistory = []; }
-function onclickShowSchema() {
-	let res = dbRaw(`SELECT sql FROM sqlite_master WHERE type='table';`);
-	let text = res.map(({ columns, values }) => {
-		// return columns.join('\t') + '\n' + values.map(row => row.join('\t')).join('\n');
-		return values.map(row => row.join('\t')).join('\n');
-	}).join('\n\n');
-	let d = UI.d;
-	mClear(d)
-	mText(`<h2>Schema</h2>`, d, { maleft: 12 })
-	mDom(d, {}, { tag: 'pre', html: text });
-}
 
 
 //#region filter records
 async function onclickFilter(ev) { await filterRecords(); }
 async function onclickFilterFast(ev) { await filterRecords(null, false); }
-function generateSQLWhereClause(cells) {
-	// // Example usage:
-	// const cells = [
-	//   { icol: 0, irow: 0, text: 'Alice', header: 'name' },
-	//   { icol: 1, irow: 0, text: 'Engineering', header: 'department' },
-	//   { icol: 0, irow: 1, text: 'Bob', header: 'name' },
-	//   { icol: 1, irow: 1, text: 'HR', header: 'department' }
-	// ];
-
-	// console.log(generateSQLWhereClause(cells));
-	if (cells.length === 0) {
-		return '';
-	}
-
-	// Group cells by their rows and columns
-	const rows = {};
-	const cols = {};
-
-	cells.forEach(cell => {
-		if (!rows[cell.irow]) {
-			rows[cell.irow] = [];
-		}
-		rows[cell.irow].push(cell);
-
-		if (!cols[cell.icol]) {
-			cols[cell.icol] = [];
-		}
-		cols[cell.icol].push(cell);
-	});
-
-	//console.log(rows,cols)
-
-	let ands = [];
-	for (const irow in rows) {
-		let rcells = rows[irow];
-		let cl = rcells.map(cell => generateSQLEqualsWHERE(cell.header, cell.text)).filter(cell => !isEmpty(cell)).join(' AND ');
-		ands.push(cl);
-	}
-	ands = ands.filter(x => !isEmpty(x))
-	let res = isEmpty(ands) ? null : ' WHERE ' + ands.join(' OR ');
-	return res;
-}
 function generateSQLHavingClause(cells) {
 	// // Example usage:
 	// const cells = [

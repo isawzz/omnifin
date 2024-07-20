@@ -18,12 +18,12 @@ function clsGetHeaderMapping(clauses, sorting) {
 	sc = stringAfter(sc, 'SELECT');
 	let selectHeaders = sc.split(',').map(x => x.includes(' as ') ? stringAfter(x, ' as ') : x.includes(' AS ') ? stringAfter(x, ' AS ') : x);
 	
-	selectHeaders=selectHeaders.map(x=>trimQuotes(x)); console.log('select headers:', selectHeaders);
+	selectHeaders=selectHeaders.map(x=>trimQuotes(x)); //console.log('select headers:', selectHeaders);
 	//assertion(false,"*** THE END ***")
 
 	//die sorting params sollen jetzt verwandelt werden in die select headers
 	let sortHeaders = Object.keys(sorting).filter(x => isdef(sorting[x]));
-	console.log('sort headers:', sortHeaders);
+	//console.log('sort headers:', sortHeaders);
 	let headerMapping = {};
 	for (const hSort of sortHeaders) {
 		let hSelect = selectHeaders.find(x => x.endsWith(hSort))
@@ -36,7 +36,7 @@ function measureRecord(rec) {
 	var di = {
 		account_name:145, account_type:140, account_owner:150, amount: 80, asset_name:120, asset_type:120, associated_account: 90, 
 		category: 120, dateof: 100, description: 'minmax(200px,1fr)', id: 40,
-		report: 80, receiver_name: 140, sender_name: 140, tag_name: 120, tag_names: 'auto', unit: 50, MCC: 60
+		report: 80, receiver_name: 140, sender_name: 140, tag_name: 120, tag_names: 'auto', unit: 70, MCC: 60
 	};
 	for (const h in rec) {
 		let val = rec[h]; //console.log(typeof val, val, h);
@@ -52,6 +52,18 @@ function measureRecord(rec) {
 	//console.log(res)
 	return res;
 
+}
+async function menuCloseOverview() { closeLeftSidebar(); mClear('dMain'); M.qHistory = []; }
+function onclickShowSchema() {
+	let res = dbRaw(`SELECT sql FROM sqlite_master WHERE type='table';`);
+	let text = res.map(({ columns, values }) => {
+		// return columns.join('\t') + '\n' + values.map(row => row.join('\t')).join('\n');
+		return values.map(row => row.join('\t')).join('\n');
+	}).join('\n\n');
+	let d = UI.d;
+	mClear(d)
+	mText(`<h2>Schema</h2>`, d, { maleft: 12 })
+	mDom(d, {}, { tag: 'pre', html: text });
 }
 async function sortRecordsBy(h, allowEdit = false) {
 
