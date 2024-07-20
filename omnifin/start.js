@@ -6,11 +6,11 @@ async function start() { await prelims(); test29(); }
 
 async function test29(){
 	await switchToMainMenu('overview');
-	await showRecords(qTTList(),UI.d); return;
-	let grid = mBy('gridContainer'); //console.log(arrChildren(grid).length)
-	ch = arrChildren(grid)[17];
-	mClass(ch,'bg_yellow')
-	await filterRecords();
+	// await showRecords(qTTList(),UI.d); return;
+	// let grid = mBy('gridContainer'); //console.log(arrChildren(grid).length)
+	// ch = arrChildren(grid)[17];
+	// mClass(ch,'bg_yellow')
+	// await filterRecords();
 }
 async function test28(){
 	await switchToMainMenu('overview');

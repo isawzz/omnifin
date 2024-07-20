@@ -178,32 +178,6 @@ function buildTransactionQuery() {
 }
 //#endregion
 
-//#region menu sql
-async function menuOpenSql() {
-	let d = mDom('dMain');
-	let ta = UI.ta = mDom(d, { 'white-space': 'pre-wrap', w100: true, 'border-color': 'transparent' }, { rows: 25, tag: 'textarea', id: 'taSql', value: 'select * from reports' });
-	ta.addEventListener('keydown', function (event) {
-		if (event.key === 'Enter' && !event.shiftKey) {
-			event.preventDefault();
-			onclickExecute();
-		}
-	});
-	let db = mDom(d, { gap: 10 }); mFlex(db);
-	mButton('Execute', onclickExecute, db, {}, 'button');
-	mButton('Clear', () => UI.ta.value = '', db, {}, 'button');
-	mButton('Example', () => UI.ta.value = dbGetSampleQuery(), db, {}, 'button');
-	UI.d = mDom('dMain', { className: 'section' });
-
-	onclickExecute();
-}
-async function menuCloseSql() { mClear('dMain'); M.qHistory = []; }
-async function onclickExecute() {
-	let q = UI.ta.value;
-	let tablename = dbGetTableName(q);
-	let records = dbToList(q);
-	showTableSortedBy(UI.d, 'Result', tablename, records);
-}
-//#endregion
 
 //#region helpers
 async function onclickTagForAll(ev, list) {

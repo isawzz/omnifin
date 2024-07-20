@@ -9,7 +9,7 @@ function showNavMenu() {
 	let dlogo = mDom(l, { fz: 34 }, { html: `Omnifin` });
 	let commands = {};
 	commands.overview = menuCommand(l, 'nav', 'overview', 'Overview', menuOpenOverview, menuCloseOverview);
-	//commands.sql = menuCommand(l, 'nav', 'sql', 'Sql', menuOpenSql, menuCloseSql);
+	commands.sql = menuCommand(l, 'nav', 'sql', 'Sql', menuOpenSql, menuCloseSql);
 
 	let db = mDom(dNav, { matop: 12, maleft: 128, gap: 10, className: 'centerflexV' }, { id: 'dButtons' });
 	// mButton('<<', onclickBackHistory, db, {}, 'button', 'bBack');
@@ -22,7 +22,7 @@ function showNavMenu() {
 }
 async function menuOpenOverview() {
 	let side = UI.sidebar = mSidebar('dLeft', 110);
-	UI.d = mDom('dMain'); //, { className: 'section' });
+	UI.d = mDom('dMain',{h:window.innerHeight-130}); //, { className: 'section' });
 	let gap = 5;
 
 	UI.commands.showSchema = mCommand(side.d, 'showSchema', 'schema', {}); mNewline(side.d, gap); mLinebreak(side.d, 10);
@@ -39,9 +39,29 @@ async function menuOpenOverview() {
 	UI.commands.accounts = mCommand(side.d, 'accounts', 'accounts', {}, { open: () => showRecords('SELECT * from accounts', UI.d, true) }); mNewline(side.d, gap);
 	UI.commands.statements = mCommand(side.d, 'statements', 'statements', {}, { open: () => showRecords('SELECT * from statements', UI.d, true) }); mNewline(side.d, gap);
 	UI.commands.verifications = mCommand(side.d, 'verifications', 'verifications', {}, { open: () => showRecords('SELECT * from verifications', UI.d, true) }); mNewline(side.d, gap);
-	UI.commands.tRevisions = mCommand(side.d, 'tRevisions', 'revisions', {}, { open: () => showRecords('SELECT * from revisions', UI.d, true) }); mNewline(side.d, gap);
+	UI.commands.tRevisions = mCommand(side.d, 'tRevisions', 'revisions', {}, { open: () => showRecords('SELECT * from transaction_revisions', UI.d, true) }); mNewline(side.d, gap);
 
-	//await onclickCommand(null, 'translist');
+	await onclickCommand(null, 'currency');
+}
+async function menuOpenSql() {
+	let side = UI.sidebar = mSidebar('dLeft', 110);
+	let dta = mDom('dMain');
+	let db = mDom('dMain', { gap: 10 }); mFlex(db);
+	UI.d = mDom('dMain',{matop:5,h:630});
+
+	let ta = UI.ta = mDom(dta, { 'white-space': 'pre-wrap', w100: true, 'border-color': 'transparent' }, { rows: 10, tag: 'textarea', id: 'taSql', value: 'select * from reports' });
+	ta.addEventListener('keydown', function (event) {
+		if (event.key === 'Enter' && !event.shiftKey) {
+			event.preventDefault();
+			onclickExecute();
+		}
+	});
+
+	mButton('Execute', onclickExecute, db, {}, 'button');
+	mButton('Clear', () => UI.ta.value = '', db, {}, 'button');
+	mButton('Example', () => UI.ta.value = dbGetSampleQuery(), db, {}, 'button');
+
+	onclickExecute();
 }
 
 

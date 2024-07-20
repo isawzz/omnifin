@@ -2,7 +2,6 @@
 //#region stages showRecord SEHR COOL!!!!
 
 //#region stage 10 (bauomni.js)
-
 function addSumAmount(ui, records) {
 	if (nundef(ui)) return;
 	//console.log(ui);
@@ -492,6 +491,151 @@ function sqlWithoutClause(clauses,which='ORDER BY') {
 	return qnew;
 }
 
+//mist
+function qCurrency(){
+	return `
+		SELECT 
+			t.id, 
+			t.dateof, 
+			sender.account_name AS sender_name, 
+			receiver.account_name AS receiver_name, 
+			t.amount, 
+			a.asset_name AS unit, 
+			GROUP_CONCAT(
+				CASE 
+					WHEN tg.category = 'MCC' THEN tg.tag_name 
+					ELSE NULL 
+				END
+			) AS MCC,
+			GROUP_CONCAT(
+				CASE 
+					WHEN tg.category <> 'MCC' AND tg.tag_name NOT GLOB '*[0-9]*' THEN tg.tag_name 
+					ELSE NULL 
+				END
+			) AS tag_names,
+			t.description,
+			sender.account_owner AS snd_owner, 
+			receiver.account_owner AS rec_owner,
+			t.report
+		FROM 
+			transactions t
+		JOIN 
+			accounts sender ON t.sender = sender.id
+		JOIN 
+			accounts receiver ON t.receiver = receiver.id
+		JOIN 
+			assets a ON t.unit = a.id
+		LEFT JOIN 
+			transaction_tags tt ON t.id = tt.id
+		LEFT JOIN 
+			tags tg ON tt.tag_id = tg.id
+		WHERE 
+				a.asset_type = 'currency'
+		GROUP BY 
+			t.id, t.dateof, sender_name, receiver_name, t.amount, unit;
+		`;
+}
+function _splitSQLClauses(sql) {
+	// Remove all tab or newline characters and trim spaces
+	sql = sql.replace(/[\t\n]/g, ' ').trim();
+
+	// Replace multiple consecutive spaces with a single space
+	sql = sql.replace(/\s\s+/g, ' ');
+
+	// Remove the last semicolon if present
+	if (sql.endsWith(';')) {
+		sql = sql.slice(0, -1);
+	}
+
+	const clauses = {};
+	let mainSelect = stringBetween(sql,'select','from');console.log(mainSelect); 
+	clauses.SELECT = [`SELECT\n${mainSelect}`];
+
+	sql=stringAfter(sql,'from');
+
+	// Define the regex pattern for SQL clauses
+	//const pattern = /\b(SELECT|FROM|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET|JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|OUTER JOIN|FULL JOIN|CROSS JOIN|UNION)\b/gi;
+	const pattern = /\b(WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET|JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|OUTER JOIN|FULL JOIN|CROSS JOIN|UNION)\b/gi;
+
+	// Split the SQL statement into parts based on the pattern
+	const parts = sql.split(pattern).filter(Boolean).map(x=>trim(x));
+	parts.unshift('FROM');
+
+	console.log(sql, parts);
+	//assertion(false,"*** THE END ***")
+	
+	assertion(parts.length % 2 == 0, 'WTF')
+	
+	// console.log(parts.length,parts)
+	for (let i = 0; i < parts.length; i += 2) {
+		//console.log(parts[i].toUpperCase())
+		let key = parts[i].toUpperCase().trim();
+		if (nundef(clauses[key])) clauses[key] = [];
+		lookupAddToList(clauses, [key], `${key}\n${parts[i + 1]}`);
+	}
+
+	console.log(clauses);
+	return clauses;
+}
+function qAusgaben(){
+	return `
+		SELECT 
+			t.id, 
+			t.dateof, 
+			sender.account_name AS sender_name, 
+			receiver.account_name AS receiver_name, 
+			t.amount, 
+			a.asset_name AS unit, 
+			t.description,
+			t.report
+		FROM 
+				transactions t
+		JOIN 
+				accounts sender ON t.sender = sender.id
+		JOIN 
+				accounts receiver ON t.receiver = receiver.id
+		JOIN 
+				assets a ON t.unit = a.id
+		WHERE 
+				receiver.account_owner = 'external' 
+				AND sender.account_owner != 'internal' 
+				AND a.asset_type = 'currency';
+
+	`;
+}
+function qEinnahmen(){
+	return `
+		SELECT 
+			t.id, 
+			t.dateof, 
+			sender.account_name AS sender_name, 
+			receiver.account_name AS receiver_name, 
+			t.amount, 
+			a.asset_name AS unit, 
+			t.description,
+			t.report
+		FROM 
+				transactions t
+		JOIN 
+				accounts sender ON t.sender = sender.id
+		JOIN 
+				accounts receiver ON t.receiver = receiver.id
+		JOIN 
+				assets a ON t.unit = a.id
+		WHERE 
+				sender.account_owner = 'external' 
+				AND receiver.account_owner != 'internal' 
+				AND a.asset_type = 'currency';
+
+	`;
+}
+async function onclickExecute() {
+	let q = UI.ta.value;
+	// showRecords(q,UI.d);
+	let tablename = dbGetTableName(q);
+	let records = dbToList(q);
+	showTableSortedBy(UI.d, 'Result', tablename, records);
+}
 
 
 

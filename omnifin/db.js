@@ -106,6 +106,14 @@ function dbGetTableName(q) {
 
 function dbGetTableNames() { return dbToList(qTablenames(),false); }
 
+function dbGetSampleQuery() {
+	let qs = [qTTList,qTTCols,qCurrency,qStocks,qAusgaben,qEinnahmen];
+	let q = rChoose(qs)();
+	q = replaceAllSpecialChars(q, '\t', ' ');
+	q = replaceAll(q, '  ', ' ');
+	//q=splitOnUpperCaseWord(q);
+	return q.trim();
+}
 function dbHistory(q, addToHistory) {
 	if (addToHistory) {
 		let q1 = q.toLowerCase().trim();
