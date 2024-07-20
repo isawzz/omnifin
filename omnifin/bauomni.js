@@ -4,9 +4,9 @@ function addSumAmount(ui, records) {
 	//console.log(ui);
 
 	let sum = arrSum(records, 'amount');
-	if (isNumber(sum)) sum = Math.round(sum);
+	if (isNumber(sum)) sum = Math.round(sum); //sum.toFixed(2); //
 
-	mDom(ui, {}, { html: sum })
+	mDom(ui, {align:'right'}, { html: sum })
 
 }
 function clsGetHeaderMapping(clauses, sorting) {
@@ -76,7 +76,7 @@ async function sortRecordsBy(h, allowEdit = false) {
 
 	let qnew = sqlWithoutClause(clauses, 'ORDER BY'); //remove orderBy from q
 
-	let headerMapping = clsGetHeaderMapping(clauses, sorting); console.log(headerMapping);//zuerst muss ich alle headers die verwenden kann suchen aus dem SELECT
+	let headerMapping = clsGetHeaderMapping(clauses, sorting); //console.log(headerMapping);//zuerst muss ich alle headers die verwenden kann suchen aus dem SELECT
 
 	//if (!isEmpty(sorting)) {
 
@@ -138,7 +138,7 @@ async function sortRecordsBy(h, allowEdit = false) {
 		qnew += `ORDER BY ${Object.keys(sorting).map(x => `${headerMapping[x]} ${sorting[x].toUpperCase()}`).join(', ')}`;
 	}
 
-	console.log(qnew);
+	//console.log(qnew);
 	await showRecords(qnew, dParent);
 
 }
