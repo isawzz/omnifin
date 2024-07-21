@@ -7,6 +7,18 @@ SELECT SUM(sender) AS total_sender_sum FROM transactions;
 
 SELECT sql FROM sqlite_master WHERE type='table';
 
+insert into tags (tag_name, report, category, description) VALUES ('aaa1', 1, 'znew', 'irgendwas cooles');
+DELETE FROM tags WHERE id >= 150;
+select * from tags order by category desc;
+
+CREATE TABLE tags (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tag_name TEXT NOT NULL UNIQUE,
+        category TEXT,
+        description TEXT,
+        report INTEGER NOT NULL,
+        FOREIGN KEY (report) REFERENCES reports(id)
+    )
 
 
 
