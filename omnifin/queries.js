@@ -524,9 +524,7 @@ function qLimit20() {
 		`;
 
 }
-
 function qTags() { return 'select * from tags;'; }
-
 
 //special queries
 function qTablenames() { return `SELECT name FROM sqlite_master WHERE type='table';`; }

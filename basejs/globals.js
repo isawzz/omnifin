@@ -1,3 +1,4 @@
+var Serverdata = {};
 var Counter = 0;
 var A = null;
 var Menu = null;

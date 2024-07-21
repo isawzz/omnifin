@@ -4,6 +4,11 @@ onload = start;onresize = ()=>{if (UI.nav.cur == 'overview' && lookup(DA,['info'
 
 async function start() { await prelims(); test29(); }
 
+async function test30_config(){
+
+}
+
+
 async function test29(){
 	await switchToMainMenu('overview');
 	// await showRecords(qTTList(),UI.d); return;
@@ -799,6 +804,9 @@ function getDistColors(n = 200) {
 	return res;
 }
 async function prelims() {
+	Serverdata = await mGetRoute('session'); //session ist: users,config,events
+	console.log(Serverdata);
+
 	M = {};
 	M.superdi = await mGetYaml('../assets/superdi.yaml');
 

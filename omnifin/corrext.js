@@ -27,6 +27,11 @@ function extractWords(s, allowed) {
 	let parts = splitAtAnyOf(s, specialChars.join('')).map(x => x.trim());
 	return parts.filter(x => !isEmpty(x));
 }
+function getServerurl() {
+  let type = detectSessionType();
+  let server = type == 'vps' ? 'https://server.vidulusludorum.com' : 'http://localhost:3001';
+  return server;
+}
 function mButtonX(dParent, handler = null, sz = 22, offset = 5, color = 'contrast') {
 	mIfNotRelative(dParent);
 	let bx = mDom(dParent, { position: 'absolute', top: -2 + offset, right: -5 + offset, w: sz, h: sz, cursor: 'pointer' }, { className: 'hop1' });

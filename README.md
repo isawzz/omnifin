@@ -1,5 +1,5 @@
 
-Omnifin browser ui
+OmnifinUI browser version:
 
 - add db file
 
@@ -9,9 +9,17 @@ Omnifin browser ui
 
 - right-click index.html (in omnifin): Open w/ Live Server
 
+OmnifinUI hybrid version (nodeJs only used for saving):
 
+Node js:
 
+- npm install express multer body-parser fs path js-yaml dotenv cors sqlite3
 
+- nodemon omnifin/app.js
+
+OmnifinUI nodeJs version (db access server only):
+
+- NOT IMPLEMENTED
 
 
 

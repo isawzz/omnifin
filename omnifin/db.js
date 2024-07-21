@@ -103,7 +103,6 @@ function dbGetTableName(q) {
 	return wordAfter(q.toLowerCase(), 'from'); 
 	//return firstWord(stringAfterLast(q.toLowerCase(),'from'));
 }
-
 function dbGetTableNames() { return dbToList(qTablenames(),false); }
 
 function dbGetSampleQuery() {
@@ -257,6 +256,6 @@ function dbToObject(q) {
 	//console.log('tablename',dbGetTableName(q))
 	return isList(res) && res.length == 1 && isdef(res[0].columns) ? res[0] : isEmpty(res) ? { columns: [], values: [] } : res;
 }
-//#_endregion
+//#endregion
 
 
