@@ -1,5 +1,36 @@
 
 
+function _getHeaderHtml(header, sorting) {
+	let arrowHtml = '';
+
+	if (sorting === 'asc') {
+		arrowHtml = ' &uarr;'; // Up arrow
+	} else if (sorting === 'desc') {
+		arrowHtml = ' &darr;'; // Down arrow
+	}
+
+	return `${header}${arrowHtml}`;
+}
+function _sqlReplaceStar(q){
+
+	//console.log(':::::::::::',q);
+	let qTemp = q.toLowerCase().trim();
+	if (qTemp.startsWith('select * from')){
+
+		//if (qTemp.endsWith(';')) qTemp = stringBeforeLast(qTemp,';');
+		//qTemp += ` LIMIT 1;`;
+		console.log(qTemp)
+		let records = dbToList(qTemp); //'select * from tags');
+		if (isEmpty(records)) return [q,[]];
+
+		let headers = Object.keys(records[0]);
+		let qnew = `SELECT ${headers.join(', ')}\n${stringAfter(q,' * ')}`;
+		return [qnew, records];
+
+
+	}
+	return [q,null];
+}
 function calcIndexFromTo(inc, o) {
 	let ito, ifrom = o.ifrom, records = o.records;
 	if (inc == 0) ito = Math.min(ifrom + o.size, records.length);
@@ -15,16 +46,18 @@ function calcIndexFromTo(inc, o) {
 	}
 	return [ifrom, ito];
 }
-function _getHeaderHtml(header, sorting) {
-	let arrowHtml = '';
-
-	if (sorting === 'asc') {
-		arrowHtml = ' &uarr;'; // Up arrow
-	} else if (sorting === 'desc') {
-		arrowHtml = ' &darr;'; // Down arrow
-	}
-
-	return `${header}${arrowHtml}`;
+function checkButtons() {
+	return;
+	let bs = arrChildren('dButtons'); bs.map(x => disableButton(x));
+	if (DB) enableButton('bDownload');
+	let info = DA.tinfo; //are there records shown?
+	if (nundef(info)) return;
+	let [ifrom, ito, records] = [info.ifrom, info.ito, info.records];
+	//console.log('checkButtons',ifrom,ito,records.length)
+	if (ifrom > 0) enableButton('bPgUp');
+	if (ito < records.length) enableButton('bPgDn');
+	if (!isEmpty(M.qHistory)) enableButton('bBack');
+	if (DA.cells.find(x => x.isSelected)) ['bFilter', 'bFilterFast', 'bSort', 'bSortFast'].map(x => enableButton(x));
 }
 function insertWhereClause(sql, whereClause) {
 
@@ -194,26 +227,6 @@ function showChunk(inc) {
 	}
 	DA.tinfo.ifrom = ifrom;
 	checkButtons();
-}
-function _sqlReplaceStar(q){
-
-	//console.log(':::::::::::',q);
-	let qTemp = q.toLowerCase().trim();
-	if (qTemp.startsWith('select * from')){
-
-		//if (qTemp.endsWith(';')) qTemp = stringBeforeLast(qTemp,';');
-		//qTemp += ` LIMIT 1;`;
-		console.log(qTemp)
-		let records = dbToList(qTemp); //'select * from tags');
-		if (isEmpty(records)) return [q,[]];
-
-		let headers = Object.keys(records[0]);
-		let qnew = `SELECT ${headers.join(', ')}\n${stringAfter(q,' * ')}`;
-		return [qnew, records];
-
-
-	}
-	return [q,null];
 }
 function sqlUpdateOrderBy(q, sorting) {
 	let clauses = splitSQLClauses(q); // console.log('clauses',clauses)

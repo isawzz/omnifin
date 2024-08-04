@@ -32,18 +32,6 @@ function buildCompExp(whereItems, clauses, key='WHERE') {
 	let where = generateCompExp(whereItems); //console.log(where);
 	return where;
 }
-function checkButtons() {
-	let bs = arrChildren('dButtons'); bs.map(x => disableButton(x));
-	if (DB) enableButton('bDownload');
-	let info = DA.tinfo; //are there records shown?
-	if (nundef(info)) return;
-	let [ifrom, ito, records] = [info.ifrom, info.ito, info.records];
-	//console.log('checkButtons',ifrom,ito,records.length)
-	if (ifrom > 0) enableButton('bPgUp');
-	if (ito < records.length) enableButton('bPgDn');
-	if (!isEmpty(M.qHistory)) enableButton('bBack');
-	if (DA.cells.find(x => x.isSelected)) ['bFilter', 'bFilterFast', 'bSort', 'bSortFast'].map(x => enableButton(x));
-}
 function clsGetHeaderMapping(clauses, sorting) {
 	let sc = clauses.SELECT[0];
 	assertion(isdef(sc), `NO SELECT CLAUSE!!! ${clauses}`);
@@ -94,60 +82,6 @@ function clsGetHeaderMapping1(clauses, sorting) {
 		if (hSelect) headerMapping[hSort] = hSelect.use.includes('.')?hSelect.use:`"${hSelect.use}"`;
 	}
 	return headerMapping;
-}
-async function filterRecords(allowEdit = false) {
-	let [records, headers, q] = [DA.info.records, DA.info.headers, DA.info.q];
-	let selitems = getSelItems(); //console.log('selitems', selitems);
-	let clauses = splitSQLClauses(q); //console.log(clauses); 
-
-	let whereItems = selitems.filter(x => x.h != 'MCC' && x.h != 'tag_names'); //console.log('whereItems', whereItems);
-	let compExp = buildCompExp(whereItems, clauses); //will be null if no suitable whereItems
-	if (compExp) {
-		if (isdef(clauses.WHERE)) {
-			let cl = clauses.WHERE[0];
-			clauses.WHERE = [`WHERE ` + stringAfter(cl, 'WHERE') + ' AND ' + compExp];
-		}
-		else clauses.WHERE = [`WHERE ${compExp}`];
-	}
-
-	//if (isdef(clauses.WHERE)) console.log(clauses.WHERE)
-
-	let havingItems = selitems.filter(x => ['MCC','tag_names'].includes(x.h)); //console.log('havingItems', havingItems);
-	compExp = buildCompExp(havingItems, clauses); //console.log(compExp); //will be null if no suitable whereItems
-
-
-	if (compExp) {
-		if (isdef(clauses.HAVING)) {
-			let cl = clauses.HAVING[0];
-			clauses.HAVING = [`HAVING ` + stringAfter(cl, 'HAVING') + ' AND ' + compExp];
-		}
-		else clauses.HAVING = [`HAVING ${compExp}`];
-	}
-
-	if (isdef(clauses.HAVING)) console.log(clauses.HAVING[0])
-	//assertion(false, '- THE END -')
-
-	// let having = generateSQLHavingClause(selitems); //console.log('!!!!',having)
-	// if (having) {
-	// 	if (isdef(clauses.HAVING)) {
-	// 		let cl = clauses.HAVING[0];
-	// 		clauses.HAVING = [`HAVING (` + stringAfter(cl, 'HAVING') + ') AND ' + stringAfter(having, 'HAVING')];
-	// 	}
-	// 	else clauses.HAVING = [having];
-	// }
-
-	let order = `SELECT|FROM|JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|OUTER JOIN|FULL JOIN|CROSS JOIN|UNION|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET`.split('|');
-	let sql = '';
-	for (const k of order) {
-		let list = lookup(clauses, [k]);
-		if (!list) continue;
-		sql += '\n' + list.join('\n');
-	}
-	let qnew = sql + ';'; //console.log(qnew)
-	showRecords(qnew, UI.d);
-
-
-
 }
 function generateCompExp(cells) {
 	// // Example usage:

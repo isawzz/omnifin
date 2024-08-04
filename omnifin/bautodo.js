@@ -5,7 +5,7 @@ async function onclickBackHistory() {
 	let o = M.qHistory.pop();
 	if (isdef(o)) {
 		let records = dbToList(o.q, false);
-		showChunkedSortedBy(UI.d, o.tablename, o.tablename, records);
+		//showChunkedSortedBy(UI.d, o.tablename, o.tablename, records);
 	}
 }
 //#endregion

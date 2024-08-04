@@ -1,4 +1,59 @@
 
+async function filterRecords(allowEdit = false) {
+	let [records, headers, q] = [DA.info.records, DA.info.headers, DA.info.q];
+	let selitems = getSelItems(); //console.log('selitems', selitems);
+	let clauses = splitSQLClauses(q); //console.log(clauses); 
+
+	let whereItems = selitems.filter(x => x.h != 'MCC' && x.h != 'tag_names'); //console.log('whereItems', whereItems);
+	let compExp = buildCompExp(whereItems, clauses); //will be null if no suitable whereItems
+	if (compExp) {
+		if (isdef(clauses.WHERE)) {
+			let cl = clauses.WHERE[0];
+			clauses.WHERE = [`WHERE ` + stringAfter(cl, 'WHERE') + ' AND ' + compExp];
+		}
+		else clauses.WHERE = [`WHERE ${compExp}`];
+	}
+
+	//if (isdef(clauses.WHERE)) console.log(clauses.WHERE)
+
+	let havingItems = selitems.filter(x => ['MCC','tag_names'].includes(x.h)); //console.log('havingItems', havingItems);
+	compExp = buildCompExp(havingItems, clauses); //console.log(compExp); //will be null if no suitable whereItems
+
+
+	if (compExp) {
+		if (isdef(clauses.HAVING)) {
+			let cl = clauses.HAVING[0];
+			clauses.HAVING = [`HAVING ` + stringAfter(cl, 'HAVING') + ' AND ' + compExp];
+		}
+		else clauses.HAVING = [`HAVING ${compExp}`];
+	}
+
+	if (isdef(clauses.HAVING)) console.log(clauses.HAVING[0])
+	//assertion(false, '- THE END -')
+
+	// let having = generateSQLHavingClause(selitems); //console.log('!!!!',having)
+	// if (having) {
+	// 	if (isdef(clauses.HAVING)) {
+	// 		let cl = clauses.HAVING[0];
+	// 		clauses.HAVING = [`HAVING (` + stringAfter(cl, 'HAVING') + ') AND ' + stringAfter(having, 'HAVING')];
+	// 	}
+	// 	else clauses.HAVING = [having];
+	// }
+
+	let order = `SELECT|FROM|JOIN|LEFT JOIN|RIGHT JOIN|INNER JOIN|OUTER JOIN|FULL JOIN|CROSS JOIN|UNION|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET`.split('|');
+	let sql = '';
+	for (const k of order) {
+		let list = lookup(clauses, [k]);
+		if (!list) continue;
+		sql += '\n' + list.join('\n');
+	}
+	let qnew = sql + ';'; //console.log(qnew)
+	showRecords(qnew, UI.d);
+
+
+
+}
+
 async function showRecords(q, dParent, clearInfo = false) {
 
 	//#region vorher
@@ -14,7 +69,11 @@ async function showRecords(q, dParent, clearInfo = false) {
 	DA.info.dParent = dParent;
 	DA.info.records = records;
 	DA.info.headers = headers;
+
 	let tablename = DA.info.tablename = dbGetTableName(q);
+
+	let isTagView = DA.info.isTagView, bTagView=mBy('bToggleTagView');
+	if (isdef(bTagView)) bTagView.innerHTML = isTagView? 'compact view':'tag view';
 
 	mIfNotRelative(dParent);
 	let h= Math.min(mGetStyle(dParent,'h'),window.innerHeight - 130);

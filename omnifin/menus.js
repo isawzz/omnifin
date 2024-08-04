@@ -13,8 +13,9 @@ function showNavMenu() {
 
 	let db = mDom(dNav, { matop: 12, maleft: 128, gap: 10, className: 'centerflexV' }, { id: 'dButtons' });
 	// mButton('<<', onclickBackHistory, db, {}, 'button', 'bBack');
-	mButton('clear sorting', () => { DA.info.sorting = { id: 'desc' }; sortRecordsBy('id') }, db, {}, 'button', 'bSortFast');
-	mButton('filter', filterRecords, db, {}, 'button', 'bSortFast');
+	mButton('clear sorting', () => { DA.info.sorting = { id: 'desc' }; sortRecordsBy('id') }, db, {}, 'button', 'bClearSorting');
+	mButton('filter', filterRecords, db, {}, 'button', 'bFilter');
+	mButton('tag view', toggleTagView, db, {}, 'button', 'bToggleTagView');
 
 	// commands.test = menuCommand(nav.l, 'nav', 'test', 'Test', menuOpenTest, menuCloseTest);
 	//nav.commands = commands;
@@ -27,7 +28,7 @@ async function menuOpenOverview() {
 
 	UI.commands.showSchema = mCommand(side.d, 'showSchema', 'schema', {}); mNewline(side.d, gap); mLinebreak(side.d, 10);
 	UI.commands.translist = mCommand(side.d, 'translist', 'translist', {}, { open: () => showRecords(qTTList(), UI.d, true) }); mNewline(side.d, gap);
-	UI.commands.transcols = mCommand(side.d, 'transcols', 'transcols', {}, { open: () => showRecords(qTTCols(), UI.d, true) }); mNewline(side.d, gap);
+	//UI.commands.transcols = mCommand(side.d, 'transcols', 'transcols', {}, { open: () => showRecords(qTTCols(), UI.d, true) }); mNewline(side.d, gap);
 	UI.commands.ausgaben = mCommand(side.d, 'ausgaben', 'ausgaben', {}, { open: () => showRecords(qAusgaben(), UI.d, true) }); mNewline(side.d, gap);
 	UI.commands.einnahmen = mCommand(side.d, 'einnahmen', 'einnahmen', {}, { open: () => showRecords(qEinnahmen(), UI.d, true) }); mNewline(side.d, gap);
 	UI.commands.currency = mCommand(side.d, 'currency', 'currency', {}, { open: () => showRecords(qCurrency(), UI.d, true) }); mNewline(side.d, gap);
