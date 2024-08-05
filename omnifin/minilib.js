@@ -4839,7 +4839,7 @@ function mToggleButton(handler, dParent, styles = {}, opts = {}) {
   const basicColors = ['tomato', 'steel_blue', 'light_green', 'gold', 'orange', 'sienna', 'olive', 'emerald', 'skyblue', 'navy', 'indigo'];
   if (nundef(colors)) { colors = states.map((x, i) => basicColors[i]); }
   if (nundef(states)) { states = colors.map((x, i) => `state ${i + 1}`); }
-  let onclick = ev => { let elem = ev.target; let i = toggleState(elem, states, colors); handler(i); }
+  let onclick = ev => { let elem = ev.target; let i = toggleState(elem, states, colors); if (handler) handler(i); }
   addKeys({ className: 'button', align: 'center' }, styles);
   let b = mDom(dParent, styles, { html: 'None', onclick, istate: -1 });
   toggleState(b, states, colors);

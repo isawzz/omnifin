@@ -9,6 +9,17 @@ function addSumAmount(ui, records) {
 	mDom(ui, {align:'right'}, { html: sum })
 
 }
+async function clearFilters() {
+	let q = DA.info.q;
+
+	let clauses = sqlSplitClauses(q);
+	delete clauses.WHERE;
+	delete clauses.HAVING;
+
+	let qnew = sqlComposeClauses(clauses);
+
+	showRecords(qnew, UI.d);
+}
 function clsGetHeaderMapping(clauses, sorting) {
 	let sc = clauses.SELECT[0];
 	assertion(isdef(sc), `NO SELECT CLAUSE!!! ${clauses}`);
@@ -146,7 +157,6 @@ function generateCompExp(cells) {
 	let res = isEmpty(ands) ? null : ands.join(' OR ');
 	return res;
 }
-function generateEquals(a, text) {	return isEmpty(text) ? `${a} IS NULL OR ${a}=''` : `${a}='${text}'`;}
 function getHeaderHtml(header, sorting) {
 	let arrowHtml = '';
 

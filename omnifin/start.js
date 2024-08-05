@@ -2,10 +2,13 @@
 const DB_PATH = '../db/test2.db'; // relative to omnifin dir
 onload = start;onresize = ()=>{if (UI.nav.cur == 'overview' && lookup(DA,['info','q'])) showRecords(DA.info.q,UI.d); }//onscroll = handleSticky;
 
-async function start() { await prelims(); test29(); }
+async function start() { await prelims(); test30_config(); }
 
 async function test30_config(){
-
+	await switchToMainMenu('overview');
+	return;
+	let d=clearFlex();
+	mToggleButton('==',null,d,{wmin:0,wmax:30},{states:['==','<=','>=']});
 }
 
 
@@ -419,8 +422,8 @@ async function test14() {
 async function test13() {
 	let d = clearFlex();
 	let handler = i => console.log(i)
-	let b = mToggleButton(handler, d);
-	b = mToggleButton(handler, d, { w: 50 }, { states: ['hallo', 'du', 'bist', 'da'], colors: [GREEN, YELLOW, BLUE, RED] });
+	let b = mToggleButton(null,handler, d);
+	b = mToggleButton(null,handler, d, { w: 50 }, { states: ['hallo', 'du', 'bist', 'da'], colors: [GREEN, YELLOW, BLUE, RED] });
 }
 async function test12() {
 	await switchToMainMenu('overview');

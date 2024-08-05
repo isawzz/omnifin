@@ -16,6 +16,7 @@ function showNavMenu() {
 	mButton('clear sorting', () => { DA.info.sorting = { id: 'desc' }; sortRecordsBy('id') }, db, {}, 'button', 'bClearSorting');
 	mButton('clear filters', clearFilters, db, {}, 'button', 'bClearSorting');
 	mButton('filter', filterRecords, db, {}, 'button', 'bFilter');
+	mToggleButton('=',filterRecords, db, {wmin:0,w:30}, {id:'bFilterOp',states:['=','<=','>='],colors:['white','white','white']});
 	mButton('tag view', toggleTagView, db, {}, 'button', 'bToggleTagView');
 
 	// commands.test = menuCommand(nav.l, 'nav', 'test', 'Test', menuOpenTest, menuCloseTest);
