@@ -14,6 +14,7 @@ function showNavMenu() {
 	let db = mDom(dNav, { matop: 12, maleft: 128, gap: 10, className: 'centerflexV' }, { id: 'dButtons' });
 	// mButton('<<', onclickBackHistory, db, {}, 'button', 'bBack');
 	mButton('clear sorting', () => { DA.info.sorting = { id: 'desc' }; sortRecordsBy('id') }, db, {}, 'button', 'bClearSorting');
+	mButton('clear filters', clearFilters, db, {}, 'button', 'bClearSorting');
 	mButton('filter', filterRecords, db, {}, 'button', 'bFilter');
 	mButton('tag view', toggleTagView, db, {}, 'button', 'bToggleTagView');
 
@@ -47,10 +48,10 @@ async function menuOpenOverview() {
 async function menuOpenSql() {
 	let side = UI.sidebar = mSidebar('dLeft', 110);
 	let dta = mDom('dMain');
-	let db = mDom('dMain', { gap: 10 }); mFlex(db);
+	let db = mDom('dMain', { gap: 10 }, {id:'dButtons'}); mFlex(db);
 	UI.d = mDom('dMain',{matop:5,h:630});
 
-	let ta = UI.ta = mDom(dta, { 'white-space': 'pre-wrap', w100: true, 'border-color': 'transparent' }, { rows: 10, tag: 'textarea', id: 'taSql', value: 'select * from reports' });
+	let ta = UI.ta = mDom(dta, { matop:10, 'white-space': 'pre-wrap', w:'90%', 'border-color': 'transparent' }, { rows: 10, tag: 'textarea', id: 'taSql', value: 'select * from reports' });
 	ta.addEventListener('keydown', function (event) {
 		if (event.key === 'Enter' && !event.shiftKey) {
 			event.preventDefault();
